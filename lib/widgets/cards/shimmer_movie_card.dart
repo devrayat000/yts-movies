@@ -85,34 +85,34 @@ class ShimmerMovieCard extends StatelessWidget {
           children: [
             Container(
               width: double.infinity,
-              height: 16,
+              height: isGrid ? 12 : 16,
               decoration: _decoration(context),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: isGrid ? 8 : 12),
             FractionallySizedBox(
               widthFactor: 0.7,
               child: Container(
-                height: 16,
+                height: isGrid ? 12 : 16,
                 decoration: _decoration(context),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: isGrid ? 8 : 12),
           ],
         ),
       );
 
   List<Widget> _desc(BuildContext context) => [
         ...List.generate(
-            4,
+            isGrid ? 3 : 4,
             (i) => Container(
-                  height: 8,
+                  height: isGrid ? 4 : 8,
                   margin: EdgeInsets.symmetric(vertical: 4.0),
                   decoration: _decoration(context),
                 )),
         FractionallySizedBox(
           widthFactor: 0.6,
           child: Container(
-            height: 10,
+            height: isGrid ? 4 : 8,
             margin: EdgeInsets.symmetric(vertical: 4.0),
             decoration: _decoration(context),
           ),
@@ -121,6 +121,6 @@ class ShimmerMovieCard extends StatelessWidget {
 
   Decoration _decoration(BuildContext context) => BoxDecoration(
         color: Theme.of(context).colorScheme.onSurface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isGrid ? 12 : 16),
       );
 }

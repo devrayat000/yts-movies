@@ -181,21 +181,26 @@ class _MovieCardState extends State<MovieCard> {
         id: widget._movie.id,
       );
 
-  Widget get _title => Text.rich(
-        TextSpan(
-          text: widget._movie.language != 'en'
-              ? '[${widget._movie.language.toUpperCase()}] '
-              : '',
-          style: Theme.of(context).textTheme.headline5?.copyWith(
-                color: Colors.blueGrey[400],
-              ),
-          children: [
-            TextSpan(
-              text: widget._movie.title,
-              style: Theme.of(context).textTheme.headline5,
-            )
-          ],
+  Widget get _title {
+    final theme = _isGrid
+        ? Theme.of(context).textTheme.headline6
+        : Theme.of(context).textTheme.headline5;
+    return Text.rich(
+      TextSpan(
+        text: widget._movie.language != 'en'
+            ? '[${widget._movie.language.toUpperCase()}] '
+            : '',
+        style: theme?.copyWith(
+          color: Colors.blueGrey[400],
         ),
-        textAlign: _isGrid ? TextAlign.center : TextAlign.start,
-      );
+        children: [
+          TextSpan(
+            text: widget._movie.title,
+            style: theme,
+          )
+        ],
+      ),
+      textAlign: _isGrid ? TextAlign.center : TextAlign.start,
+    );
+  }
 }

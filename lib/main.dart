@@ -3,10 +3,8 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animated_theme/animation_type.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localized_locales/flutter_localized_locales.dart';
-// import 'package:flutter_animated_theme/animated_theme_app.dart';
 
 import './models/constants.dart';
 import './models/movie.dart';
