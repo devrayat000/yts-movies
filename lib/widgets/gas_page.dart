@@ -6,8 +6,9 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:provider/provider.dart';
+// import 'package:provider/provider.dart';
 
-import '../models/constants.dart';
+import '../utils/constants.dart';
 import '../models/movie.dart';
 import '../models/theme.dart';
 import '../providers/mamus_provider.dart';
@@ -51,12 +52,12 @@ class MamuMovieListpageState<T extends Mamus>
     with
         PageStorageCache<MamuMovieListpage<T>>,
         SingleTickerProviderStateMixin<MamuMovieListpage<T>> {
-  late final PagingController<int, Movie> _pagingController;
-  late final ScrollController _scrollController;
-  late final AnimationController _fabScaleController;
-  late final Animation<double> _fabScaleAnimation;
-  late final StreamSubscription _subscription;
-  late final String _label;
+  late PagingController<int, Movie> _pagingController;
+  late ScrollController _scrollController;
+  late AnimationController _fabScaleController;
+  late Animation<double> _fabScaleAnimation;
+  late StreamSubscription _subscription;
+  late String _label;
 
   late final ValueKey<String> _listKey;
   late final ValueKey<String> _pageKey;
@@ -145,7 +146,7 @@ class MamuMovieListpageState<T extends Mamus>
   @override
   Widget build(BuildContext context) {
     return PageStorage(
-      bucket: kPageStorageBucket,
+      bucket: context.bucket,
       child: Scaffold(
         key: _scaffoldKey,
         appBar: widget.appBar,
@@ -185,36 +186,43 @@ class MamuMovieListpageState<T extends Mamus>
     );
   }
 
-  SliverGridDelegate get _gridDelegrate =>
+  SliverGridDelegate _gridDelegrate(int crossAxis, double aspectRatio) =>
       SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: context.watch<GridListView>().crossAxis,
-        childAspectRatio: context.watch<GridListView>().aspectRatio,
+        crossAxisCount: crossAxis,
+        childAspectRatio: aspectRatio,
         crossAxisSpacing: 4,
         mainAxisSpacing: 4,
       );
 
-  Widget get _pageGrid => PagedSliverGrid<int, Movie>(
-        shrinkWrapFirstPageIndicators: true,
-        pagingController: _pagingController,
-        builderDelegate: PagedChildBuilderDelegate(
-          itemBuilder: (context, item, index) {
-            return MovieCard(
-              key: ValueKey('movie-${item.id}'),
-              movie: item,
-            );
-          },
-          firstPageErrorIndicatorBuilder: _firstPageErrorIndicator,
-          newPageErrorIndicatorBuilder: _newPageErrorIndicator,
-          firstPageProgressIndicatorBuilder: (_) => _shimmer,
-          newPageProgressIndicatorBuilder: (_) => kCircularLoading,
-          noItemsFoundIndicatorBuilder:
-              widget.noItemBuilder ?? _noItemsFoundIndicator,
-          noMoreItemsIndicatorBuilder: _noMoreItemsIndicator,
-          animateTransitions: true,
-          // animateTransitions: true,
+  Widget get _pageGrid => Consumer<GridListView>(
+        child: _shimmer,
+        builder: (context, view, child) => PagedSliverGrid<int, Movie>(
+          shrinkWrapFirstPageIndicators: true,
+          pagingController: _pagingController,
+          builderDelegate: PagedChildBuilderDelegate(
+            itemBuilder: (context, item, index) {
+              return MovieCard(
+                key: ValueKey('movie-${item.id}'),
+                movie: item,
+                isGrid: view.isTrue,
+              );
+            },
+            firstPageErrorIndicatorBuilder: _firstPageErrorIndicator,
+            newPageErrorIndicatorBuilder: _newPageErrorIndicator,
+            firstPageProgressIndicatorBuilder: (_) => child!,
+            newPageProgressIndicatorBuilder: (_) => kCircularLoading,
+            noItemsFoundIndicatorBuilder:
+                widget.noItemBuilder ?? _noItemsFoundIndicator,
+            noMoreItemsIndicatorBuilder: _noMoreItemsIndicator,
+            animateTransitions: true,
+          ),
+          gridDelegate: _gridDelegrate(
+            view.crossAxis * _orientation(MediaQuery.of(context).orientation),
+            view.aspectRatio,
+          ),
         ),
-        gridDelegate: _gridDelegrate,
       );
+
   Widget _newPageErrorIndicator(BuildContext context) => Column(
         children: [
           Text(_pagingController.error.toString()),
@@ -304,6 +312,14 @@ class MamuMovieListpageState<T extends Mamus>
     }
   }
 
+  int _orientation(Orientation o) {
+    if (o == Orientation.portrait) {
+      return 1;
+    } else {
+      return 2;
+    }
+  }
+
   static const _shimmer = const _MovieListShimmer();
 }
 
@@ -315,18 +331,22 @@ class _MovieListShimmer extends StatelessWidget {
     return Shimmer(
       linearGradient: context
           .select<AppTheme, LinearGradient>((theme) => theme.shimmerGradient),
-      child: GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: context.read<GridListView>().crossAxis,
-          childAspectRatio: context.read<GridListView>().aspectRatio,
-          crossAxisSpacing: 4,
-          mainAxisSpacing: 4,
-        ),
-        physics: NeverScrollableScrollPhysics(),
-        itemCount: 6,
-        shrinkWrap: true,
-        itemBuilder: (context, i) {
-          return ShimmerMovieCard(isGrid: context.read<GridListView>().isTrue);
+      child: Consumer<GridListView>(
+        builder: (context, view, child) {
+          return GridView.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: view.crossAxis,
+              childAspectRatio: view.aspectRatio,
+              crossAxisSpacing: 4,
+              mainAxisSpacing: 4,
+            ),
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 6,
+            shrinkWrap: true,
+            itemBuilder: (context, i) {
+              return ShimmerMovieCard(isGrid: view.isTrue);
+            },
+          );
         },
       ),
     );

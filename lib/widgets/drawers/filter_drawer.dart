@@ -76,7 +76,7 @@ class SearchFilterDrawer extends StatelessWidget {
                 FilterItem(
                   title: const Text('Descending'),
                   action: _provider<OrderFilter>(
-                    notifier: _selector(context, (filter) => filter.order),
+                    notifier: _selector<OrderFilter>(context, (filter) => filter.order),
                     builder: (_, order, __) => CupertinoSwitch(
                       value: order.value,
                       onChanged: order.changeHandler,

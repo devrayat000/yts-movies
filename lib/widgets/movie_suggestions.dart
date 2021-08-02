@@ -2,7 +2,6 @@ import 'dart:convert' show jsonDecode;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 
 import './cards/movie_card.dart' show MovieCard;

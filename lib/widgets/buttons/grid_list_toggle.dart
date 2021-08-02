@@ -1,7 +1,5 @@
-import 'package:flutter/widgets.dart';
-import 'package:flutter/material.dart'
-    show IconButton, AnimatedIcon, AnimatedIcons;
-import 'package:provider/provider.dart' show SelectContext, ReadContext;
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../providers/view_provider.dart';
 
@@ -29,7 +27,7 @@ class _GridListToggleState extends State<GridListToggle>
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 300),
-    );
+    )..value = context.read<GridListView>().isTrue ? 0 : 1;
     _animation =
         CurvedAnimation(parent: _animationController, curve: Curves.easeInOut);
   }
@@ -42,39 +40,40 @@ class _GridListToggleState extends State<GridListToggle>
 
   @override
   Widget build(BuildContext context) {
-    final _isGrid = context.select<GridListView, bool>((view) => view.isTrue);
-    _animationController.value = _isGrid ? 0 : 1;
-    return IconButton(
-      icon: AnimatedIcon(
+    return Consumer<GridListView>(
+      child: AnimatedIcon(
         icon: AnimatedIcons.list_view,
         progress: _animation,
         semanticLabel: 'Grid/List Toggle',
       ),
-      onPressed: () {
-        final _offset = widget.controller?.offset;
-        final _dur = const Duration(milliseconds: 400);
-        final _curve = Curves.linear;
-        if (_isGrid) {
-          _animationController.forward();
-          widget.controller?.animateTo(
-            _offset! * 1.8,
-            duration: _dur,
-            curve: _curve,
-          );
-        } else {
-          _animationController.reverse();
-          widget.controller?.animateTo(
-            _offset! / 1.8,
-            duration: _dur,
-            curve: _curve,
-          );
-        }
-        context.read<GridListView>().toggle();
-        final a = widget.onToggle;
-        if (a != null) {
-          a(!_isGrid);
-        }
-      },
+      builder: (context, view, icon) => IconButton(
+        icon: icon!,
+        onPressed: () {
+          final _offset = widget.controller?.offset;
+          final _dur = const Duration(milliseconds: 400);
+          final _curve = Curves.linear;
+          if (_animationController.status == AnimationStatus.dismissed) {
+            _animationController.forward();
+            widget.controller?.animateTo(
+              _offset! * 1.8,
+              duration: _dur,
+              curve: _curve,
+            );
+          } else if (_animationController.status == AnimationStatus.completed) {
+            _animationController.reverse();
+            widget.controller?.animateTo(
+              _offset! / 1.8,
+              duration: _dur,
+              curve: _curve,
+            );
+          }
+          context.read<GridListView>().toggle();
+          final a = widget.onToggle;
+          if (a != null) {
+            a(!context.read<GridListView>().isTrue);
+          }
+        },
+      ),
     );
   }
 }

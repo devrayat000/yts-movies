@@ -37,7 +37,9 @@ class MovieImage extends StatelessWidget {
         wasSynchronouslyLoaded,
       ) {
         return Hero(
+          key: ValueKey(id),
           tag: 'movie-$id',
+          transitionOnUserGestures: true,
           child: _container(
             child: child,
             padding: EdgeInsets.all(padding),

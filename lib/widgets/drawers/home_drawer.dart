@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart' show ReadContext, SelectContext;
+import 'package:provider/provider.dart';
 
 import '../../models/theme.dart';
 
@@ -8,8 +8,6 @@ class MainDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    void _closeDrawer() => Navigator.of(context).pop();
-
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -30,13 +28,17 @@ class MainDrawer extends StatelessWidget {
                       style: Theme.of(context).textTheme.headline4,
                       textAlign: TextAlign.start,
                     ),
-                    IconButton(
-                      onPressed: context.read<AppTheme>().toggleTheme,
-                      icon: Icon(
-                        context.select<AppTheme, bool>((theme) => theme.isDark)
-                            ? Icons.light_mode_rounded
-                            : Icons.dark_mode,
-                      ),
+                    Consumer<AppTheme>(
+                      builder: (context, theme, child) {
+                        return IconButton(
+                          onPressed: theme.toggleTheme,
+                          icon: Icon(
+                            theme.isDark
+                                ? Icons.light_mode_rounded
+                                : Icons.dark_mode,
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -46,17 +48,14 @@ class MainDrawer extends StatelessWidget {
           DrawerItem(
             title: 'Latest Movies',
             leadingIcon: Icons.new_releases,
-            onClose: _closeDrawer,
           ),
           DrawerItem(
             title: 'Profile',
             leadingIcon: Icons.account_circle,
-            onClose: _closeDrawer,
           ),
           DrawerItem(
             title: 'Settings',
             leadingIcon: Icons.settings,
-            onClose: _closeDrawer,
           ),
         ],
       ),
@@ -90,7 +89,10 @@ class DrawerItem extends StatelessWidget {
           fontSize: 20.0,
         ),
       ),
-      onTap: this.onClose,
+      onTap: () {
+        Navigator.pop(context);
+        this.onClose?.call();
+      },
     );
   }
 }

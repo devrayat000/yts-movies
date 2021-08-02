@@ -6,38 +6,56 @@ import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:ytsmovies/models/movie.dart';
-import 'package:ytsmovies/pages/movie.dart';
-import 'package:ytsmovies/providers/view_provider.dart';
-import 'package:ytsmovies/widgets/buttons/grid_list_toggle.dart';
-import 'package:ytsmovies/widgets/cards/actionbar.dart';
-import 'package:ytsmovies/widgets/cards/movie_card.dart';
-import 'package:ytsmovies/widgets/image.dart';
+import '../../models/movie.dart';
+import '../../pages/movie.dart';
+import '../../providers/view_provider.dart';
+import '../buttons/grid_list_toggle.dart';
+import '../cards/actionbar.dart';
+import '../cards/movie_card.dart';
+import '../image.dart';
 
 class MovieSearchDelegate extends SearchDelegate<Movie?> {
   final _controller = PagingController<int, Movie>(firstPageKey: 1);
   final _scrollController = ScrollController();
-  Iterable<Movie> _cachedMovies = [];
+  final _prefs = SharedPreferences.getInstance();
+
+  double minSoundLevel = 50000;
+  double maxSoundLevel = -50000;
+  // Iterable<Movie> _cachedMovies = [];
+
+  static const _historyKey = 'search-history';
 
   MovieSearchDelegate() {
-    _controller.addPageRequestListener((pageKey) async {
-      try {
-        final _movies = await _moviesFuture(pageKey);
-        _controller.appendPage(_movies.toList(), ++pageKey);
-      } catch (e) {
-        _controller.error = e;
-      }
-    });
+    // _controller.addPageRequestListener((pageKey) async {
+    //   try {
+    //     final _movies = await _moviesFuture(pageKey);
+    //     _controller.appendPage(_movies.toList(), ++pageKey);
+    //   } catch (e) {
+    //     _controller.error = e;
+    //   }
+    // });
   }
 
   @override
   List<Widget> buildActions(BuildContext context) {
     return [
       IconButton(
-        onPressed: null,
-        icon: Icon(Icons.clear),
-      )
+        onPressed: () {
+          if (query.isNotEmpty) {
+            query = '';
+          }
+        },
+        icon: AnimatedSwitcher(
+          duration: Duration(milliseconds: 200),
+          child: query.isEmpty ? null : Icon(Icons.clear),
+          transitionBuilder: (child, animation) => ScaleTransition(
+            scale: animation,
+            child: child,
+          ),
+        ),
+      ),
     ];
   }
 
@@ -55,9 +73,22 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
   ThemeData appBarTheme(BuildContext context) => Theme.of(context);
 
   @override
-  void showResults(BuildContext context) {
-    _controller.appendPage(_cachedMovies.toList(), 2);
-    super.showResults(context);
+  Future<void> showResults(BuildContext context) async {
+    // _controller.appendPage(_cachedMovies.toList(), 2);
+    try {
+      _controller.addPageRequestListener((pageKey) async {
+        try {
+          final _movies = await _moviesFuture(pageKey);
+          _controller.appendPage(_movies.toList(), ++pageKey);
+        } catch (e) {
+          _controller.error = e;
+        }
+      });
+      await _setHistory(query);
+      super.showResults(context);
+    } catch (e) {
+      print(e);
+    }
   }
 
   @override
@@ -84,18 +115,20 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
                 GridListToggle(controller: _scrollController),
               ],
             ),
-            PagedSliverGrid<int, Movie>(
-              pagingController: _controller,
-              builderDelegate: PagedChildBuilderDelegate(
-                itemBuilder: (context, movie, i) => MovieCard(
-                  movie: movie,
+            Builder(
+              builder: (context) => PagedSliverGrid<int, Movie>(
+                pagingController: _controller,
+                builderDelegate: PagedChildBuilderDelegate(
+                  itemBuilder: (context, movie, i) => MovieCard(
+                    movie: movie,
+                  ),
                 ),
-              ),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: context.watch<GridListView>().crossAxis,
-                childAspectRatio: context.watch<GridListView>().aspectRatio,
-                crossAxisSpacing: 4,
-                mainAxisSpacing: 4,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: context.watch<GridListView>().crossAxis,
+                  childAspectRatio: context.watch<GridListView>().aspectRatio,
+                  crossAxisSpacing: 4,
+                  mainAxisSpacing: 4,
+                ),
               ),
             ),
           ],
@@ -106,8 +139,8 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    return FutureBuilder<Iterable<Movie>>(
-      future: _firstMovies,
+    return FutureBuilder<List<Object>?>(
+      future: query.isEmpty ? _history : _firstMovies,
       initialData: [],
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -118,28 +151,47 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
         } else if (snapshot.hasData) {
           final movies = snapshot.data;
           if (movies == null) {
-            Text(
-              'No movies found',
-              style: Theme.of(context).textTheme.headline4,
-            );
+            if (query.isNotEmpty) {
+              return Text(
+                'No movies found',
+                style: Theme.of(context).textTheme.headline4,
+              );
+            }
+            return Text('Search for movies');
           }
           return ListView.separated(
             itemBuilder: (context, i) {
-              final _movie = movies!.toList()[i];
+              final _movie = movies[i];
+              if (_movie is Movie) {
+                return ListTile(
+                  leading: MovieImage(src: _movie.coverImg.small),
+                  title: Text(_movie.title),
+                  subtitle: Text(
+                      LocaleNames.of(context)?.nameOf(_movie.language) ??
+                          'English'),
+                  trailing: Text(_runtimeFormat(_movie)),
+                  onTap: () {
+                    Navigator.pushNamed(context, MoviePage.routeName);
+                  },
+                );
+              }
               return ListTile(
-                leading: MovieImage(src: _movie.coverImg.small),
-                title: Text(_movie.title),
-                subtitle: Text(
-                    LocaleNames.of(context)?.nameOf(_movie.language) ??
-                        'English'),
-                trailing: Text(_runtimeFormat(_movie)),
+                key: ValueKey(_movie as String),
+                leading: Icon(Icons.history),
+                title: Text(_movie),
+                trailing: Icon(Icons.find_in_page),
                 onTap: () {
-                  Navigator.pushNamed(context, MoviePage.routeName);
+                  try {
+                    query = _movie;
+                    showResults(context);
+                  } catch (e) {
+                    print(e);
+                  }
                 },
               );
             },
             separatorBuilder: (context, i) => Divider(),
-            itemCount: movies!.length,
+            itemCount: movies.length,
           );
         } else {
           return Center(child: CircularProgressIndicator());
@@ -160,11 +212,30 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
     });
   }
 
-  Future<Iterable<Movie>> get _firstMovies {
-    return _moviesFuture(1).then<Iterable<Movie>>((parsedMovies) {
-      _cachedMovies = parsedMovies;
-      return parsedMovies.take(7);
+  Future<List<Movie>> get _firstMovies {
+    return _moviesFuture(1).then<List<Movie>>((parsedMovies) {
+      // _cachedMovies = parsedMovies;
+      return parsedMovies.take(10).toList();
     });
+  }
+
+  Future<List<String>?> get _history async {
+    try {
+      final prefs = await _prefs;
+      return prefs.getStringList(_historyKey);
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  Future<void> _setHistory(String searchHistory) async {
+    try {
+      final prefs = await _prefs;
+      final prevHistory = prefs.getStringList(_historyKey) ?? [];
+      prefs.setStringList(_historyKey, [searchHistory, ...prevHistory]);
+    } catch (e) {
+      throw e;
+    }
   }
 
   String _runtimeFormat(Movie _movie) {

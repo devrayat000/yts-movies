@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ytsmovies/widgets/appbars/search_delegate.dart';
 
-import './search.dart';
+// import './search.dart';
 import './latest.dart';
 import '../widgets/appbars/home_appbar.dart';
 import '../widgets/drawers/home_drawer.dart';
@@ -23,11 +23,11 @@ class HomePage extends StatelessWidget {
         children: [
           InkWell(
             onTap: () {
-              Navigator.of(context).pushNamed(SearchPage.routeName);
-              // showSearch(
-              //   context: context,
-              //   delegate: MovieSearchDelegate(),
-              // );
+              // Navigator.of(context).pushNamed(SearchPage.routeName);
+              showSearch(
+                context: context,
+                delegate: MovieSearchDelegate(),
+              );
             },
             child: const SearchTile(),
             splashFactory: NoSplash.splashFactory,

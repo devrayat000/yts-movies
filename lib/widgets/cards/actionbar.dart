@@ -1,4 +1,3 @@
-import 'package:flutter/rendering.dart';
 import 'package:flutter/material.dart';
 
 class SliverActionBar extends StatelessWidget {

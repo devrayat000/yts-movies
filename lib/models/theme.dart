@@ -24,7 +24,7 @@ class AppTheme with ChangeNotifier {
         _current = _boolPref == false ? ThemeMode.light : ThemeMode.dark;
         _isDarkTheme = _boolPref;
       }
-      print('theme: $_isDarkTheme');
+      print('theme: $current');
     } catch (e) {
       print(e);
     }

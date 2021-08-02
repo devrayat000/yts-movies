@@ -1,6 +1,14 @@
 import 'package:flutter/widgets.dart';
+import 'package:provider/provider.dart';
 
-late PageStorageBucket kPageStorageBucket;
+class Storage {
+  final bucket = PageStorageBucket();
+}
+
+extension Bucket on BuildContext {
+  PageStorageBucket get bucket => this.read<Storage>().bucket;
+}
+
 late Widget kCircularLoading;
 
 class Col {

@@ -1,8 +1,27 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.ytsmovies">
+    package="com.dev.standard.ytsmovies">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="magnet" />
+        </intent>
+    </queries>
    <application
         android:label="YTS Movies"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="true"
+        android:fullBackupContent="true"
+       >
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

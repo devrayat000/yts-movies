@@ -18,12 +18,8 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 5,
       actions: [
         IconButton(
-          onPressed: () async {
-            try {
-              Navigator.pushNamed(context, FavouratesPage.routeName);
-            } catch (e) {
-              print(e);
-            }
+          onPressed: () {
+            Navigator.pushNamed(context, FavouratesPage.routeName);
           },
           icon: const Icon(
             Icons.favorite_outline_rounded,

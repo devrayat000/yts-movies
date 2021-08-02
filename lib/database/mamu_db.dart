@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart' show compute;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' show join;
-import 'package:ytsmovies/utils/exceptions.dart';
 
-import '../models/constants.dart' show Col;
+import '../utils/exceptions.dart';
+import '../utils/constants.dart' show Col;
 import '../models/movie.dart';
 
 class MamuDB {

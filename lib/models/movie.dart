@@ -1,4 +1,5 @@
-import 'package:ytsmovies/models/constants.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:ytsmovies/utils/constants.dart';
 
 class MovieDetails extends Movie {
   late final String downloadCount;
@@ -98,6 +99,49 @@ class Movie {
   List<String> get quality {
     return torrents.map((e) => e.quality).toSet().toList();
   }
+
+  @override
+  operator ==(Object another) =>
+      identical(this, another) ||
+      (another is Movie &&
+          id == another.id &&
+          backgroundImage == another.backgroundImage &&
+          coverImg == another.coverImg &&
+          dateUploaded == another.dateUploaded &&
+          descriptionFull == another.descriptionFull &&
+          genres == another.genres &&
+          imdbCode == another.imdbCode &&
+          language == another.language &&
+          mpaRating == another.mpaRating &&
+          rating == another.rating &&
+          runtime == another.runtime &&
+          synopsis == another.synopsis &&
+          torrents == another.torrents &&
+          url == another.url &&
+          year == another.year &&
+          trailer == another.trailer &&
+          title == another.title);
+
+  @override
+  int get hashCode => hashValues(
+        id,
+        backgroundImage,
+        coverImg,
+        dateUploaded,
+        descriptionFull,
+        genres,
+        imdbCode,
+        language,
+        mpaRating,
+        rating,
+        runtime,
+        synopsis,
+        torrents,
+        url,
+        year,
+        trailer,
+        title,
+      );
 }
 
 class CoverImage {
@@ -117,6 +161,17 @@ class CoverImage {
       Col.largeImage: large,
     };
   }
+
+  @override
+  operator ==(Object another) =>
+      identical(this, another) ||
+      (another is CoverImage &&
+          this.small == another.small &&
+          this.medium == another.medium &&
+          this.large == another.large);
+
+  @override
+  int get hashCode => hashValues(small, medium, large);
 }
 
 class Torrent {
@@ -130,17 +185,16 @@ class Torrent {
   late final DateTime dateUploaded;
   late final String _title;
 
-  Torrent(Map<String, dynamic> torrent, {required String title}) {
-    url = torrent['url'];
-    hash = torrent['hash'];
-    type = torrent['type'].toString() == 'bluray' ? 'blu' : torrent['type'];
-    quality = torrent['quality'];
-    seeds = torrent['seeds'];
-    peers = torrent['peers'];
-    size = torrent['size'];
-    dateUploaded = DateTime.parse(torrent['date_uploaded']);
-    _title = title;
-  }
+  Torrent(Map<String, dynamic> torrent, {required String title})
+      : url = torrent['url'],
+        hash = torrent['hash'],
+        type = torrent['type'].toString() == 'bluray' ? 'blu' : torrent['type'],
+        quality = torrent['quality'],
+        seeds = torrent['seeds'],
+        peers = torrent['peers'],
+        size = torrent['size'],
+        dateUploaded = DateTime.parse(torrent['date_uploaded']),
+        _title = title;
 
   Map<String, Object?> toJSON() {
     return {
@@ -175,6 +229,33 @@ class Torrent {
     );
     return magnetUri;
   }
+
+  @override
+  operator ==(Object another) =>
+      identical(this, another) ||
+      (another is Torrent &&
+          dateUploaded == another.dateUploaded &&
+          hash == another.hash &&
+          magnet == another.magnet &&
+          peers == another.peers &&
+          quality == another.quality &&
+          seeds == another.seeds &&
+          size == another.size &&
+          type == another.type &&
+          url == another.url);
+
+  @override
+  int get hashCode => hashValues(
+        peers,
+        seeds,
+        url,
+        type,
+        hash,
+        magnet,
+        quality,
+        size,
+        dateUploaded,
+      );
 }
 
 class MovieArg<T extends Movie> {

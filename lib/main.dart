@@ -3,10 +3,11 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 
-import './models/constants.dart';
+import 'utils/constants.dart';
 import './models/movie.dart';
 import './providers/mamus_provider.dart';
 import './pages/home.dart';
@@ -58,9 +59,14 @@ void main() async {
       _apptheme.initialize(),
     ]);
 
-    kPageStorageBucket = PageStorageBucket();
     kCircularLoading = Center(
       child: CircularProgressIndicator.adaptive(),
+    );
+
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+      ),
     );
 
     runApp(MultiProvider(
@@ -69,6 +75,7 @@ void main() async {
         ChangeNotifierProvider.value(value: _view),
         // ChangeNotifierProvider(create: (_) => Filter()),
         ChangeNotifierProvider.value(value: _favsX),
+        Provider<Storage>(create: (_) => Storage()),
       ],
       child: const MyApp(),
     ));
@@ -83,79 +90,33 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Unfocus(
-      child: MaterialApp(
-        title: 'YTS Movies',
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        // animationType: AnimationType.CIRCULAR_ANIMATED_THEME,
-        themeMode:
-            context.select<AppTheme, ThemeMode>((theme) => theme.current),
-        initialRoute: HomePage.routeName,
-        routes: _routes,
-        scrollBehavior: const CupertinoScrollBehavior(),
-        // onGenerateRoute: _onGenerateRoute,
-        localizationsDelegates: [
-          const LocaleNamesLocalizationsDelegate(fallbackLocale: 'en'),
-        ],
-        builder: (BuildContext context, Widget? widget) {
-          Widget error = Text('...Unexpected error occurred...');
-          if (widget is Scaffold || widget is Navigator)
-            error = Scaffold(body: Center(child: error));
-          ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
-          return widget!;
-        },
+      child: Consumer<AppTheme>(
+        builder: (context, theme, _) => MaterialApp(
+          title: 'YTS Movies',
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          // animationType: AnimationType.CIRCULAR_ANIMATED_THEME,
+          themeMode: theme.current,
+          initialRoute: HomePage.routeName,
+          routes: _routes,
+          scrollBehavior: const CupertinoScrollBehavior(),
+          localizationsDelegates: [
+            const LocaleNamesLocalizationsDelegate(fallbackLocale: 'en'),
+          ],
+          restorationScopeId: 'com.movies.yts',
+          builder: (BuildContext context, Widget? widget) {
+            Widget error = Text('...Unexpected error occurred...');
+            if (widget is Scaffold || widget is Navigator)
+              error = Scaffold(body: Center(child: error));
+            ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
+            return widget!;
+          },
+        ),
       ),
     );
   }
 
-  // Route<dynamic> _onGenerateRoute(RouteSettings settings) {
-  //   switch (settings.name) {
-  //     case HomePage.routeName:
-  //       return PageTransition(
-  //         child: const HomePage(),
-  //         type: PageTransitionType.bottomToTop,
-  //         settings: settings,
-  //       );
-  //     case SearchPage.routeName:
-  //       return PageTransition(
-  //         child: const SearchPage(),
-  //         type: PageTransitionType.rightToLeftWithFade,
-  //         settings: settings,
-  //       );
-  //     case MoviePage.routeName:
-  //       return PageTransition(
-  //         child: const MoviePage(),
-  //         type: PageTransitionType.rightToLeftWithFade,
-  //         settings: settings,
-  //       );
-  //     case LatestMoviesPage.routeName:
-  //       return PageTransition(
-  //         child: const LatestMoviesPage(),
-  //         type: PageTransitionType.bottomToTop,
-  //         settings: settings,
-  //       );
-  //     case HD4KMoviesPage.routeName:
-  //       return PageTransition(
-  //         child: const HD4KMoviesPage(),
-  //         type: PageTransitionType.bottomToTop,
-  //         settings: settings,
-  //       );
-  //     case FavouratesPage.routeName:
-  //       return PageTransition(
-  //         child: const FavouratesPage(),
-  //         type: PageTransitionType.bottomToTop,
-  //         settings: settings,
-  //       );
-  //     default:
-  //       return PageTransition(
-  //         child: const HomePage(),
-  //         type: PageTransitionType.bottomToTop,
-  //         settings: settings,
-  //       );
-  //   }
-  // }
-
-  Map<String, Widget Function(BuildContext)> get _routes {
+  Map<String, WidgetBuilder> get _routes {
     return {
       HomePage.routeName: (_) => const HomePage(),
       SearchPage.routeName: (_) => const SearchPage(),
@@ -167,9 +128,13 @@ class MyApp extends StatelessWidget {
           item: _movie,
         );
       },
-      LatestMoviesPage.routeName: (context) => const LatestMoviesPage(),
+      LatestMoviesPage.routeName: (_) =>
+          const LatestMoviesPage(),
       HD4KMoviesPage.routeName: (_) => const HD4KMoviesPage(),
       FavouratesPage.routeName: (_) => const FavouratesPage(),
     };
   }
 }
+
+//  keytool -genkey -v -keystore c:\Users\rayat\yts-movies-keystore.jks -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+
