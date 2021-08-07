@@ -38,7 +38,7 @@ class Movie {
   late final String mpaRating;
   late final String descriptionFull;
   late final String synopsis;
-  late final String trailer;
+  late final String? trailer;
   late final int runtime;
   late final List<String> genres;
   late final List<Torrent> torrents;

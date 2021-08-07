@@ -7,9 +7,11 @@ class GridListView extends _View {
 }
 
 abstract class _View with ChangeNotifier {
-  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+  late final Future<SharedPreferences> _prefs;
   bool _default = false;
   static const _key = 'view';
+
+  _View() : _prefs = SharedPreferences.getInstance();
 
   Future<void> initialize() async {
     try {

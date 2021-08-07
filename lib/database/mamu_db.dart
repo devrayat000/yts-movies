@@ -1,13 +1,14 @@
 import 'package:flutter/foundation.dart' show compute;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' show join;
+import 'package:ytsmovies/utils/isolates.dart';
 
 import '../utils/exceptions.dart';
 import '../utils/constants.dart' show Col;
 import '../models/movie.dart';
 
 class MamuDB {
-  late Database _database;
+  late Future<Database> _database;
   late String _path;
   static const _dbname = 'yts.db';
   static const _movieTable = 'favmovies';
@@ -17,14 +18,14 @@ class MamuDB {
   static const _dateInserted = 'dateInserted';
 
   MamuDB() {
-    open();
+    _database = dbFuture;
   }
 
-  Future<void> open() async {
+  Future<Database> get dbFuture async {
     try {
       final dbpath = await getDatabasesPath();
       _path = join(dbpath, _dbname);
-      _database = await openDatabase(
+      return await openDatabase(
         _path,
         version: 1,
         onCreate: (Database db, int version) async {
@@ -83,14 +84,23 @@ class MamuDB {
         },
       );
     } catch (e) {
-      throw e;
+      rethrow;
+    }
+  }
+
+  Future<void> open() async {
+    try {
+      await _database;
+    } catch (e) {
+      rethrow;
     }
   }
 
   // Public methods
   Future<void> insert(Movie movie) async {
     try {
-      final batch = _database.batch();
+      final db = await _database;
+      final batch = db.batch();
       final _movie = movie.toJSON();
       // print('79: $_movie');
       batch.insert(
@@ -122,24 +132,30 @@ class MamuDB {
       });
       await batch.commit(noResult: true);
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 
   Future<void> delete(String id) async {
-    final batch = _database.batch();
-    batch.delete(_movieTable, where: '${Col.id} = ?', whereArgs: [id]);
-    batch.delete(_torrentTable, where: '$_movieId = ?', whereArgs: [id]);
-    batch.delete(_genreTable, where: '$_movieId = ?', whereArgs: [id]);
     try {
+      final db = await _database;
+      final batch = db.batch();
+      batch.delete(_movieTable, where: '${Col.id} = ?', whereArgs: [id]);
+      batch.delete(_torrentTable, where: '$_movieId = ?', whereArgs: [id]);
+      batch.delete(_genreTable, where: '$_movieId = ?', whereArgs: [id]);
       await batch.commit(noResult: true);
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 
   Future<void> close() async {
-    await _database.close();
+    try {
+      final db = await _database;
+      await db.close();
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<void> deleteDB() async {
@@ -149,65 +165,44 @@ class MamuDB {
   }
 
   // Public getters
-  Database get instance => _database;
+  Future<Database> get instance => _database;
 
   Future<List<String>> get getMovieIds async {
     try {
-      final ids = await _database.query(
+      final db = await _database;
+      final ids = await db.query(
         _movieTable,
         columns: ['id'],
       );
       return ids.map((e) => e['id'].toString()).toList();
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 
   Future<List<Movie>> get getAll async {
-    print(_database);
-    final batch = _database.batch();
+    final db = await _database;
+    final batch = db.batch();
     batch.query(_movieTable, orderBy: _dateInserted);
     batch.query(_torrentTable);
     batch.query(_genreTable);
     try {
       final data = await batch.commit();
 
-      if (data.length == 0) {
-        throw NotFoundException('No movies were found');
+      // ignore: unnecessary_null_comparison
+      if (data == null || data.length == 0 || data.any((e) => e == null)) {
+        throw NotFoundException('Add movies to favourite');
       }
 
       // await this.close();
-      return compute(_parseMovies, {
+      return compute(Spawn.parseDatabaseMovies, {
         'movies': data[0] as List? ?? [],
         'torrents': data[1] as List? ?? [],
         'genres': data[2] as List? ?? [],
       });
       // return newMovies;
     } catch (e) {
-      throw e;
+      rethrow;
     }
-  }
-
-  static Future<List<Movie>> _parseMovies(Map<String, dynamic> data) async {
-    final movies = data['movies'] as List;
-    final torrents = data['torrents'] as List;
-    final genres = data['genres'] as List;
-
-    // movies.sort((a, b) {
-    //   final dateA = DateTime.parse(a[_dateInserted]);
-    //   final dateB = DateTime.parse(b[_dateInserted]);
-    //   return dateA.compareTo(dateB);
-    // });
-
-    return movies.map((movie) {
-      var newMovie = {}..addAll(movie);
-      newMovie['torrents'] =
-          torrents.where((t) => t[_movieId] == newMovie['id']).toList();
-      newMovie['genres'] = genres
-          .where((g) => g[_movieId] == newMovie['id'])
-          .map((g) => g['genre'])
-          .toList();
-      return Movie.fromJSON(newMovie);
-    }).toList();
   }
 }

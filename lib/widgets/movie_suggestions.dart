@@ -1,39 +1,56 @@
-import 'dart:convert' show jsonDecode;
+// import 'dart:convert' show jsonDecode;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:ytsmovies/utils/constants.dart';
+import 'package:ytsmovies/utils/exceptions.dart';
 
 import './cards/movie_card.dart' show MovieCard;
 
 import '../models/movie.dart';
 
-class Suggestions extends StatelessWidget {
+class Suggestions extends StatefulWidget {
   final String id;
   const Suggestions({Key? key, required this.id}) : super(key: key);
 
   @override
+  _SuggestionsState createState() => _SuggestionsState();
+}
+
+class _SuggestionsState extends State<Suggestions> {
+  late Future<List<Movie>> _future;
+  @override
+  void initState() {
+    _future = _suggestionsFuture;
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Movie>>(
-      future: _suggestionsFuture,
+      future: _future,
       builder: _builder,
     );
   }
 
   Widget _builder(BuildContext context, AsyncSnapshot<List<Movie>> snapshot) {
-    if (snapshot.hasError) {
-      return SliverList(
-        delegate: SliverChildListDelegate([
-          Container(
-            child: Text(snapshot.error.toString()),
-          ),
-        ]),
-      );
-    } else if (snapshot.hasData) {
-      switch (snapshot.connectionState) {
-        case ConnectionState.waiting:
-          return _loader;
-        case ConnectionState.done:
+    switch (snapshot.connectionState) {
+      case ConnectionState.none:
+        return Text('😥');
+      case ConnectionState.waiting:
+      case ConnectionState.active:
+        return _loader;
+      case ConnectionState.done:
+        if (snapshot.hasError) {
+          return SliverList(
+            delegate: SliverChildListDelegate([
+              Container(
+                child: Text(snapshot.error.toString()),
+              ),
+            ]),
+          );
+        } else if (snapshot.hasData) {
           final movies = snapshot.data!;
           return SliverGrid(
             delegate: SliverChildBuilderDelegate(
@@ -49,38 +66,36 @@ class Suggestions extends StatelessWidget {
               mainAxisSpacing: 4,
             ),
           );
-
-        default:
+        } else {
           return _loader;
-      }
-    } else {
-      return _loader;
+        }
+      default:
+        return _loader;
     }
   }
 
   Widget get _loader => SliverList(
-        delegate: SliverChildListDelegate([
-          const Center(
-            child: CircularProgressIndicator(),
-          )
+        delegate: SliverChildListDelegate(const [
+          MyGlobals.kCircularLoading,
         ]),
       );
 
   Future<List<Movie>> get _suggestionsFuture async {
-    final uri = Uri.https(
-      'yts.mx',
-      '/api/v2/movie_suggestions.json',
-      {'movie_id': id},
-    );
-    var response = await http.get(uri);
-    return compute(_parseData, response.body);
-  }
-
-  static Future<List<Movie>> _parseData(String respBody) async {
-    var respData = jsonDecode(respBody);
-    var data = respData['data'];
-
-    List movies = data['movies'];
-    return movies.map((e) => Movie.fromJSON(e)).toList();
+    try {
+      final uri = Uri.https(
+        'yts.mx',
+        '/api/v2/movie_suggestions.json',
+        {'movie_id': widget.id},
+      );
+      var response = await http.get(uri);
+      final movies = await compute(MyGlobals.parseResponseData, response.body);
+      if (movies == null) {
+        throw NotFoundException('No movie found! 😥', uri: uri);
+      } else {
+        return movies;
+      }
+    } catch (e) {
+      throw e;
+    }
   }
 }

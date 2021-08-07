@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show ChangeNotifier;
 
-import '../models/label_value.dart';
+import 'package:ytsmovies/utils/enums.dart';
+import 'package:ytsmovies/utils/lists.dart' as list;
 
 class Filter extends ChangeNotifier {
   final OrderFilter order = OrderFilter();
@@ -57,56 +58,16 @@ class OrderFilter extends ChangeNotifier {
 }
 
 class SortFilter extends DropDownNotifier {
-  static const items = const [
-    LabelValue('Latest', null),
-    LabelValue('Alphabetical', 'title'),
-    LabelValue('Year', 'year'),
-    LabelValue('Rating', 'rating'),
-    LabelValue('Peers', 'peers'),
-    LabelValue('Seeds', 'seeds'),
-    LabelValue('Downloads', 'download_count'),
-    LabelValue('Likes', 'like_count'),
-  ];
-
-  SortFilter() : super(items[0].value);
+  SortFilter() : super(list.sorts[0].value);
 }
 
 class GenreFilter extends DropDownNotifier {
-  static const items = const [
-    LabelValue("All", null),
-    LabelValue("Action", "action"),
-    LabelValue("Adventure", "adventure"),
-    LabelValue("Animation", "animation"),
-    LabelValue("Biography", "biography"),
-    LabelValue("Comedy", "comedy"),
-    LabelValue("Crime", "crime"),
-    LabelValue("Documentary", "documentary"),
-    LabelValue("Drama", "drama"),
-    LabelValue("Family", "family"),
-    LabelValue("Fantasy", "fantasy"),
-    LabelValue("Film-Noir", "film-noir"),
-    LabelValue("Game-Show", "game-show"),
-    LabelValue("History", "history"),
-    LabelValue("Horror", "horror"),
-    LabelValue("Music", "music"),
-    LabelValue("Musical", "musical"),
-    LabelValue("Mystery", "mystery"),
-    LabelValue("News", "news"),
-    LabelValue("Reality-TV", "reality-tv"),
-    LabelValue("Romance", "romance"),
-    LabelValue("Sci-Fi", "sci-fi"),
-    LabelValue("Sport", "sport"),
-    LabelValue("Talk-Show", "talk-show"),
-    LabelValue("Thriller", "thriller"),
-    LabelValue("War", "war"),
-    LabelValue("Western", "western"),
-  ];
-
-  GenreFilter() : super(items[0].value);
+  GenreFilter() : super(list.genres[0].value);
 }
 
 class QualityFilter extends DropDownNotifier {
-  static const quality = const ['720p', '1080p', '2160p', '3D'];
+  static final quality =
+      Quality.values.map((e) => e.val).toList(growable: false);
 
   QualityFilter() : super(null);
 

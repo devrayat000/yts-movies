@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:ytsmovies/utils/tweens.dart';
 
 import '../../providers/mamus_provider.dart';
 import '../../models/movie.dart';
@@ -24,34 +25,22 @@ class _FavouriteButtonState extends State<FavouriteButton>
 
   late Animation<double> _sizeAnimation, _iconAnimation;
 
-  static final _iconTween = Tween<double>(
-    begin: 0,
-    end: 1,
-  );
-
-  static final _iconJumpTween = TweenSequence<double>([
-    TweenSequenceItem(
-      tween: Tween(begin: 1, end: 2),
-      weight: 50,
-    ),
-    TweenSequenceItem(
-      tween: Tween(begin: 2, end: 1),
-      weight: 50,
-    ),
-  ]);
-
   @override
   void initState() {
     _controller = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 300),
     );
-    _iconAnimation = _controller.drive(_iconTween);
-    _sizeAnimation = _controller.drive(_iconJumpTween);
-
-    _favHandler();
+    _iconAnimation = _controller.drive(MyTween.zeroOne);
+    _sizeAnimation = _controller.drive(MyTween.wiggleEnlarge);
 
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    _favHandler();
+    super.didChangeDependencies();
   }
 
   void _favHandler() {
@@ -87,7 +76,7 @@ class _FavouriteButtonState extends State<FavouriteButton>
         builder: (context, child) => Transform.scale(
           scale: _sizeAnimation.value,
           child: Icon(
-            _iconAnimation.value == 0
+            _iconAnimation.value <= 0.5
                 ? Icons.favorite_border_outlined
                 : Icons.favorite,
             color: Colors.pinkAccent[400],

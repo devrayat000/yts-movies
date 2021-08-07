@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../pages/favourites.dart';
+import 'package:ytsmovies/pages/index.dart';
+import 'package:ytsmovies/widgets/buttons/theme_button.dart';
+// import '../../pages/favourites.dart';
 
 class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
   const HomeAppbar({Key? key})
@@ -17,9 +19,14 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
       ),
       elevation: 5,
       actions: [
+        const ThemeToggleButton(),
         IconButton(
-          onPressed: () {
-            Navigator.pushNamed(context, FavouratesPage.routeName);
+          onPressed: () async {
+            try {
+              await Navigator.of(context).push(Routes.favourites(context));
+            } catch (e) {
+              print(e);
+            }
           },
           icon: const Icon(
             Icons.favorite_outline_rounded,

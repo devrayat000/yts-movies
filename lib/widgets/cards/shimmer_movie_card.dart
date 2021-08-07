@@ -1,9 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'package:ytsmovies/providers/view_provider.dart';
+import 'package:ytsmovies/theme/index.dart';
+import 'package:ytsmovies/widgets/cards/shimmer_shapes.dart';
 
 import '../shimmer.dart';
 
+class MovieListShimmer extends StatelessWidget {
+  const MovieListShimmer({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer(
+      linearGradient: context
+          .select<AppTheme, LinearGradient>((theme) => theme.shimmerGradient),
+      child: Consumer<GridListView>(
+        builder: (context, view, child) {
+          return GridView.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: view.crossAxis,
+              childAspectRatio: view.aspectRatio,
+              crossAxisSpacing: 4,
+              mainAxisSpacing: 4,
+            ),
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 6,
+            shrinkWrap: true,
+            itemBuilder: (context, i) {
+              return ShimmerMovieCard(isGrid: view.isTrue);
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
 class ShimmerMovieCard extends StatelessWidget {
-  // const ShimmerMovieCard({ Key? key }) : super(key: key);
   final bool isGrid;
 
   const ShimmerMovieCard({Key? key, required this.isGrid}) : super(key: key);
@@ -24,32 +58,37 @@ class ShimmerMovieCard extends StatelessWidget {
           color: Theme.of(context).colorScheme.surface,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: isGrid ? _grid(context) : _list(context),
+            child: isGrid ? _grid : _list,
           ),
         ),
       ),
     );
   }
 
-  Widget _list(BuildContext context) => Flex(
+  Widget get _list => Flex(
         direction: Axis.horizontal,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _image(context),
+          ShimmerShape.image(),
           SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _title(context),
-                ..._desc(context),
+                ShimmerShape.title(height: isGrid ? 12 : 16),
+                Expanded(
+                  child: ShimmerShape.desc(
+                    height: isGrid ? 4 : 8,
+                    count: isGrid ? 3 : 4,
+                  ),
+                ),
               ],
             ),
           ),
         ],
       );
 
-  Widget _grid(BuildContext context) => Flex(
+  Widget get _grid => Flex(
         direction: Axis.vertical,
         children: [
           Expanded(
@@ -58,70 +97,20 @@ class ShimmerMovieCard extends StatelessWidget {
               direction: Axis.horizontal,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: _image(context)),
+                Expanded(child: ShimmerShape.image()),
                 Expanded(
-                  child: Column(
-                    children: _desc(context),
+                  child: ShimmerShape.desc(
+                    height: isGrid ? 4 : 8,
+                    count: isGrid ? 3 : 4,
                   ),
                 ),
               ],
             ),
           ),
-          Expanded(flex: 1, child: _title(context)),
-        ],
-      );
-
-  Widget _image(BuildContext context) => LimitedBox(
-        maxHeight: 170,
-        child: AspectRatio(
-          aspectRatio: 2 / 3,
-          child: ColoredBox(color: Theme.of(context).colorScheme.onSurface),
-        ),
-      );
-
-  Widget _title(BuildContext context) => Container(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Container(
-              width: double.infinity,
-              height: isGrid ? 12 : 16,
-              decoration: _decoration(context),
-            ),
-            SizedBox(height: isGrid ? 8 : 12),
-            FractionallySizedBox(
-              widthFactor: 0.7,
-              child: Container(
-                height: isGrid ? 12 : 16,
-                decoration: _decoration(context),
-              ),
-            ),
-            SizedBox(height: isGrid ? 8 : 12),
-          ],
-        ),
-      );
-
-  List<Widget> _desc(BuildContext context) => [
-        ...List.generate(
-            isGrid ? 3 : 4,
-            (i) => Container(
-                  height: isGrid ? 4 : 8,
-                  margin: EdgeInsets.symmetric(vertical: 4.0),
-                  decoration: _decoration(context),
-                )),
-        FractionallySizedBox(
-          widthFactor: 0.6,
-          child: Container(
-            height: isGrid ? 4 : 8,
-            margin: EdgeInsets.symmetric(vertical: 4.0),
-            decoration: _decoration(context),
+          Expanded(
+            flex: 1,
+            child: ShimmerShape.title(height: isGrid ? 12 : 16),
           ),
-        ),
-      ];
-
-  Decoration _decoration(BuildContext context) => BoxDecoration(
-        color: Theme.of(context).colorScheme.onSurface,
-        borderRadius: BorderRadius.circular(isGrid ? 12 : 16),
+        ],
       );
 }

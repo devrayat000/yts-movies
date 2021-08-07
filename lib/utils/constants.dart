@@ -1,15 +1,62 @@
-import 'package:flutter/widgets.dart';
-import 'package:provider/provider.dart';
+import 'dart:convert';
 
-class Storage {
-  final bucket = PageStorageBucket();
+import 'package:flutter/material.dart';
+// import 'package:http/http.dart';
+
+import 'package:ytsmovies/models/movie.dart';
+// import 'package:ytsmovies/utils/exceptions.dart';
+
+enum Query {
+  latest,
+  hd,
+  mostDownloaded,
+  mostLiked,
+  rated,
 }
 
-extension Bucket on BuildContext {
-  PageStorageBucket get bucket => this.read<Storage>().bucket;
+Map<String, dynamic> parseQuery(Query query) {
+  switch (query) {
+    case Query.latest:
+      return {};
+    case Query.hd:
+      return {'quality': '2160p'};
+    case Query.mostDownloaded:
+      return {'sort_by': 'download_count'};
+    case Query.mostLiked:
+      return {'sort_by': 'like_count'};
+    case Query.rated:
+      return {'sort_by': 'rating', 'minimum_rating': '5'};
+    default:
+      return {};
+  }
 }
 
-late Widget kCircularLoading;
+class MyGlobals {
+  static final bucket = PageStorageBucket();
+
+  static const Widget kCircularLoading = const Center(
+    child: CircularProgressIndicator.adaptive(),
+  );
+
+  static List<Movie> parseRawMovies(List<dynamic> data) {
+    return data.map((item) => Movie.fromJSON(item)).toList();
+  }
+
+  static Map<String, dynamic> parseResponse(String body) => jsonDecode(body);
+
+  static List<Map<String, dynamic>> decodeMovies(List<Movie> movies) =>
+      movies.map((movie) => movie.toJSON()).toList();
+
+  static List<Movie>? parseResponseData(String body) {
+    final respData = parseResponse(body);
+    final rawMovies = respData['data']['movies'];
+    if (rawMovies is List) {
+      return rawMovies.map((e) => Movie.fromJSON(e)).toList();
+    } else {
+      return null;
+    }
+  }
+}
 
 class Col {
   static const id = 'id';

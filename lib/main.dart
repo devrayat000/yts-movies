@@ -7,17 +7,12 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 
-import 'utils/constants.dart';
-import './models/movie.dart';
+import 'pages/home-2.dart';
+import 'providers/filter_provider.dart';
 import './providers/mamus_provider.dart';
-import './pages/home.dart';
-import './pages/search.dart';
-import './pages/movie.dart';
-import './pages/latest.dart';
-import './pages/favourites.dart';
-import './widgets/unfocus.dart';
 import './providers/view_provider.dart';
-import './models/theme.dart';
+import './widgets/unfocus.dart';
+import './theme/index.dart';
 
 class MyImageCache extends ImageCache {
   @override
@@ -29,8 +24,11 @@ class MyImageCache extends ImageCache {
 
 class MyWidgetsBinding extends WidgetsFlutterBinding {
   @override
+  ImageCache? get imageCache => createImageCache();
+
+  @override
   ImageCache createImageCache() {
-    imageCache?.maximumSize = 10;
+    imageCache?.maximumSize = 999;
     return MyImageCache();
   }
 
@@ -40,9 +38,8 @@ class MyWidgetsBinding extends WidgetsFlutterBinding {
 
 void main() async {
   // The constructor sets global variables.
-  MyWidgetsBinding();
-
   MyWidgetsBinding.ensureInitialized();
+
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.dumpErrorToConsole(details);
     if (kReleaseMode) exit(1);
@@ -56,83 +53,84 @@ void main() async {
     await Future.wait([
       _favsX.init(),
       _view.initialize(),
-      _apptheme.initialize(),
     ]);
-
-    kCircularLoading = Center(
-      child: CircularProgressIndicator.adaptive(),
-    );
 
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
+        statusBarBrightness: Brightness.dark,
       ),
     );
+
+    final stored = await _apptheme.storedTheme;
 
     runApp(MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: _apptheme),
         ChangeNotifierProvider.value(value: _view),
-        // ChangeNotifierProvider(create: (_) => Filter()),
         ChangeNotifierProvider.value(value: _favsX),
-        Provider<Storage>(create: (_) => Storage()),
+        ChangeNotifierProvider(create: (context) => Filter()),
       ],
-      child: const MyApp(),
+      child: MyApp(themeMode: stored),
     ));
   } catch (e) {
     print(e);
   }
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class MyApp extends StatefulWidget {
+  final ThemeMode? themeMode;
+  const MyApp({Key? key, this.themeMode}) : super(key: key);
+
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void didChangeDependencies() {
+    if (widget.themeMode == null) {
+      final brightness = MediaQuery.platformBrightnessOf(context);
+      if (brightness == Brightness.dark) {
+        context.read<AppTheme>().themeMode = ThemeMode.dark;
+      } else {
+        context.read<AppTheme>().themeMode = ThemeMode.light;
+      }
+    } else {
+      context.read<AppTheme>().themeMode = widget.themeMode!;
+    }
+
+    super.didChangeDependencies();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Unfocus(
       child: Consumer<AppTheme>(
-        builder: (context, theme, _) => MaterialApp(
-          title: 'YTS Movies',
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          // animationType: AnimationType.CIRCULAR_ANIMATED_THEME,
-          themeMode: theme.current,
-          initialRoute: HomePage.routeName,
-          routes: _routes,
-          scrollBehavior: const CupertinoScrollBehavior(),
-          localizationsDelegates: [
-            const LocaleNamesLocalizationsDelegate(fallbackLocale: 'en'),
-          ],
-          restorationScopeId: 'com.movies.yts',
-          builder: (BuildContext context, Widget? widget) {
-            Widget error = Text('...Unexpected error occurred...');
-            if (widget is Scaffold || widget is Navigator)
-              error = Scaffold(body: Center(child: error));
-            ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
-            return widget!;
-          },
-        ),
+        builder: (context, theme, _) {
+          return MaterialApp(
+            title: 'YTS Movies',
+            theme: LightTheme.light,
+            darkTheme: DarkTheme.dark,
+            debugShowCheckedModeBanner: false,
+            themeMode: theme.current,
+            home: HomePage2(),
+            scrollBehavior: const CupertinoScrollBehavior(),
+            localizationsDelegates: [
+              const LocaleNamesLocalizationsDelegate(fallbackLocale: 'en'),
+            ],
+            restorationScopeId: 'com.movies.yts',
+            builder: (BuildContext context, Widget? widget) {
+              Widget error = Text('...Unexpected error occurred...');
+              if (widget is Scaffold || widget is Navigator)
+                error = Scaffold(body: Center(child: error));
+              ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
+              return widget!;
+            },
+          );
+        },
       ),
     );
-  }
-
-  Map<String, WidgetBuilder> get _routes {
-    return {
-      HomePage.routeName: (_) => const HomePage(),
-      SearchPage.routeName: (_) => const SearchPage(),
-      MoviePage.routeName: (context) {
-        final args =
-            ModalRoute.of(context)!.settings.arguments as MovieArg<Movie>;
-        final _movie = args.movie;
-        return MoviePage(
-          item: _movie,
-        );
-      },
-      LatestMoviesPage.routeName: (_) =>
-          const LatestMoviesPage(),
-      HD4KMoviesPage.routeName: (_) => const HD4KMoviesPage(),
-      FavouratesPage.routeName: (_) => const FavouratesPage(),
-    };
   }
 }
 

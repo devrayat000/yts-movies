@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -30,163 +31,243 @@ class MoviePage extends StatefulWidget {
 }
 
 class _MoviePageState extends State<MoviePage> {
-  late YoutubePlayerController _controller;
-
+  late YoutubePlayerController? _controller;
   late PlayerState _playerState;
   late YoutubeMetaData _videoMetaData;
+  String language = '';
+
   int _volume = 100;
-  bool _muted = false;
   bool _isPlayerReady = false;
+
+  final _muted = ValueNotifier(false);
 
   @override
   void initState() {
-    _controller = YoutubePlayerController(
-      initialVideoId: YoutubePlayer.convertUrlToId(widget._movie.trailer)!,
-      flags: const YoutubePlayerFlags(
-        mute: true,
-        autoPlay: true,
-        disableDragSeek: false,
-        loop: false,
-        isLive: false,
-        forceHD: false,
-        enableCaption: true,
-        controlsVisibleAtStart: true,
-      ),
-    )
-      ..unMute()
-      ..setVolume(_volume)
-      ..addListener(_listener);
+    final _code = YoutubePlayer.convertUrlToId(widget._movie.trailer!);
+
+    if (_code != null) {
+      _controller = YoutubePlayerController(
+        initialVideoId: _code,
+        flags: const YoutubePlayerFlags(
+          mute: false,
+          autoPlay: false,
+          disableDragSeek: false,
+          loop: false,
+          isLive: false,
+          forceHD: false,
+          enableCaption: true,
+          controlsVisibleAtStart: true,
+        ),
+      )
+        ..unMute()
+        ..setVolume(_volume)
+        ..addListener(_listener);
+    } else {
+      _controller = null;
+    }
+
     _videoMetaData = const YoutubeMetaData();
     _playerState = PlayerState.unknown;
+
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
   }
 
   @override
   void deactivate() {
     // Pauses video while navigating to next page.
-    _controller.pause();
+    _controller?.pause();
     super.deactivate();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   void _listener() {
-    if (_isPlayerReady && mounted && !_controller.value.isFullScreen) {
+    if (_isPlayerReady && mounted && !_controller!.value.isFullScreen) {
       setState(() {
-        _playerState = _controller.value.playerState;
-        _videoMetaData = _controller.metadata;
+        _playerState = _controller!.value.playerState;
+        _videoMetaData = _controller!.metadata;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final language =
-        LocaleNames.of(context)?.nameOf(widget._movie.language) ?? 'English';
-
-    return YoutubePlayerBuilder(
-      onExitFullScreen: () {
-        SystemChrome.setPreferredOrientations(DeviceOrientation.values);
-      },
-      player: YoutubePlayer(
-        controller: _controller,
-        showVideoProgressIndicator: true,
-        progressIndicatorColor: Colors.red,
-        progressColors: ProgressBarColors(
-          playedColor: Colors.red,
-          handleColor: Colors.redAccent,
-        ),
-        onReady: () {
-          // _trailerController.addListener(listener);
-          _isPlayerReady = true;
+    if (_controller != null) {
+      return YoutubePlayerBuilder(
+        onExitFullScreen: () {
+          SystemChrome.setPreferredOrientations(DeviceOrientation.values);
         },
-        topActions: <Widget>[
-          const SizedBox(width: 8.0),
-          Expanded(
-            child: Text(
-              _controller.metadata.title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18.0,
-              ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
+        player: YoutubePlayer(
+          controller: _controller!,
+          showVideoProgressIndicator: true,
+          progressIndicatorColor: Colors.red,
+          progressColors: ProgressBarColors(
+            playedColor: Colors.red,
+            handleColor: Colors.redAccent,
           ),
-          IconButton(
-            icon: const Icon(
-              Icons.settings,
-              color: Colors.white,
-              size: 25.0,
-            ),
-            onPressed: () {
-              log('Settings Tapped!');
-            },
-          ),
-        ],
-      ),
-      builder: (context, player) => Scaffold(
-        appBar: AppBar(
-          title: Text(
-            widget._movie.title,
-            style: Theme.of(context).appBarTheme.titleTextStyle,
-          ),
-          titleTextStyle: Theme.of(context).appBarTheme.titleTextStyle,
-          centerTitle: true,
-          actions: [FavouriteButton(movie: widget._movie)],
-        ),
-        backgroundColor: Theme.of(context).backgroundColor,
-        body: GestureDetector(
-          onHorizontalDragUpdate: (details) {
-            int sensitivity = 8;
-            if (details.delta.dx > sensitivity) {
-              Navigator.pop(context);
-            }
+          onReady: () {
+            // _trailerController.addListener(listener);
+            _isPlayerReady = true;
           },
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverList(
-                  delegate: SliverChildListDelegate.fixed([
-                    Text(
-                      widget._movie.title,
-                      style: Theme.of(context).textTheme.headline4,
+          topActions: <Widget>[
+            const SizedBox(width: 8.0),
+            Expanded(
+              child: Text(
+                _controller!.metadata.title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18.0,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(
+                Icons.settings,
+                color: Colors.white,
+                size: 25.0,
+              ),
+              onPressed: () {
+                log('Settings Tapped!');
+              },
+            ),
+          ],
+          bottomActions: [
+            const SizedBox(width: 8.0),
+            IconButton(
+              onPressed: () {
+                if (_muted.value) {
+                  _controller?.unMute();
+                  _muted.value = false;
+                } else {
+                  _controller?.mute();
+                  _muted.value = true;
+                }
+              },
+              icon: ValueListenableBuilder<bool>(
+                valueListenable: _muted,
+                builder: (context, isMuted, child) {
+                  return Icon(isMuted ? Icons.volume_mute : Icons.volume_up);
+                },
+              ),
+            ),
+            const SizedBox(width: 14.0),
+            CurrentPosition(),
+            const SizedBox(width: 8.0),
+            ProgressBar(
+              isExpanded: true,
+              colors: ProgressBarColors(
+                playedColor: Colors.red,
+                handleColor: Colors.redAccent,
+              ),
+            ),
+            RemainingDuration(),
+            const PlaybackSpeedButton(),
+            FullScreenButton(),
+          ],
+        ),
+        builder: (context, player) => _Screen(
+          movie: widget._movie,
+          player: player,
+        ),
+      );
+    }
+    return _Screen(movie: widget._movie);
+  }
+}
+
+class _Screen extends StatelessWidget {
+  final Movie _movie;
+  final Widget? player;
+  const _Screen({Key? key, required Movie movie, this.player})
+      : _movie = movie,
+        super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final language =
+        LocaleNames.of(context)?.nameOf(_movie.language) ?? 'English';
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          _movie.title,
+          style: Theme.of(context).appBarTheme.titleTextStyle,
+        ),
+        titleTextStyle: Theme.of(context).appBarTheme.titleTextStyle,
+        centerTitle: true,
+        actions: [FavouriteButton(movie: _movie)],
+      ),
+      backgroundColor: Theme.of(context).backgroundColor,
+      body: GestureDetector(
+        onHorizontalDragUpdate: (details) {
+          int sensitivity = 8;
+          if (details.delta.dx > sensitivity) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CustomScrollView(
+            slivers: [
+              SliverList(
+                delegate: SliverChildListDelegate.fixed([
+                  SelectableText(
+                    _movie.title,
+                    style: Theme.of(context).textTheme.headline4,
+                  ),
+                  _space(),
+                  Text(
+                    _movie.year,
+                    style: Theme.of(context).textTheme.headline5,
+                  ),
+                  _space(),
+                  BreadCrumb.builder(
+                    itemCount: _movie.genres.length,
+                    builder: (i) => BreadCrumbItem(
+                      content: Text(
+                        _movie.genres[i],
+                        style: Theme.of(context).textTheme.headline5,
+                      ),
                     ),
-                    _space(),
-                    Text(
-                      widget._movie.year,
-                      style: Theme.of(context).textTheme.headline5,
+                    divider: const Text(
+                      ' / ',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    _space(),
-                    BreadCrumb.builder(
-                      itemCount: widget._movie.genres.length,
-                      builder: (i) => BreadCrumbItem(
-                        content: Text(
-                          widget._movie.genres[i],
-                          style: Theme.of(context).textTheme.headline5,
+                  ),
+                  _space(),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: NetworkImage(_movie.backgroundImage),
+                        fit: BoxFit.cover,
+                        colorFilter: ColorFilter.mode(
+                          Colors.black54,
+                          BlendMode.overlay,
                         ),
-                      ),
-                      divider: const Text(
-                        '/',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        onError: (e, s) => print(e),
                       ),
                     ),
-                    _space(),
-                    Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
                           child: MovieImage(
-                            src: widget._movie.coverImg.medium,
-                            color: Colors.white,
-                            padding: 4.0,
-                            id: widget._movie.id,
+                            src: _movie.coverImg.medium,
+                            padding: const EdgeInsets.all(4),
+                            id: _movie.id,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                         _rowSpace(spacing: 12),
@@ -196,14 +277,14 @@ class _MoviePageState extends State<MoviePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(language),
-                              Text(widget._movie.mpaRating),
+                              Text(_movie.mpaRating),
                               Chip(
                                 avatar: Image.asset(
                                   'images/logo-imdb.png',
                                   errorBuilder: (_, __, ___) =>
                                       Icon(Icons.star),
                                 ),
-                                label: Text('${widget._movie.rating} / 10'),
+                                label: Text('${_movie.rating} / 10'),
                                 padding: EdgeInsets.only(left: 16, right: 4),
                                 deleteIcon: Icon(Icons.star),
                                 deleteIconColor: Colors.green,
@@ -212,7 +293,7 @@ class _MoviePageState extends State<MoviePage> {
                               Wrap(
                                 alignment: WrapAlignment.spaceBetween,
                                 spacing: 2.0,
-                                children: widget._movie.torrents
+                                children: _movie.torrents
                                     .map((t) => DownloadButton(torrent: t))
                                     .toList(),
                               ),
@@ -220,7 +301,7 @@ class _MoviePageState extends State<MoviePage> {
                                 onPressed: () async {
                                   try {
                                     final subTitleUri =
-                                        'https://yifysubtitles.org/movie-imdb/${widget._movie.imdbCode}';
+                                        'https://yifysubtitles.org/movie-imdb/${_movie.imdbCode}';
                                     if (await canLaunch(subTitleUri)) {
                                       launch(subTitleUri);
                                     }
@@ -230,39 +311,53 @@ class _MoviePageState extends State<MoviePage> {
                                 },
                                 icon: const Icon(Icons.subtitles),
                                 label: const Text('Subtitles'),
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor:
+                                      Theme.of(context).scaffoldBackgroundColor,
+                                ),
                               ),
-                              widget._movie.runtime != 0
-                                  ? TextButton.icon(
-                                      onPressed: null,
-                                      icon: Icon(Icons.alarm),
-                                      label: Text(_runtimeFormat),
-                                    )
-                                  : Container(),
+                              if (_movie.runtime != 0)
+                                TextButton.icon(
+                                  onPressed: null,
+                                  icon: Icon(Icons.alarm),
+                                  label: Text(
+                                    _runtimeFormat,
+                                    style:
+                                        Theme.of(context).textTheme.subtitle1,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    _space(),
-                    TorrentTab(torrents: widget._movie.torrents),
-                    _space(),
-                    player,
-                    _space(),
+                  ),
+                  _space(),
+                  TorrentTab(torrents: _movie.torrents),
+                  _space(),
+                  if (player != null) ...[
                     Text(
-                      'Synopsis',
+                      'Trailer',
                       style: Theme.of(context).textTheme.headline4,
                     ),
                     _space(),
-                    Text(
-                      widget._movie.synopsis,
-                      style: Theme.of(context).textTheme.headline5,
-                    ),
+                    player!,
                     _space(),
-                  ]),
-                ),
-                Suggestions(id: widget._movie.id),
-              ],
-            ),
+                  ],
+                  Text(
+                    'Synopsis',
+                    style: Theme.of(context).textTheme.headline4,
+                  ),
+                  _space(),
+                  SelectableText(
+                    _movie.synopsis,
+                    style: Theme.of(context).textTheme.headline5,
+                  ),
+                  _space(),
+                ]),
+              ),
+              Suggestions(id: _movie.id),
+            ],
           ),
         ),
       ),
@@ -270,7 +365,7 @@ class _MoviePageState extends State<MoviePage> {
   }
 
   String get _runtimeFormat {
-    final _duration = Duration(minutes: widget._movie.runtime);
+    final _duration = Duration(minutes: _movie.runtime);
     final hour = _duration.inHours;
     final mins = _duration.inMinutes.remainder(60);
     return '$hour h $mins min';

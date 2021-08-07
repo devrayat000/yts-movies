@@ -7,7 +7,6 @@ class SearchTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 10,
-      margin: EdgeInsets.all(12.0),
       color: Theme.of(context).inputDecorationTheme.fillColor,
       child: TextFormField(
         style: TextStyle(
@@ -19,7 +18,6 @@ class SearchTile extends StatelessWidget {
           hintText: 'Search movies',
           enabled: false,
           hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
-          // border: Theme.of(context).inputDecorationTheme.border,
           fillColor: Theme.of(context).inputDecorationTheme.fillColor,
           filled: Theme.of(context).inputDecorationTheme.filled,
           contentPadding: Theme.of(context).inputDecorationTheme.contentPadding,

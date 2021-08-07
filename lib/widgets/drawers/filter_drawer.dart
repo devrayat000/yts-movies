@@ -1,117 +1,143 @@
 import 'package:flutter/cupertino.dart' show CupertinoSwitch;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:ytsmovies/utils/lists.dart' as list;
 
 import '../../providers/filter_provider.dart';
 
-class SearchFilterDrawer extends StatelessWidget {
-  final void Function() onApplyFilter;
-  const SearchFilterDrawer({Key? key, required this.onApplyFilter})
-      : super(key: key);
+class _FilterItem extends StatelessWidget {
+  final Widget title;
+  final Widget action;
+  const _FilterItem({
+    Key? key,
+    required this.title,
+    required this.action,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        shrinkWrap: true,
-        physics: const BouncingScrollPhysics(),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        runSpacing: 8.0,
         children: [
-          const DrawerHeader(
-            child: Text('Filter'),
-          ),
-          ListBody(
-            children: ListTile.divideTiles(
-              context: context,
-              tiles: [
-                FilterItem(
-                  title: const Text('Rating'),
-                  action: _provider<RatingFilter>(
-                    notifier: _selector(context, (filter) => filter.rating),
-                    builder: (_, rating, __) => Slider.adaptive(
-                      value: rating.value,
-                      label: '${rating.value.round()}+',
-                      onChanged: rating.changeHandler,
-                      divisions: 9,
-                      max: 9,
-                    ),
-                  ),
-                ),
-                FilterItem(
-                  title: const Text('Quality'),
-                  action: _dropdown<QualityFilter>(
-                    notifier: _selector(context, (filter) => filter.quality),
-                    hint: const Text('Select Resolution'),
-                    items: QualityFilter.quality
-                        .map((e) => DropdownMenuItem<String>(
-                              child: Text(e),
-                              value: e,
-                            ))
-                        .toList(),
-                  ),
-                ),
-                FilterItem(
-                  title: const Text('Genre'),
-                  action: _dropdown<GenreFilter>(
-                    notifier: _selector(context, (filter) => filter.genre),
-                    items: GenreFilter.items
-                        .map((e) => DropdownMenuItem<String>(
-                              child: Text(e.label),
-                              value: e.value,
-                            ))
-                        .toList(),
-                  ),
-                ),
-                FilterItem(
-                  title: const Text('Sort'),
-                  action: _dropdown<SortFilter>(
-                    notifier: _selector(context, (filter) => filter.sort),
-                    items: SortFilter.items
-                        .map((e) => DropdownMenuItem<String>(
-                              child: Text(e.label),
-                              value: e.value,
-                            ))
-                        .toList(),
-                  ),
-                ),
-                FilterItem(
-                  title: const Text('Descending'),
-                  action: _provider<OrderFilter>(
-                    notifier: _selector<OrderFilter>(context, (filter) => filter.order),
-                    builder: (_, order, __) => CupertinoSwitch(
-                      value: order.value,
-                      onChanged: order.changeHandler,
-                    ),
-                  ),
-                ),
-              ],
-            ).toList(),
-          ),
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              children: [
-                _actionButton(
-                  context,
-                  onPressed: () {
-                    onApplyFilter();
-                  },
-                  label: 'Apply',
-                  icon: Icons.search,
-                  color: Colors.greenAccent[400],
-                ),
-                SizedBox(width: 12),
-                _actionButton(
-                  context,
-                  onPressed: context.read<Filter>().reset,
-                  label: 'Reset',
-                  icon: Icons.refresh,
-                  color: Colors.redAccent[400],
-                ),
-              ],
-            ),
-          ),
+          title,
+          action,
         ],
+      ),
+    );
+  }
+}
+
+class FilterDrawer extends StatelessWidget {
+  final void Function() onApplyFilter;
+  FilterDrawer({Key? key, required this.onApplyFilter}) : super(key: key);
+
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.only(left: 180.0),
+      color: Theme.of(context).canvasColor,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _FilterItem(
+              title: const Text('Rating'),
+              action: _provider<RatingFilter>(
+                notifier: _selector(context, (filter) => filter.rating),
+                builder: (_, rating, __) => Slider.adaptive(
+                  value: rating.value,
+                  label: '${rating.value.round()}+',
+                  onChanged: rating.changeHandler,
+                  divisions: 9,
+                  max: 9,
+                ),
+              ),
+            ),
+            _FilterItem(
+              title: const Text('Quality'),
+              action: _dropdown<QualityFilter>(
+                notifier: _selector(context, (filter) => filter.quality),
+                hint: const Text('Select Resolution'),
+                items: QualityFilter.quality
+                    .map((e) => DropdownMenuItem<String>(
+                          child: Text(e),
+                          value: e,
+                        ))
+                    .toList(),
+              ),
+            ),
+            _FilterItem(
+              title: const Text('Genre'),
+              action: _dropdown<GenreFilter>(
+                notifier: _selector(context, (filter) => filter.genre),
+                items: list.genres
+                    .map((e) => DropdownMenuItem<String>(
+                          child: Text(e.label),
+                          value: e.value,
+                        ))
+                    .toList(),
+              ),
+            ),
+            _FilterItem(
+              title: const Text('Sort'),
+              action: _dropdown<SortFilter>(
+                notifier: _selector(context, (filter) => filter.sort),
+                items: list.sorts
+                    .map((e) => DropdownMenuItem<String>(
+                          child: Text(e.label),
+                          value: e.value,
+                        ))
+                    .toList(),
+              ),
+            ),
+            _FilterItem(
+              title: const Text('Descending'),
+              action: _provider<OrderFilter>(
+                notifier:
+                    _selector<OrderFilter>(context, (filter) => filter.order),
+                builder: (_, order, __) => CupertinoSwitch(
+                  value: order.value,
+                  onChanged: order.changeHandler,
+                ),
+              ),
+            ),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _actionButton(
+                    context,
+                    onPressed: () {
+                      onApplyFilter();
+                    },
+                    label: 'Apply',
+                    icon: Icons.search,
+                    color: Colors.greenAccent[400],
+                  ),
+                  SizedBox(width: 12),
+                  _actionButton(
+                    context,
+                    onPressed: context.read<Filter>().reset,
+                    label: 'Reset',
+                    icon: Icons.refresh,
+                    color: Colors.redAccent[400],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -123,15 +149,13 @@ class SearchFilterDrawer extends StatelessWidget {
     IconData? icon,
     Color? color,
   }) =>
-      Expanded(
-        child: ElevatedButton.icon(
-          onPressed: onPressed,
-          icon: Icon(icon, color: Colors.white),
-          label: Text(label, style: TextStyle(color: Colors.white)),
-          style: ElevatedButton.styleFrom(
-            primary: color,
-            animationDuration: Duration(milliseconds: 300),
-          ),
+      ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, color: Colors.white),
+        label: Text(label, style: TextStyle(color: Colors.white)),
+        style: ElevatedButton.styleFrom(
+          primary: color,
+          animationDuration: Duration(milliseconds: 300),
         ),
       );
 
@@ -160,6 +184,9 @@ class SearchFilterDrawer extends StatelessWidget {
       notifier: notifier,
       child: hint,
       builder: (_, data, hintChild) => DropdownButtonFormField<String>(
+        isDense: true,
+        // itemHeight: 60,
+        menuMaxHeight: 360,
         value: data?.selected,
         items: items,
         onChanged: data?.changeHandler,
@@ -170,32 +197,6 @@ class SearchFilterDrawer extends StatelessWidget {
             borderRadius: const BorderRadius.all(Radius.circular(4)),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class FilterItem extends StatelessWidget {
-  final Widget title;
-  final Widget action;
-  const FilterItem({
-    Key? key,
-    required this.title,
-    required this.action,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Wrap(
-        alignment: WrapAlignment.spaceBetween,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        runSpacing: 16.0,
-        children: [
-          title,
-          action,
-        ],
       ),
     );
   }

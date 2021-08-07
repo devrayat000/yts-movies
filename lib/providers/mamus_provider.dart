@@ -1,11 +1,15 @@
 import 'dart:async';
-import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../utils/api.dart';
+import '../utils/isolates.dart';
 import '../database/mamu_db.dart';
 import '../models/movie.dart';
 import '../utils/exceptions.dart';
+
+typedef Resolver = Future<http.Response> Function([int? page]);
 
 class FavouriteMamus extends Mamus with ChangeNotifier {
   final db = MamuDB();
@@ -20,7 +24,7 @@ class FavouriteMamus extends Mamus with ChangeNotifier {
       print(ids);
       _fabouriteMoviesId = [...ids];
     } catch (e) {
-      throw e;
+      print(e);
     }
   }
 
@@ -30,7 +34,7 @@ class FavouriteMamus extends Mamus with ChangeNotifier {
     try {
       await db.insert(movie);
     } catch (e) {
-      throw e;
+      print(e);
     }
   }
 
@@ -40,7 +44,7 @@ class FavouriteMamus extends Mamus with ChangeNotifier {
     try {
       await db.delete(id);
     } catch (e) {
-      throw e;
+      print(e);
     }
   }
 
@@ -67,55 +71,74 @@ class FavouriteMamus extends Mamus with ChangeNotifier {
 
   @override
   Future<void> dispose() async {
-    // await db.close();
-    super.dispose();
+    try {
+      await db.close();
+      super.dispose();
+    } catch (e) {
+      print(e);
+    }
   }
 
   Future<void> deleteDB() => db.deleteDB();
 }
 
 class SearchMamus extends Mamus {
-  bool _searchInitiates = false;
+  bool _searchInitiated = false;
   void search(Map<String, dynamic> params) {
-    this._params = params;
-    _searchInitiates = true;
+    this._resolver = ([int? page]) => Api.listMovieByrawParams(page, params);
+    _searchInitiated = true;
   }
 
   @override
   Future<void> pageRequesthandler(int page) async {
-    if (!_searchInitiates) {
+    if (!_searchInitiated) {
       _controller.add(PageState(list: [], nextPage: 0));
       return;
     }
-    await super.pageRequesthandler(page);
+    try {
+      await super.pageRequesthandler(page);
+    } catch (e) {
+      _controller.addError(e);
+    }
   }
 }
 
 class HDMamus extends Mamus {
   HDMamus()
-      : _params = {'quality': '2160p'},
+      : _resolver = Api.hd4kMovies,
         super();
 
   @override
-  final Map<String, dynamic> _params;
+  final Resolver _resolver;
 }
 
-class LatestMamus extends Mamus {}
+class RatedMamus extends Mamus {
+  RatedMamus()
+      : _resolver = Api.ratedMovies,
+        super();
+
+  @override
+  final Resolver _resolver;
+}
+
+class LatestMamus extends Mamus {
+  LatestMamus()
+      : _resolver = Api.latestMovies,
+        super();
+
+  @override
+  final Resolver _resolver;
+}
 
 abstract class Mamus {
   final _controller = StreamController<PageState>();
-  Map<String, dynamic> _params = {};
+  Resolver _resolver = Api.latestMovies;
 
   // Public methods
   Future<void> pageRequesthandler(int page) async {
-    print(this._params);
     print(page);
     try {
-      final uri = Uri.https('yts.mx', '/api/v2/list_movies.json', {
-        'page': page.toString(),
-        ...this._params,
-      });
-      final data = await listMoviesSearch(uri);
+      final data = await listMoviesSearch(page);
       final movieCount = data['movie_count'] as int;
       final limit = data['limit'] as int;
       final pages = (movieCount / limit).ceil();
@@ -127,7 +150,7 @@ abstract class Mamus {
         throw NotFoundException('No movies were found');
       }
 
-      final movies = await compute(parseMovies, jsonMovies);
+      final movies = await compute(Spawn.parseMovies, jsonMovies);
       _controller.add(PageState(
         list: movies,
         nextPage: ++page,
@@ -139,13 +162,13 @@ abstract class Mamus {
     }
   }
 
-  Future<Map<String, dynamic>> listMoviesSearch(Uri url) async {
+  Future<Map<String, dynamic>> listMoviesSearch([int? page]) async {
     try {
-      final response = await http.get(url);
-      final respData = await compute(decodeJson, response.body);
+      final response = await this._resolver(page);
+      final respData = await compute(Spawn.decodeJson, response.body);
       return respData['data'] as Map<String, dynamic>;
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 
@@ -164,9 +187,3 @@ class PageState {
   const PageState(
       {required this.list, required this.nextPage, this.isLast = false});
 }
-
-List<Movie> parseMovies(List movies) {
-  return movies.map((e) => Movie.fromJSON(e)).toList();
-}
-
-dynamic decodeJson(String body) => jsonDecode(body);

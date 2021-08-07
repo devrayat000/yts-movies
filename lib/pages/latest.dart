@@ -53,3 +53,28 @@ class HD4KMoviesPage extends StatelessWidget {
     );
   }
 }
+
+class RatedMoviesPage extends StatelessWidget {
+  static const routeName = '/rated-movies';
+  const RatedMoviesPage({Key? key}) : super(key: key);
+
+  static final _mamuKey = GlobalKey<MamuMovieListpageState<RatedMamus>>();
+
+  @override
+  Widget build(BuildContext context) {
+    return MamuMovieListpage<RatedMamus>(
+      key: _mamuKey,
+      label: 'rated',
+      handler: RatedMamus(),
+      actions: [
+        GridListToggle(controller: _mamuKey.currentState?.scrollController),
+      ],
+      appBar: AppBar(
+        title: Text(
+          'Highly Rated Movies',
+          style: Theme.of(context).appBarTheme.titleTextStyle,
+        ),
+      ),
+    );
+  }
+}

@@ -3,21 +3,32 @@ import 'package:flutter/material.dart';
 
 class MovieImage extends StatelessWidget {
   final String src;
-  final double padding;
-  final Color? color;
   final String? label;
   final String? id;
   final double? height;
+  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
+  final Alignment? alignment;
 
-  const MovieImage({
+  late final Decoration? _decoration;
+
+  MovieImage({
     Key? key,
     required this.src,
-    this.padding = 0.0,
-    this.color,
+    this.padding = EdgeInsets.zero,
+    this.margin = EdgeInsets.zero,
+    this.alignment,
+    Decoration? decoration,
     this.label,
     this.id,
     this.height,
-  }) : super(key: key);
+  }) : super(key: key) {
+    _decoration = decoration ??
+        BoxDecoration(
+          borderRadius: BorderRadius.circular(4.0),
+          // color: color,
+        );
+  }
 
   static final _colorTween = ColorTween(begin: Colors.red, end: Colors.green);
 
@@ -42,12 +53,6 @@ class MovieImage extends StatelessWidget {
           transitionOnUserGestures: true,
           child: _container(
             child: child,
-            padding: EdgeInsets.all(padding),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(4.0),
-              // color: color,
-            ),
           ),
         );
       },
@@ -71,8 +76,8 @@ class MovieImage extends StatelessWidget {
         }
         final progress = loadingProgress.cumulativeBytesLoaded /
             loadingProgress.expectedTotalBytes!;
-        return AspectRatio(
-          aspectRatio: 2 / 3,
+
+        return _container(
           child: Center(
             child: CircularProgressIndicator(
               value:
@@ -87,9 +92,6 @@ class MovieImage extends StatelessWidget {
 
   Widget _container({
     required Widget child,
-    Decoration? decoration,
-    Color? color,
-    EdgeInsetsGeometry? padding,
   }) {
     return Container(
       child: AspectRatio(
@@ -97,8 +99,9 @@ class MovieImage extends StatelessWidget {
         child: child,
       ),
       padding: padding,
-      decoration: decoration,
-      color: color,
+      margin: margin,
+      alignment: alignment,
+      decoration: _decoration,
     );
   }
 }

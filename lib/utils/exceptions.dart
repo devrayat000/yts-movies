@@ -3,6 +3,9 @@ class NotFoundException implements Exception {
   final Uri? uri;
 
   const NotFoundException(this.message, {this.uri});
+
+  @override
+  String toString() => 'NotFoundException: $message for uri $uri';
 }
 
 class TorrentClientException implements Exception {

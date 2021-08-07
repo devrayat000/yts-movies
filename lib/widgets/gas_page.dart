@@ -10,14 +10,14 @@ import 'package:provider/provider.dart';
 
 import '../utils/constants.dart';
 import '../models/movie.dart';
-import '../models/theme.dart';
+// import '../models/theme.dart';
 import '../providers/mamus_provider.dart';
 import '../providers/view_provider.dart';
 import './cards/movie_card.dart';
 import './cards/actionbar.dart';
 import './cards/shimmer_movie_card.dart';
 import './buttons/popup_fab.dart';
-import './shimmer.dart';
+// import './shimmer.dart';
 import '../utils/mixins.dart';
 import '../utils/exceptions.dart';
 
@@ -146,7 +146,7 @@ class MamuMovieListpageState<T extends Mamus>
   @override
   Widget build(BuildContext context) {
     return PageStorage(
-      bucket: context.bucket,
+      bucket: MyGlobals.bucket,
       child: Scaffold(
         key: _scaffoldKey,
         appBar: widget.appBar,
@@ -210,7 +210,7 @@ class MamuMovieListpageState<T extends Mamus>
             firstPageErrorIndicatorBuilder: _firstPageErrorIndicator,
             newPageErrorIndicatorBuilder: _newPageErrorIndicator,
             firstPageProgressIndicatorBuilder: (_) => child!,
-            newPageProgressIndicatorBuilder: (_) => kCircularLoading,
+            newPageProgressIndicatorBuilder: (_) => MyGlobals.kCircularLoading,
             noItemsFoundIndicatorBuilder:
                 widget.noItemBuilder ?? _noItemsFoundIndicator,
             noMoreItemsIndicatorBuilder: _noMoreItemsIndicator,
@@ -247,7 +247,10 @@ class MamuMovieListpageState<T extends Mamus>
         child: Text('No movie found'),
       );
   Widget _noMoreItemsIndicator(BuildContext context) => Center(
-        child: Text('That\'s the last of it.'),
+        child: Text(
+          'That\'s the last of it.',
+          style: Theme.of(context).textTheme.headline5,
+        ),
       );
 
   void refresh() => _pagingController.refresh();
@@ -320,35 +323,5 @@ class MamuMovieListpageState<T extends Mamus>
     }
   }
 
-  static const _shimmer = const _MovieListShimmer();
-}
-
-class _MovieListShimmer extends StatelessWidget {
-  const _MovieListShimmer({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Shimmer(
-      linearGradient: context
-          .select<AppTheme, LinearGradient>((theme) => theme.shimmerGradient),
-      child: Consumer<GridListView>(
-        builder: (context, view, child) {
-          return GridView.builder(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: view.crossAxis,
-              childAspectRatio: view.aspectRatio,
-              crossAxisSpacing: 4,
-              mainAxisSpacing: 4,
-            ),
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 6,
-            shrinkWrap: true,
-            itemBuilder: (context, i) {
-              return ShimmerMovieCard(isGrid: view.isTrue);
-            },
-          );
-        },
-      ),
-    );
-  }
+  static const _shimmer = const MovieListShimmer();
 }
