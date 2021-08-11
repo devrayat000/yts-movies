@@ -7,11 +7,13 @@ import 'package:http/http.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ytsmovies/models/movie_data.dart';
 
 import 'package:ytsmovies/providers/filter_provider.dart';
 import 'package:ytsmovies/utils/api.dart';
 import 'package:ytsmovies/utils/constants.dart';
 import 'package:ytsmovies/utils/exceptions.dart';
+import 'package:ytsmovies/utils/isolates.dart';
 import 'package:ytsmovies/widgets/search/animation.dart';
 import 'package:ytsmovies/widgets/search/suggestions.dart';
 import '../../models/movie.dart';
@@ -68,7 +70,7 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
     // _controller.appendPage(_cachedMovies.toList(), 2);
     try {
       _controller.addPageRequestListener(_pagehandler);
-      await _setHistory(query);
+      await _setHistory();
       print(_params);
       super.showResults(context);
     } catch (e) {
@@ -78,8 +80,12 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   void _pagehandler(int pageKey) async {
     try {
-      final _movies = await _moviesFuture(pageKey);
-      _controller.appendPage(_movies.toList(), ++pageKey);
+      final _data = await _moviesFuture(pageKey);
+      if (_data.isLastPage) {
+        _controller.appendLastPage(_data.movies!.toList());
+      } else {
+        _controller.appendPage(_data.movies!.toList(), ++pageKey);
+      }
     } catch (e) {
       _controller.error = e;
     }
@@ -128,19 +134,20 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
           print(e);
         }
       },
+      onTap: () => _setHistory(),
     );
   }
 
-  Future<List<Movie>> _moviesFuture(int page) async {
+  Future<MovieData> _moviesFuture(int page) async {
     try {
       _subscriber = CancelableOperation.fromFuture(
           Api.listMovieByrawParams(page, {'query_term': query, ..._params}));
       final response = await _subscriber!.value;
-      final movies = await compute(MyGlobals.parseResponseData, response.body);
-      if (movies == null) {
+      final data = await compute(Spawn.parseRawBody, response.body);
+      if (data.movies == null) {
         throw NotFoundException('No movie found! 😥');
       } else {
-        return movies;
+        return data;
       }
     } catch (e) {
       rethrow;
@@ -149,17 +156,17 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   Future<List<Movie>> get _firstMovies {
     return _moviesFuture(1).then<List<Movie>>((parsedMovies) {
-      return parsedMovies.take(10).toList();
+      return parsedMovies.movies!.take(10).toList();
     }).catchError((e) => throw e);
   }
 
-  Future<void> _setHistory(String searchHistory) async {
+  Future<void> _setHistory() async {
     try {
       final prefs = await _prefs;
       final prevHistory = _history ?? [];
-      _history = [searchHistory, ...prevHistory];
-      await prefs.setStringList(_historyKey,
-          Set<String>.from([searchHistory, ...prevHistory]).toList());
+      _history = [query, ...prevHistory];
+      await prefs.setStringList(
+          _historyKey, Set<String>.from(_history!).toList());
     } catch (e) {
       print(e);
     }

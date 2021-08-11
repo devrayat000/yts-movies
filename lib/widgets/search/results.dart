@@ -1,12 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:provider/provider.dart';
 
 import 'package:ytsmovies/models/movie.dart';
-import 'package:ytsmovies/providers/view_provider.dart';
 import 'package:ytsmovies/utils/constants.dart';
-import 'package:ytsmovies/widgets/buttons/grid_list_toggle.dart';
 import 'package:ytsmovies/widgets/cards/actionbar.dart';
 import 'package:ytsmovies/widgets/cards/movie_card.dart';
 import 'package:ytsmovies/widgets/cards/shimmer_movie_card.dart';
@@ -48,7 +45,6 @@ class SearchResults extends StatelessWidget {
                       icon: const Icon(Icons.filter_alt_outlined),
                       splashRadius: 20,
                     ),
-                    GridListToggle(controller: _scrollController),
                   ],
                 ),
                 _grid,
@@ -87,8 +83,8 @@ class SearchResults extends StatelessWidget {
             ),
           ),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: context.watch<GridListView>().crossAxis,
-            childAspectRatio: context.watch<GridListView>().aspectRatio,
+            crossAxisCount: 1,
+            childAspectRatio: 9 / 4,
             crossAxisSpacing: 4,
             mainAxisSpacing: 4,
           ),

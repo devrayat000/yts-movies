@@ -10,8 +10,10 @@ class SearchSuggestions extends StatelessWidget {
   final List<String>? history;
   final Future<List<Movie>?>? future;
   final void Function(int index) onShowHistory;
+  final VoidCallback? onTap;
   const SearchSuggestions({
     Key? key,
+    this.onTap,
     required this.history,
     required this.future,
     required this.onShowHistory,
@@ -40,7 +42,7 @@ class SearchSuggestions extends StatelessWidget {
                   leading: Icon(Icons.history),
                   title: Text(history![i]),
                   trailing: Icon(Icons.find_in_page),
-                  onTap:() => onShowHistory(i),
+                  onTap: () => onShowHistory(i),
                 );
               },
               itemCount: history!.length,
@@ -79,6 +81,8 @@ class SearchSuggestions extends StatelessWidget {
                         ));
                       } catch (e) {
                         print(e);
+                      } finally {
+                        onTap?.call();
                       }
                     },
                   );

@@ -120,7 +120,7 @@ class _SearchResultPageState extends State<SearchResultPage>
               child: FilterDrawer(
                 onApplyFilter: () {
                   if (_controller.isCompleted) {
-                    _controller.reverse();
+                    _close();
                   }
                   widget.onFiltered.call();
                 },

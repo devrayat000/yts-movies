@@ -219,6 +219,13 @@ class _Screen extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: CustomScrollView(
             slivers: [
+              SliverAppBar(
+                collapsedHeight: MediaQuery.of(context).size.width,
+                expandedHeight: MediaQuery.of(context).size.width / 2 * 3,
+                flexibleSpace: FlexibleSpaceBar(
+                  
+                ),
+              ),
               SliverList(
                 delegate: SliverChildListDelegate.fixed([
                   SelectableText(

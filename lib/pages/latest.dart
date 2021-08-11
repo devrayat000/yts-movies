@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../providers/mamus_provider.dart';
-import '../widgets/buttons/grid_list_toggle.dart';
 import '../widgets/gas_page.dart';
 
 class LatestMoviesPage extends StatelessWidget {
@@ -22,9 +21,7 @@ class LatestMoviesPage extends StatelessWidget {
           style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
       ),
-      actions: [
-        GridListToggle(controller: _mamuKey.currentState?.scrollController),
-      ],
+      actions: [],
     );
   }
 }
@@ -41,9 +38,7 @@ class HD4KMoviesPage extends StatelessWidget {
       key: _mamuKey,
       label: '4k',
       handler: HDMamus(),
-      actions: [
-        GridListToggle(controller: _mamuKey.currentState?.scrollController),
-      ],
+      actions: [],
       appBar: AppBar(
         title: Text(
           '4K Movies',
@@ -66,9 +61,7 @@ class RatedMoviesPage extends StatelessWidget {
       key: _mamuKey,
       label: 'rated',
       handler: RatedMamus(),
-      actions: [
-        GridListToggle(controller: _mamuKey.currentState?.scrollController),
-      ],
+      actions: [],
       appBar: AppBar(
         title: Text(
           'Highly Rated Movies',

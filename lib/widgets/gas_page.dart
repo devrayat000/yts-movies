@@ -1,25 +1,61 @@
-import 'dart:async';
+import 'dart:async' show Future, StreamSubscription;
 
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/material.dart';
-import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:provider/provider.dart';
-// import 'package:provider/provider.dart';
+import 'package:flutter/cupertino.dart' show CupertinoScrollbar;
+import 'package:flutter/foundation.dart' show Key, ValueKey;
+import 'package:flutter/rendering.dart'
+    show
+        EdgeInsets,
+        ScrollDirection,
+        SliverGridDelegate,
+        SliverGridDelegateWithFixedCrossAxisCount;
+import 'package:flutter/material.dart'
+    show
+        AlwaysScrollableScrollPhysics,
+        Animation,
+        AnimationController,
+        AnimationStatus,
+        BouncingScrollPhysics,
+        BuildContext,
+        Center,
+        Column,
+        Container,
+        CurvedAnimation,
+        Curves,
+        CustomScrollView,
+        GlobalKey,
+        Key,
+        PageStorage,
+        PageStorageKey,
+        PreferredSizeWidget,
+        RefreshIndicator,
+        Scaffold,
+        ScaffoldMessenger,
+        ScaffoldState,
+        ScaleTransition,
+        ScrollController,
+        SingleTickerProviderStateMixin,
+        SnackBar,
+        SnackBarAction,
+        State,
+        StatefulWidget,
+        Text,
+        TextButton,
+        Theme,
+        Tween,
+        ValueKey,
+        Widget,
+        WidgetBuilder;
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart' show PagedChildBuilderDelegate, PagedSliverGrid, PagingController, PagingStatus;
 
-import '../utils/constants.dart';
-import '../models/movie.dart';
-// import '../models/theme.dart';
-import '../providers/mamus_provider.dart';
-import '../providers/view_provider.dart';
-import './cards/movie_card.dart';
-import './cards/actionbar.dart';
-import './cards/shimmer_movie_card.dart';
-import './buttons/popup_fab.dart';
-// import './shimmer.dart';
-import '../utils/mixins.dart';
-import '../utils/exceptions.dart';
+import '../utils/constants.dart' show MyGlobals;
+import '../models/movie.dart' show Movie;
+import '../providers/mamus_provider.dart' show Mamus, PageState;
+import 'package:ytsmovies/widgets/cards/movie_card.dart';
+import './cards/actionbar.dart' show SliverActionBar;
+import './cards/shimmer_movie_card.dart' show MovieListShimmer;
+import './buttons/popup_fab.dart' show PopupFloatingActionButton, PopupFloatingActionButtonState;
+import '../utils/mixins.dart' show PageStorageCache;
+import '../utils/exceptions.dart' show NotFoundException;
 
 class MamuMovieListpage<T extends Mamus> extends StatefulWidget {
   final List<Widget> actions;
@@ -165,11 +201,12 @@ class MamuMovieListpageState<T extends Mamus>
                 physics: const BouncingScrollPhysics(
                     parent: AlwaysScrollableScrollPhysics()),
                 slivers: [
-                  SliverActionBar(
-                    actions: widget.actions,
-                    floating: true,
-                    snap: true,
-                  ),
+                  if (widget.actions.length != 0)
+                    SliverActionBar(
+                      actions: widget.actions,
+                      floating: true,
+                      snap: true,
+                    ),
                   _pageGrid,
                 ],
               ),
@@ -194,33 +231,26 @@ class MamuMovieListpageState<T extends Mamus>
         mainAxisSpacing: 4,
       );
 
-  Widget get _pageGrid => Consumer<GridListView>(
-        child: _shimmer,
-        builder: (context, view, child) => PagedSliverGrid<int, Movie>(
-          shrinkWrapFirstPageIndicators: true,
-          pagingController: _pagingController,
-          builderDelegate: PagedChildBuilderDelegate(
-            itemBuilder: (context, item, index) {
-              return MovieCard(
-                key: ValueKey('movie-${item.id}'),
-                movie: item,
-                isGrid: view.isTrue,
-              );
-            },
-            firstPageErrorIndicatorBuilder: _firstPageErrorIndicator,
-            newPageErrorIndicatorBuilder: _newPageErrorIndicator,
-            firstPageProgressIndicatorBuilder: (_) => child!,
-            newPageProgressIndicatorBuilder: (_) => MyGlobals.kCircularLoading,
-            noItemsFoundIndicatorBuilder:
-                widget.noItemBuilder ?? _noItemsFoundIndicator,
-            noMoreItemsIndicatorBuilder: _noMoreItemsIndicator,
-            animateTransitions: true,
-          ),
-          gridDelegate: _gridDelegrate(
-            view.crossAxis * _orientation(MediaQuery.of(context).orientation),
-            view.aspectRatio,
-          ),
+  Widget get _pageGrid => PagedSliverGrid<int, Movie>(
+        shrinkWrapFirstPageIndicators: true,
+        pagingController: _pagingController,
+        builderDelegate: PagedChildBuilderDelegate(
+          itemBuilder: (context, item, index) {
+            return MovieCard(
+              key: ValueKey('movie-${item.id}'),
+              movie: item,
+            );
+          },
+          firstPageErrorIndicatorBuilder: _firstPageErrorIndicator,
+          newPageErrorIndicatorBuilder: _newPageErrorIndicator,
+          firstPageProgressIndicatorBuilder: (_) => _shimmer,
+          newPageProgressIndicatorBuilder: (_) => MyGlobals.kCircularLoading,
+          noItemsFoundIndicatorBuilder:
+              widget.noItemBuilder ?? _noItemsFoundIndicator,
+          noMoreItemsIndicatorBuilder: _noMoreItemsIndicator,
+          animateTransitions: true,
         ),
+        gridDelegate: _gridDelegrate(1, 9 / 4),
       );
 
   Widget _newPageErrorIndicator(BuildContext context) => Column(
@@ -312,14 +342,6 @@ class MamuMovieListpageState<T extends Mamus>
         _fabScaleController.reverse();
         _fabKey.currentState?.stop();
       }
-    }
-  }
-
-  int _orientation(Orientation o) {
-    if (o == Orientation.portrait) {
-      return 1;
-    } else {
-      return 2;
     }
   }
 

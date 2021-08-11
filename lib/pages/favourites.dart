@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../providers/mamus_provider.dart';
-import '../widgets/buttons/grid_list_toggle.dart';
 import '../widgets/gas_page.dart';
 
 class FavouratesPage extends StatelessWidget {
@@ -24,9 +23,7 @@ class FavouratesPage extends StatelessWidget {
           style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
       ),
-      actions: [
-        GridListToggle(controller: _mamuKey.currentState?.scrollController),
-      ],
+      actions: [],
     );
   }
 }

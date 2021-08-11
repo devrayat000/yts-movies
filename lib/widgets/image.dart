@@ -1,5 +1,5 @@
-import 'package:flutter/widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart' show Alignment, AspectRatio, BorderRadius, BoxDecoration, BoxFit, BuildContext, Center, ColorTween, Container, Decoration, EdgeInsets, EdgeInsetsGeometry, Hero, Icon, Image, Key, StatelessWidget, ValueKey, Widget;
+import 'package:flutter/material.dart' show Colors, Icons, CircularProgressIndicator;
 
 class MovieImage extends StatelessWidget {
   final String src;
@@ -12,6 +12,8 @@ class MovieImage extends StatelessWidget {
 
   late final Decoration? _decoration;
 
+  late final Key _key;
+
   MovieImage({
     Key? key,
     required this.src,
@@ -22,7 +24,8 @@ class MovieImage extends StatelessWidget {
     this.label,
     this.id,
     this.height,
-  }) : super(key: key) {
+  })  : _key = ValueKey(id),
+        super(key: key) {
     _decoration = decoration ??
         BoxDecoration(
           borderRadius: BorderRadius.circular(4.0),
@@ -36,6 +39,7 @@ class MovieImage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Image.network(
       this.src,
+      key: _key,
       cacheHeight: 300,
       cacheWidth: 200,
       fit: BoxFit.cover,
@@ -48,7 +52,7 @@ class MovieImage extends StatelessWidget {
         wasSynchronouslyLoaded,
       ) {
         return Hero(
-          key: ValueKey(id),
+          key: _key,
           tag: 'movie-$id',
           transitionOnUserGestures: true,
           child: _container(

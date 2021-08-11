@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:ytsmovies/models/movie.dart';
+import 'package:ytsmovies/models/movie_data.dart';
 
 class Spawn {
   static const _movieId = 'movieId';
@@ -29,9 +30,9 @@ class Spawn {
 
   static Map<String, dynamic> decodeJson(String body) => jsonDecode(body);
 
-  static List<Movie>? parseRawBody(String body) {
+  static MovieData parseRawBody(String body) {
     final respData = jsonDecode(body);
-    final movies = respData['data']['movies'] as List?;
-    return movies?.map((e) => Movie.fromJSON(e)).toList(growable: false);
+    final data = respData['data'];
+    return MovieData.fromJSON(data);
   }
 }
