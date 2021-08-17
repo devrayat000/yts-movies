@@ -7,11 +7,10 @@ import 'package:http/http.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ytsmovies/bloc/filter/index.dart';
 import 'package:ytsmovies/models/movie_data.dart';
 
-import 'package:ytsmovies/providers/filter_provider.dart';
 import 'package:ytsmovies/utils/api.dart';
-import 'package:ytsmovies/utils/constants.dart';
 import 'package:ytsmovies/utils/exceptions.dart';
 import 'package:ytsmovies/utils/isolates.dart';
 import 'package:ytsmovies/widgets/search/animation.dart';

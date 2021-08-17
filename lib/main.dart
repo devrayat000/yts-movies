@@ -4,13 +4,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localized_locales/flutter_localized_locales.dart';
-import 'package:ytsmovies/pages/latest.dart';
-import 'package:ytsmovies/pages/test.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:provider/single_child_widget.dart';
+// import 'package:path/path.dart' ;
+import 'package:ytsmovies/bloc/filter/index.dart';
+import 'package:ytsmovies/bloc/theme_bloc.dart';
+import 'package:ytsmovies/pages/home-2.dart';
+// import 'package:ytsmovies/pages/test.dart';
 
-import 'pages/home-2.dart';
-import 'providers/filter_provider.dart';
 import './providers/mamus_provider.dart';
 import './widgets/unfocus.dart';
 import './theme/index.dart';
@@ -46,6 +51,12 @@ void main() async {
     if (kReleaseMode) exit(1);
   };
 
+  HydratedBloc.storage = await HydratedStorage.build(
+    storageDirectory: kIsWeb
+        ? HydratedStorage.webStorageDirectory
+        : await getTemporaryDirectory(),
+  );
+
   final _apptheme = AppTheme();
   final _favsX = FavouriteMamus();
 
@@ -61,15 +72,16 @@ void main() async {
       ),
     );
 
-    final stored = await _apptheme.storedTheme;
-
     runApp(MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: _apptheme),
         ChangeNotifierProvider.value(value: _favsX),
-        ChangeNotifierProvider(create: (context) => Filter()),
+        Provider<Filter>(
+          create: (context) => Filter(),
+          dispose: (context, filter) => filter.reset(),
+        ),
       ],
-      child: MyApp(themeMode: stored),
+      child: const MyApp(),
     ));
   } catch (e) {
     print(e);
@@ -77,8 +89,7 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  final ThemeMode? themeMode;
-  const MyApp({Key? key, this.themeMode}) : super(key: key);
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +97,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'YTS Movies',
         debugShowCheckedModeBanner: false,
-        home: ImageAppbar(),
+        home: HomePage2(),
         scrollBehavior: const CupertinoScrollBehavior(),
         localizationsDelegates: [
           const LocaleNamesLocalizationsDelegate(fallbackLocale: 'en'),
@@ -97,9 +108,14 @@ class MyApp extends StatelessWidget {
           if (widget is Scaffold || widget is Navigator)
             error = Scaffold(body: Center(child: error));
           ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
-          return _Screen(
-            child: widget!,
-            themeMode: this.themeMode,
+
+          final brightness = MediaQuery.platformBrightnessOf(context);
+          final systemTheme =
+              brightness == Brightness.dark ? DarkTheme.dark : LightTheme.light;
+
+          return BlocProvider<ThemeBloc>(
+            create: (_) => ThemeBloc(systemTheme),
+            child: _Screen(child: widget!),
           );
         },
       ),
@@ -107,42 +123,21 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class _Screen extends StatefulWidget {
-  final Widget child;
-  final ThemeMode? themeMode;
-  const _Screen({Key? key, required this.child, this.themeMode})
-      : super(key: key);
+class _Screen extends SingleChildStatelessWidget {
+  const _Screen({Key? key, required Widget child})
+      : super(key: key, child: child);
 
   @override
-  _ScreenState createState() => _ScreenState();
-}
-
-class _ScreenState extends State<_Screen> {
-  @override
-  void didChangeDependencies() {
-    if (widget.themeMode == null) {
-      final brightness = MediaQuery.platformBrightnessOf(context);
-      if (brightness == Brightness.dark) {
-        context.read<AppTheme>().themeMode = ThemeMode.dark;
-      } else {
-        context.read<AppTheme>().themeMode = ThemeMode.light;
-      }
-    } else {
-      context.read<AppTheme>().themeMode = widget.themeMode!;
-    }
-
-    super.didChangeDependencies();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<AppTheme>(
-      child: widget.child,
-      builder: (context, theme, child) => AnimatedTheme(
-        data: theme.isDark ? DarkTheme.dark : LightTheme.light,
-        child: child!,
-        curve: Curves.easeOutCirc,
-      ),
+  Widget buildWithChild(BuildContext context, Widget? child) {
+    return BlocBuilder<ThemeBloc, ThemeData>(
+      builder: (context, theme) {
+        return AnimatedTheme(
+          data: theme,
+          child: child!,
+          curve: Curves.easeOutCirc,
+        );
+      },
+      buildWhen: (prev, current) => prev != current,
     );
   }
 }

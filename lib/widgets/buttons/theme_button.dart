@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:ytsmovies/bloc/theme_bloc.dart';
+// import 'package:ytsmovies/theme/index.dart';
 
 import '../../utils/tweens.dart';
 import '../../theme/index.dart';
@@ -30,7 +32,9 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
 
   @override
   void didChangeDependencies() {
-    if (context.read<AppTheme>().current == ThemeMode.dark)
+    // if (context.read<AppTheme>().current == ThemeMode.dark)
+    //   _controller.forward();
+    if (context.read<ThemeBloc>().state == DarkTheme.dark)
       _controller.forward();
 
     super.didChangeDependencies();
@@ -45,7 +49,7 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
         } else if (_controller.status == AnimationStatus.completed) {
           _controller.reverse();
         }
-        context.read<AppTheme>().toggleTheme();
+        context.read<ThemeBloc>().toggle();
       },
       enableFeedback: false,
       icon: AnimatedBuilder(

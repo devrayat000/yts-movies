@@ -1,9 +1,10 @@
 import 'package:flutter/cupertino.dart' show CupertinoSwitch;
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:ytsmovies/utils/lists.dart' as list;
 
-import '../../providers/filter_provider.dart';
+import '../../bloc/filter/index.dart';
 
 class _FilterItem extends StatelessWidget {
   final Widget title;
@@ -39,6 +40,8 @@ class FilterDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _filter = context.read<Filter>();
+
     return Container(
       padding: const EdgeInsets.only(left: 180.0),
       color: Theme.of(context).canvasColor,
@@ -51,12 +54,12 @@ class FilterDrawer extends StatelessWidget {
           children: [
             _FilterItem(
               title: const Text('Rating'),
-              action: _provider<RatingFilter>(
-                notifier: _selector(context, (filter) => filter.rating),
+              action: _provider<RatingBloc, double>(
+                bloc: _filter.rating,
                 builder: (_, rating, __) => Slider.adaptive(
-                  value: rating.value,
-                  label: '${rating.value.round()}+',
-                  onChanged: rating.changeHandler,
+                  value: rating,
+                  label: '${rating.round()}+',
+                  onChanged: _filter.rating.changeHandler,
                   divisions: 9,
                   max: 9,
                 ),
@@ -64,10 +67,10 @@ class FilterDrawer extends StatelessWidget {
             ),
             _FilterItem(
               title: const Text('Quality'),
-              action: _dropdown<QualityFilter>(
-                notifier: _selector(context, (filter) => filter.quality),
+              action: _dropdown<QualityBloc>(
+                bloc: _filter.quality,
                 hint: const Text('Select Resolution'),
-                items: QualityFilter.quality
+                items: QualityBloc.quality
                     .map((e) => DropdownMenuItem<String>(
                           child: Text(e),
                           value: e,
@@ -77,8 +80,8 @@ class FilterDrawer extends StatelessWidget {
             ),
             _FilterItem(
               title: const Text('Genre'),
-              action: _dropdown<GenreFilter>(
-                notifier: _selector(context, (filter) => filter.genre),
+              action: _dropdown<GenreBloc>(
+                bloc: _filter.genre,
                 items: list.genres
                     .map((e) => DropdownMenuItem<String>(
                           child: Text(e.label),
@@ -89,8 +92,8 @@ class FilterDrawer extends StatelessWidget {
             ),
             _FilterItem(
               title: const Text('Sort'),
-              action: _dropdown<SortFilter>(
-                notifier: _selector(context, (filter) => filter.sort),
+              action: _dropdown<SortBloc>(
+                bloc: _filter.sort,
                 items: list.sorts
                     .map((e) => DropdownMenuItem<String>(
                           child: Text(e.label),
@@ -101,12 +104,11 @@ class FilterDrawer extends StatelessWidget {
             ),
             _FilterItem(
               title: const Text('Descending'),
-              action: _provider<OrderFilter>(
-                notifier:
-                    _selector<OrderFilter>(context, (filter) => filter.order),
+              action: _provider<OrderBloc, bool>(
+                bloc: _filter.order,
                 builder: (_, order, __) => CupertinoSwitch(
-                  value: order.value,
-                  onChanged: order.changeHandler,
+                  value: order,
+                  onChanged: _filter.order.changeHandler,
                 ),
               ),
             ),
@@ -128,7 +130,7 @@ class FilterDrawer extends StatelessWidget {
                   SizedBox(width: 12),
                   _actionButton(
                     context,
-                    onPressed: context.read<Filter>().reset,
+                    onPressed: _filter.reset,
                     label: 'Reset',
                     icon: Icons.refresh,
                     color: Colors.redAccent[400],
@@ -159,37 +161,33 @@ class FilterDrawer extends StatelessWidget {
         ),
       );
 
-  T _selector<T>(BuildContext context, T Function(Filter) selector) {
-    return context.select<Filter, T>(selector);
-  }
-
-  Widget _provider<T extends ChangeNotifier?>({
-    required T notifier,
-    required Widget Function(BuildContext, T, Widget?) builder,
+  Widget _provider<T extends BlocBase<S>, S>({
+    required T bloc,
+    required Widget Function(BuildContext, S, Widget?) builder,
     Widget? child,
   }) {
-    return ChangeNotifierProvider<T>.value(
-      value: notifier,
-      child: child,
-      builder: (context, child) => builder(context, context.watch<T>(), child),
+    return BlocBuilder<T, S>(
+      bloc: bloc,
+      buildWhen: (state, oldState) => state != oldState,
+      builder: (context, state) => builder(context, state, child),
     );
   }
 
-  Widget _dropdown<T extends DropDownNotifier?>({
-    required T notifier,
+  Widget _dropdown<T extends DropdownBloc>({
+    required T bloc,
     Widget? hint,
     required List<DropdownMenuItem<String>> items,
   }) {
-    return _provider<T>(
-      notifier: notifier,
+    return _provider<T, String?>(
+      bloc: bloc,
       child: hint,
       builder: (_, data, hintChild) => DropdownButtonFormField<String>(
         isDense: true,
         // itemHeight: 60,
         menuMaxHeight: 360,
-        value: data?.selected,
+        value: data,
         items: items,
-        onChanged: data?.changeHandler,
+        onChanged: bloc.changeHandler,
         hint: hintChild,
         elevation: 4,
         decoration: const InputDecoration(

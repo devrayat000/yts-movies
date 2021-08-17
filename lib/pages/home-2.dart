@@ -5,15 +5,15 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:ytsmovies/models/movie.dart';
-import 'package:ytsmovies/pages/index.dart';
-import 'package:ytsmovies/utils/api.dart';
-import 'package:ytsmovies/utils/constants.dart';
-import 'package:ytsmovies/utils/exceptions.dart';
-import 'package:ytsmovies/utils/mixins.dart';
-import 'package:ytsmovies/widgets/search/search_delegate.dart';
-import 'package:ytsmovies/widgets/cards/intro_item.dart';
-import 'package:ytsmovies/widgets/image.dart';
+import '../models/movie.dart';
+import 'index.dart';
+import '../utils/api.dart';
+import '../utils/constants.dart';
+import '../utils/exceptions.dart';
+import '../utils/mixins.dart';
+import '../widgets/search/search_delegate.dart';
+import '../widgets/cards/intro_item.dart';
+import '../widgets/image.dart';
 import '../widgets/appbars/home_appbar.dart';
 import '../widgets/cards/search_card.dart';
 
