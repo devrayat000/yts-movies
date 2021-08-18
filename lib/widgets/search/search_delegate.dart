@@ -3,26 +3,28 @@ import 'package:async/async.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:http/http.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:ytsmovies/bloc/filter/index.dart';
-import 'package:ytsmovies/models/movie_data.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:ytsmovies/bloc/filter/index.dart';
+import 'package:ytsmovies/mock/movie_data.dart';
 import 'package:ytsmovies/utils/api.dart';
+import 'package:ytsmovies/utils/constants.dart';
 import 'package:ytsmovies/utils/exceptions.dart';
 import 'package:ytsmovies/utils/isolates.dart';
 import 'package:ytsmovies/widgets/search/animation.dart';
 import 'package:ytsmovies/widgets/search/suggestions.dart';
-import '../../models/movie.dart';
+import '../../mock/movie.dart';
 
 class MovieSearchDelegate extends SearchDelegate<Movie?> {
   List<String>? _history;
   MovieSearchDelegate({required List<String>? history}) : _history = history;
 
   final _controller = PagingController<int, Movie>(firstPageKey: 1);
-  final _prefs = SharedPreferences.getInstance();
+  // final _prefs = SharedPreferences.getInstance();
 
   Map<String, dynamic> _params = {};
 
@@ -68,6 +70,7 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
   Future<void> showResults(BuildContext context) async {
     // _controller.appendPage(_cachedMovies.toList(), 2);
     try {
+      _params = context.read<Filter>().values;
       _controller.addPageRequestListener(_pagehandler);
       await _setHistory();
       print(_params);
@@ -161,11 +164,9 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   Future<void> _setHistory() async {
     try {
-      final prefs = await _prefs;
       final prevHistory = _history ?? [];
-      _history = [query, ...prevHistory];
-      await prefs.setStringList(
-          _historyKey, Set<String>.from(_history!).toList());
+      _history = [query, ...prevHistory].toSet().toList();
+      await Hive.box<String>(MyBoxs.searchHistoryBox).add(query);
     } catch (e) {
       print(e);
     }

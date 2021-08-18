@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:ytsmovies/utils/tweens.dart';
 
 import '../../providers/mamus_provider.dart';
-import '../../models/movie.dart';
+import '../../mock/movie.dart';
 
 class FavouriteButton extends StatefulWidget {
   final bool? isFavourite;
@@ -45,7 +45,7 @@ class _FavouriteButtonState extends State<FavouriteButton>
 
   void _favHandler() {
     final fav = context.read<FavouriteMamus>();
-    if (fav.isLiked(widget._movie.id)) {
+    if (fav.isLiked(widget._movie.id.toString())) {
       _controller.forward();
     }
   }
@@ -53,9 +53,9 @@ class _FavouriteButtonState extends State<FavouriteButton>
   void _addToFavourite() async {
     final favmovie = context.read<FavouriteMamus>();
     try {
-      if (favmovie.isLiked(widget._movie.id)) {
+      if (favmovie.isLiked(widget._movie.id.toString())) {
         _controller.reverse();
-        await favmovie.unlike(widget._movie.id);
+        await favmovie.unlike(widget._movie.id.toString());
       } else {
         _controller.forward();
         await favmovie.like(widget._movie);

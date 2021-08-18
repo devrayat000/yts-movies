@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/movie.dart';
+import '../mock/movie.dart';
 import 'favourites.dart';
 import 'home-2.dart';
 import 'latest.dart';

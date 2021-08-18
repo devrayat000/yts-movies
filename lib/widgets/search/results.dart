@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
-import 'package:ytsmovies/models/movie.dart';
+import 'package:ytsmovies/mock/movie.dart';
 import 'package:ytsmovies/utils/constants.dart';
 import 'package:ytsmovies/widgets/cards/actionbar.dart';
 import 'package:ytsmovies/widgets/cards/movie_card.dart';

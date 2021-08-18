@@ -30,7 +30,6 @@ class CustomDelegate extends SliverPersistentHeaderDelegate {
     double tempVal = 34 * maxExtent / 100;
     final progress = shrinkOffset > tempVal ? 1.0 : shrinkOffset / tempVal;
     print("Objechjkf === $progress $shrinkOffset");
-    // TODO: implement build
     return FlexibleSpaceBar.createSettings(
       minExtent: minExtent,
       maxExtent: maxExtent,

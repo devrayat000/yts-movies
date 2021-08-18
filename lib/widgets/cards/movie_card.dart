@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../buttons/favourite_button.dart';
 import '../../pages/index.dart';
 import '../image.dart';
-import '../../models/movie.dart';
+import '../../mock/movie.dart';
 
 class MovieCard extends StatelessWidget {
   final Movie _movie;
@@ -74,8 +74,8 @@ class MovieCard extends StatelessWidget {
                   ),
                   _YearRating(
                     isGrid: _isGrid,
-                    rating: _movie.rating,
-                    year: _movie.year,
+                    rating: _movie.rating.toString(),
+                    year: _movie.year.toString(),
                   ),
                   Expanded(
                     child: Flex(
@@ -118,8 +118,8 @@ class MovieCard extends StatelessWidget {
                       ),
                       _YearRating(
                         isGrid: _isGrid,
-                        rating: _movie.rating,
-                        year: _movie.year,
+                        rating: _movie.rating.toString(),
+                        year: _movie.year.toString(),
                       ),
                     ],
                   ),
@@ -151,10 +151,10 @@ class MovieCard extends StatelessWidget {
       );
 
   Widget get _image => MovieImage(
-        src: _movie.coverImg.medium,
+        src: _movie.mediumCoverImage,
         padding: EdgeInsets.all(4.0),
         label: _movie.title,
-        id: _movie.id,
+        id: _movie.id.toString(),
       );
 }
 

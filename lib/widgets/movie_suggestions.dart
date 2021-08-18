@@ -8,7 +8,7 @@ import 'package:ytsmovies/utils/exceptions.dart';
 
 import './cards/movie_card.dart' show MovieCard;
 
-import '../models/movie.dart';
+import '../mock/movie.dart';
 
 class Suggestions extends StatefulWidget {
   final String id;

@@ -5,7 +5,7 @@ import 'package:ytsmovies/utils/isolates.dart';
 
 import '../utils/exceptions.dart';
 import '../utils/constants.dart' show Col;
-import '../models/movie.dart';
+import '../mock/movie.dart';
 
 class MamuDB {
   late Future<Database> _database;
@@ -101,7 +101,7 @@ class MamuDB {
     try {
       final db = await _database;
       final batch = db.batch();
-      final _movie = movie.toJSON();
+      final _movie = movie.toJson();
       // print('79: $_movie');
       batch.insert(
         _movieTable,
@@ -112,7 +112,7 @@ class MamuDB {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
       movie.torrents.forEach((torrent) {
-        final _torrent = torrent.toJSON()..addAll({_movieId: movie.id});
+        final _torrent = torrent.toJson()..addAll({_movieId: movie.id});
         // print('83: $_torrent');
         batch.insert(
           _torrentTable,

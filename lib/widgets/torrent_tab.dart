@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/material.dart';
 
-import '../models/movie.dart' show Torrent;
+import '../mock/torrent.dart';
 
 class TorrentTab extends StatelessWidget {
   final List<Torrent> _torrents;

@@ -2,58 +2,17 @@ import 'dart:async' show Future, StreamSubscription;
 
 import 'package:flutter/cupertino.dart' show CupertinoScrollbar;
 import 'package:flutter/foundation.dart' show Key, ValueKey;
-import 'package:flutter/rendering.dart'
-    show
-        EdgeInsets,
-        ScrollDirection,
-        SliverGridDelegate,
-        SliverGridDelegateWithFixedCrossAxisCount;
-import 'package:flutter/material.dart'
-    show
-        AlwaysScrollableScrollPhysics,
-        Animation,
-        AnimationController,
-        AnimationStatus,
-        BouncingScrollPhysics,
-        BuildContext,
-        Center,
-        Column,
-        Container,
-        CurvedAnimation,
-        Curves,
-        CustomScrollView,
-        GlobalKey,
-        Key,
-        PageStorage,
-        PageStorageKey,
-        PreferredSizeWidget,
-        RefreshIndicator,
-        Scaffold,
-        ScaffoldMessenger,
-        ScaffoldState,
-        ScaleTransition,
-        ScrollController,
-        SingleTickerProviderStateMixin,
-        SnackBar,
-        SnackBarAction,
-        State,
-        StatefulWidget,
-        Text,
-        TextButton,
-        Theme,
-        Tween,
-        ValueKey,
-        Widget,
-        WidgetBuilder;
-import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart' show PagedChildBuilderDelegate, PagedSliverGrid, PagingController, PagingStatus;
+import 'package:flutter/rendering.dart';
+import 'package:flutter/material.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
 import '../utils/constants.dart' show MyGlobals;
-import '../models/movie.dart' show Movie;
+import '../mock/movie.dart';
 import '../providers/mamus_provider.dart' show Mamus, PageState;
 import 'package:ytsmovies/widgets/cards/movie_card.dart';
 import './cards/actionbar.dart' show SliverActionBar;
 import './cards/shimmer_movie_card.dart' show MovieListShimmer;
-import './buttons/popup_fab.dart' show PopupFloatingActionButton, PopupFloatingActionButtonState;
+import './buttons/popup_fab.dart';
 import '../utils/mixins.dart' show PageStorageCache;
 import '../utils/exceptions.dart' show NotFoundException;
 

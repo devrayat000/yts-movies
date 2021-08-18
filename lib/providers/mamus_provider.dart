@@ -5,8 +5,8 @@ import 'package:http/http.dart' as http;
 
 import '../utils/api.dart';
 import '../utils/isolates.dart';
-import '../database/mamu_db.dart';
-import '../models/movie.dart';
+// import '../database/mamu_db.dart';
+import '../mock/movie.dart';
 import '../utils/exceptions.dart';
 
 typedef Resolver = Future<http.Response> Function([int? page]);
@@ -29,7 +29,7 @@ class FavouriteMamus extends Mamus with ChangeNotifier {
   }
 
   Future<void> like(Movie movie) async {
-    _fabouriteMoviesId.add(movie.id);
+    _fabouriteMoviesId.add(movie.id.toString());
     notifyListeners();
     try {
       await db.insert(movie);
@@ -113,21 +113,17 @@ class HDMamus extends Mamus {
 }
 
 class RatedMamus extends Mamus {
-  RatedMamus()
-      : _resolver = Api.ratedMovies,
-        super();
+  RatedMamus() : super();
 
   @override
-  final Resolver _resolver;
+  Resolver get _resolver => Api.ratedMovies;
 }
 
 class LatestMamus extends Mamus {
-  LatestMamus()
-      : _resolver = Api.latestMovies,
-        super();
+  LatestMamus() : super();
 
   @override
-  final Resolver _resolver;
+  Resolver get _resolver => Api.latestMovies;
 }
 
 abstract class Mamus {

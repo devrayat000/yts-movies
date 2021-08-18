@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../utils/exceptions.dart';
-import '../../models/movie.dart' as m;
+import '../../mock/torrent.dart' as m;
 
 class DownloadButton extends StatefulWidget {
   final m.Torrent _torrent;

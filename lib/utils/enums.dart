@@ -1,21 +1,11 @@
 enum Quality { $720, $1080, $2160, $3D }
 
-extension QualityValue on Quality {
-  String get val {
-    switch (this) {
-      case Quality.$720:
-        return '720p';
-      case Quality.$1080:
-        return '1080p';
-      case Quality.$2160:
-        return '2160p';
-      case Quality.$3D:
-        return '3D';
-      default:
-        return '720p';
-    }
-  }
-}
+final qualities = {
+  Quality.$720: '720p',
+  Quality.$1080: '1080p',
+  Quality.$2160: '2160p',
+  Quality.$3D: '3D',
+};
 
 enum Sort {
   TITLE,
@@ -28,31 +18,18 @@ enum Sort {
   DATE_ADDED,
 }
 
+final sorts = {
+  Sort.TITLE: 'Alphabetical',
+  Sort.DATE_ADDED: 'Latest',
+  Sort.YEAR: 'Year',
+  Sort.PEERS: 'Peers',
+  Sort.SEEDS: 'Seeds',
+  Sort.DOWNLOAD_COUNT: 'Downloads',
+  Sort.LIKE_COUNT: 'Likes',
+};
+
 extension SortValue on Sort {
   String get val => this.toString().split('.')[1].toLowerCase();
-
-  String get label {
-    switch (this) {
-      case Sort.DATE_ADDED:
-        return 'Latest';
-      case Sort.TITLE:
-        return 'Alphabetical';
-      case Sort.YEAR:
-        return 'Year';
-      case Sort.RATING:
-        return 'Rating';
-      case Sort.PEERS:
-        return 'Peers';
-      case Sort.SEEDS:
-        return 'Seeds';
-      case Sort.DOWNLOAD_COUNT:
-        return 'Downloads';
-      case Sort.LIKE_COUNT:
-        return 'Likes';
-      default:
-        return 'Latest';
-    }
-  }
 }
 
 enum Order { ASC, DESC }

@@ -5,17 +5,22 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localized_locales/flutter_localized_locales.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/single_child_widget.dart';
+// import 'package:sqflite/sqflite.dart';
 // import 'package:path/path.dart' ;
+
+// import 'package:ytsmovies/pages/test.dart';
 import 'package:ytsmovies/bloc/filter/index.dart';
 import 'package:ytsmovies/bloc/theme_bloc.dart';
+import 'package:ytsmovies/mock/movie.dart';
+import 'package:ytsmovies/mock/torrent.dart';
 import 'package:ytsmovies/pages/home-2.dart';
-// import 'package:ytsmovies/pages/test.dart';
-
+import 'package:ytsmovies/utils/constants.dart';
 import './providers/mamus_provider.dart';
 import './widgets/unfocus.dart';
 import './theme/index.dart';
@@ -51,6 +56,12 @@ void main() async {
     if (kReleaseMode) exit(1);
   };
 
+  Hive
+    ..init((await getTemporaryDirectory()).path)
+    ..registerAdapter(MovieAdapter())
+    // ..registerAdapter(MovieAdapter())
+    ..registerAdapter(TorrentAdapter());
+
   HydratedBloc.storage = await HydratedStorage.build(
     storageDirectory: kIsWeb
         ? HydratedStorage.webStorageDirectory
@@ -62,6 +73,8 @@ void main() async {
 
   try {
     await Future.wait([
+      Hive.openLazyBox<Movie>(MyBoxs.favouriteBox),
+      Hive.openLazyBox<String>(MyBoxs.searchHistoryBox),
       _favsX.init(),
     ]);
 

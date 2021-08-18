@@ -15,7 +15,7 @@ import '../widgets/torrent_tab.dart';
 import '../widgets/movie_suggestions.dart';
 import '../widgets/buttons/download_button.dart' show DownloadButton;
 import '../widgets/buttons/favourite_button.dart';
-import '../models/movie.dart';
+import '../mock/movie.dart';
 
 @immutable
 class MoviePage extends StatefulWidget {
@@ -222,9 +222,7 @@ class _Screen extends StatelessWidget {
               SliverAppBar(
                 collapsedHeight: MediaQuery.of(context).size.width,
                 expandedHeight: MediaQuery.of(context).size.width / 2 * 3,
-                flexibleSpace: FlexibleSpaceBar(
-                  
-                ),
+                flexibleSpace: FlexibleSpaceBar(),
               ),
               SliverList(
                 delegate: SliverChildListDelegate.fixed([
@@ -234,7 +232,7 @@ class _Screen extends StatelessWidget {
                   ),
                   _space(),
                   Text(
-                    _movie.year,
+                    _movie.year.toString(),
                     style: Theme.of(context).textTheme.headline5,
                   ),
                   _space(),
@@ -269,9 +267,9 @@ class _Screen extends StatelessWidget {
                       children: [
                         Expanded(
                           child: MovieImage(
-                            src: _movie.coverImg.medium,
+                            src: _movie.mediumCoverImage,
                             padding: const EdgeInsets.all(4),
-                            id: _movie.id,
+                            id: _movie.id.toString(),
                             decoration: BoxDecoration(
                               color: Colors.white,
                             ),
@@ -363,7 +361,7 @@ class _Screen extends StatelessWidget {
                   _space(),
                 ]),
               ),
-              Suggestions(id: _movie.id),
+              Suggestions(id: _movie.id.toString()),
             ],
           ),
         ),

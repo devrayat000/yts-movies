@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:ytsmovies/models/movie.dart';
+import 'package:ytsmovies/mock/movie.dart';
 import 'package:ytsmovies/utils/constants.dart';
 import 'package:ytsmovies/widgets/buttons/show_more_button.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localized_locales/flutter_localized_locales.dart';
-import 'package:ytsmovies/models/movie.dart';
+import 'package:ytsmovies/mock/movie.dart';
 import 'package:ytsmovies/pages/index.dart';
 import 'package:ytsmovies/utils/constants.dart';
 import 'package:ytsmovies/utils/exceptions.dart';
@@ -66,7 +66,7 @@ class SearchSuggestions extends StatelessWidget {
                 itemBuilder: (context, i) {
                   final _movie = movies![i];
                   return ListTile(
-                    leading: MovieImage(src: _movie.coverImg.small),
+                    leading: MovieImage(src: _movie.smallCoverImage),
                     title: Text(_movie.title),
                     subtitle: Text(
                         LocaleNames.of(context)?.nameOf(_movie.language) ??

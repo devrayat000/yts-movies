@@ -31,7 +31,7 @@ class Urls {
         trimParams({
           'limit': '$limit',
           'page': '$page',
-          'quality': quality?.val,
+          'quality': qualities[quality],
           'minimum_rating': '$minimumRating',
           'query_term': queryTerm,
           'genre': genre,
@@ -41,13 +41,11 @@ class Urls {
         }));
   }
 
-  static Uri listMoviesWithRawParams([Map<String, dynamic>? params]) {
+  static Uri listMoviesWithRawParams([Map<String, String?>? params]) {
     return Uri.https(baseUrl, '/api/v2/list_movies.json', trimParams(params));
   }
 
   static Uri movieDetails(String id, {bool? image, bool? cast}) {
-    assert(id != null);
-
     return Uri.https(
         baseUrl,
         '/api/v2/movie_details.json',
@@ -64,7 +62,7 @@ class Urls {
     });
   }
 
-  static Map<String, dynamic>? trimParams([Map<String, dynamic>? params]) {
+  static Map<String, dynamic>? trimParams([Map<String, String?>? params]) {
     params?.removeWhere(
         (key, value) => value == null || value == '0' || value == 'null');
     return params;

@@ -1,13 +1,13 @@
 import 'package:async/async.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models/movie.dart';
+import '../mock/movie.dart';
 import 'index.dart';
-import '../utils/api.dart';
 import '../utils/constants.dart';
 import '../utils/exceptions.dart';
 import '../utils/mixins.dart';
@@ -47,7 +47,19 @@ class _HomePage2State extends State<HomePage2>
         _fetch(_latestCache, Query.latest));
     _hdFuture = CancelableOperation<List<Movie>>.fromFuture(Future.delayed(
       Duration(seconds: 2),
-      () => _fetch(_hdCache, Query.hd),
+      () async {
+        final data = await _fetch(_hdCache, Query.hd);
+        final box = await Hive.openBox<Movie>('textBox');
+        if (Hive.isAdapterRegistered(1) && Hive.isAdapterRegistered(2)) {
+          print('registered');
+          final a = data[0];
+          await box.put('test1', a);
+          final movie = box.get('test1');
+          print(movie?.title);
+          print(movie);
+        }
+        return data;
+      },
     ));
     _ratedFuture = CancelableOperation<List<Movie>>.fromFuture(Future.delayed(
       Duration(seconds: 4),
@@ -78,25 +90,7 @@ class _HomePage2State extends State<HomePage2>
       Future<http.Response> _resolver;
       final _limit = 10;
 
-      switch (query) {
-        case Query.latest:
-          _resolver = Api.latestMovies(1, _limit);
-          break;
-        case Query.hd:
-          _resolver = Api.hd4kMovies(1, _limit);
-          break;
-        case Query.mostDownloaded:
-          _resolver = Api.mostDownloadedMovies(1, _limit);
-          break;
-        case Query.mostLiked:
-          _resolver = Api.mostLikedMovies(1, _limit);
-          break;
-        case Query.rated:
-          _resolver = Api.ratedMovies(1, _limit);
-          break;
-        default:
-          _resolver = Api.latestMovies(1, _limit);
-      }
+      _resolver = resolvers[query]!(_limit);
 
       final movies = await _cacher.fetch(() async {
         try {
@@ -144,8 +138,9 @@ class _HomePage2State extends State<HomePage2>
                 InkWell(
                   onTap: () async {
                     try {
-                      final prefs = await SharedPreferences.getInstance();
-                      final _history = prefs.getStringList(_historyKey);
+                      final _history = Hive.box<String>(MyBoxs.searchHistoryBox)
+                          .values
+                          .toList();
 
                       showSearch(
                         context: context,
@@ -219,8 +214,8 @@ class _HomePage2State extends State<HomePage2>
             alignment: AlignmentDirectional.bottomCenter,
             children: [
               MovieImage(
-                src: movie.coverImg.medium,
-                id: movie.id,
+                src: movie.mediumCoverImage,
+                id: movie.id.toString(),
                 label: movie.imdbCode,
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 decoration: BoxDecoration(

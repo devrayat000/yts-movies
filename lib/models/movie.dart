@@ -29,7 +29,7 @@ class Movie {
   late final String title;
   late final String year;
   late final String rating;
-  late final CoverImage coverImg;
+  late final CoverImage coverImg; //
   late final String backgroundImage;
   late final DateTime dateUploaded;
   late final String url;

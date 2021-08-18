@@ -31,8 +31,7 @@ abstract class DropdownBloc extends HydratedBloc<DropdownEvent, String?> {
 }
 
 class QualityBloc extends DropdownBloc {
-  static final quality =
-      Quality.values.map((e) => e.val).toList(growable: false);
+  static final quality = qualities.values.toList(growable: false);
 
   QualityBloc() : super(null);
 }

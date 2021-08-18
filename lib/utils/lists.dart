@@ -1,8 +1,8 @@
-import 'package:ytsmovies/utils/enums.dart';
+import 'package:ytsmovies/utils/enums.dart' as enums;
 
-import '../models/label_value.dart';
+import '../mock/label_value.dart';
 
-const genres = const [
+final genres = [
   LabelValue("All", null),
   LabelValue("Action", "action"),
   LabelValue("Adventure", "adventure"),
@@ -32,5 +32,6 @@ const genres = const [
   LabelValue("Western", "western"),
 ];
 
-final sorts =
-    Sort.values.map((e) => LabelValue(e.label, e.val)).toList(growable: false);
+final List<LabelValue<String>> sorts = enums.Sort.values
+    .map((e) => LabelValue(enums.sorts[e]!, e.val))
+    .toList(growable: false);

@@ -7,7 +7,7 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:ytsmovies/utils/tweens.dart';
 import 'package:ytsmovies/widgets/drawers/filter_drawer.dart';
 import 'package:ytsmovies/widgets/search/results.dart';
-import '../../models/movie.dart';
+import '../../mock/movie.dart';
 
 class SearchResultPage extends StatefulWidget {
   final PagingController<int, Movie> controller;
