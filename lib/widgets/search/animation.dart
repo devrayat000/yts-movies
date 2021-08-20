@@ -75,7 +75,9 @@ class _SearchResultPageState extends State<SearchResultPage>
     });
 
     _controller.addListener(() {
-      _backdrop.markNeedsBuild();
+      if (_controller.isAnimating) {
+        _backdrop.markNeedsBuild();
+      }
     });
   }
 

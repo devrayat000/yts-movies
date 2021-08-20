@@ -219,11 +219,12 @@ class _Screen extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: CustomScrollView(
             slivers: [
-              SliverAppBar(
-                collapsedHeight: MediaQuery.of(context).size.width,
-                expandedHeight: MediaQuery.of(context).size.width / 2 * 3,
-                flexibleSpace: FlexibleSpaceBar(),
-              ),
+              // TODO: Implement flexible image
+              // SliverAppBar(
+              //   collapsedHeight: MediaQuery.of(context).size.width,
+              //   expandedHeight: MediaQuery.of(context).size.width / 2 * 3,
+              //   flexibleSpace: FlexibleSpaceBar(),
+              // ),
               SliverList(
                 delegate: SliverChildListDelegate.fixed([
                   SelectableText(
@@ -310,8 +311,12 @@ class _Screen extends StatelessWidget {
                                     if (await canLaunch(subTitleUri)) {
                                       launch(subTitleUri);
                                     }
-                                  } catch (e) {
+                                  } on PlatformException catch (e, s) {
+                                    print(e.message);
+                                    print(s);
+                                  } catch (e, s) {
                                     print(e);
+                                    print(s);
                                   }
                                 },
                                 icon: const Icon(Icons.subtitles),

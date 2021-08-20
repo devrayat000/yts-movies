@@ -1,78 +1,79 @@
-import 'package:equatable/equatable.dart';
+import 'package:async/async.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart';
+// import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:bloc/bloc.dart';
 
+import 'package:ytsmovies/bloc/api/state.dart';
 import 'package:ytsmovies/mock/movie.dart';
 import 'package:ytsmovies/mock/movie_data.dart';
 import 'package:ytsmovies/utils/api.dart';
+import 'package:ytsmovies/utils/constants.dart';
 import 'package:ytsmovies/utils/exceptions.dart';
 import 'package:ytsmovies/utils/isolates.dart';
 
+export 'state.dart';
+
+part 'static.dart';
+part 'search.dart';
+part 'favourites.dart';
+
 typedef Resolver = Future<http.Response> Function([int? page]);
 
-class ApiBloc extends Bloc<int, PageState> {
-  final Resolver _resolver;
-  ApiBloc({required Resolver resolver})
-      : _resolver = resolver,
-        super(PageState.empty());
+abstract class ApiBloc extends Bloc<int, PageState> {
+  ApiBloc() : super(PageStateInitial());
+
+  Resolver get resolver;
+
+  AsyncCache<MovieData> get cacher;
 
   @override
   Stream<PageState> mapEventToState(int page) async* {
     print(page);
     try {
-      final data = await listMoviesSearch(page);
-
-      final movieData = await compute(
-        _parseMovieData,
-        data,
-        debugLabel: 'apiMovieDataParser',
-      );
+      final movieData = await listMoviesSearch(page);
 
       final movies = movieData.movies;
 
       if (movies == null) {
-        throw NotFoundException('No movies were found');
+        throw CustomException('No movies were found');
       }
 
-      yield PageState(
+      yield PageStateSuccess(
         list: movies,
         nextPage: ++page,
         isLast: movieData.isLastPage,
       );
     } catch (e, s) {
-      this.addError(e, s);
       print(e);
-      yield* Stream.error(e, s);
+      print(s);
+      yield PageStateError(e, s);
     }
   }
 
-  Future<Map<String, dynamic>> listMoviesSearch([int? page]) async {
+  Future<MovieData> listMoviesSearch([int? page]) async {
     try {
-      final response = await this._resolver(page);
-      final respData = await compute(Spawn.decodeJson, response.body);
-      return respData['data'] as Map<String, dynamic>;
+      return await cacher.fetch(() async {
+        try {
+          final response = await this.resolver(page);
+          return await compute(
+            _parseMovieData,
+            response.body,
+            debugLabel: 'apiMovieDataParser',
+          );
+        } catch (e) {
+          rethrow;
+        }
+      });
     } catch (e) {
       rethrow;
     }
   }
 
-  static MovieData _parseMovieData(Map<String, dynamic> json) =>
-      MovieData.fromJson(json);
-}
-
-class PageState with EquatableMixin {
-  final List<Movie> list;
-  final int nextPage;
-  final bool isLast;
-  const PageState(
-      {required this.list, required this.nextPage, this.isLast = false});
-
-  const PageState.empty()
-      : list = const [],
-        nextPage = 0,
-        isLast = false;
-
-  @override
-  List<Object?> get props => [list, nextPage, isLast];
+  static MovieData _parseMovieData(String body) {
+    final json = Spawn.decodeJson(body);
+    final data = json['data'] as Map<String, dynamic>;
+    return MovieData.fromJson(data);
+  }
 }

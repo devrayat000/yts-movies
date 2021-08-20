@@ -6,38 +6,54 @@ import 'urls.dart';
 class Api {
   static final client = http.Client();
 
-  static Future<http.Response> listMovies(Uri url) => client.get(url);
+  static final _timeout = const Duration(seconds: 15);
 
-  static Future<http.Response> movieDetails(Uri url) => client.get(url);
+  static Future<http.Response> listMovies(Uri url) =>
+      client.get(url).timeout(_timeout);
+
+  static Future<http.Response> movieDetails(Uri url) =>
+      client.get(url).timeout(_timeout);
 
   static Future<http.Response> movieSuggestions(String id) =>
-      client.get(Urls.movieSuggestions(id));
+      client.get(Urls.movieSuggestions(id)).timeout(_timeout);
 
   //
   static Future<http.Response> latestMovies([int? page, int? limit]) =>
-      client.get(Urls.listMovies(limit: limit, page: page));
+      client.get(Urls.listMovies(limit: limit, page: page)).timeout(_timeout);
 
   static Future<http.Response> hd4kMovies([int? page, int? limit]) => client
-      .get(Urls.listMovies(limit: limit, page: page, quality: Quality.$2160));
+      .get(Urls.listMovies(limit: limit, page: page, quality: Quality.$2160))
+      .timeout(_timeout);
 
-  static Future<http.Response> ratedMovies([int? page, int? limit]) =>
-      client.get(Urls.listMovies(
-          limit: limit, page: page, sortBy: Sort.RATING, minimumRating: 5));
+  static Future<http.Response> ratedMovies([int? page, int? limit]) => client
+      .get(Urls.listMovies(
+          limit: limit, page: page, sortBy: Sort.RATING, minimumRating: 5))
+      .timeout(_timeout);
 
   static Future<http.Response> mostDownloadedMovies([int? page, int? limit]) =>
-      client.get(Urls.listMovies(
-          limit: limit, page: page, sortBy: Sort.DOWNLOAD_COUNT));
-          
+      client
+          .get(Urls.listMovies(
+              limit: limit, page: page, sortBy: Sort.DOWNLOAD_COUNT))
+          .timeout(_timeout);
+
   static Future<http.Response> mostLikedMovies([int? page, int? limit]) =>
-      client.get(
-          Urls.listMovies(limit: limit, page: page, sortBy: Sort.LIKE_COUNT));
+      client
+          .get(Urls.listMovies(
+              limit: limit, page: page, sortBy: Sort.LIKE_COUNT))
+          .timeout(_timeout);
+
+  static Future<http.Response> thisYearMovies([int? page, int? limit]) => client
+      .get(Urls.listMovies(limit: limit, page: page, sortBy: Sort.YEAR))
+      .timeout(_timeout);
 
   static Future<http.Response> listMovieByrawParams([
     int? page,
     Map<String, dynamic>? params,
   ]) =>
-      client.get(Urls.listMoviesWithRawParams({
-        'page': '$page',
-        ...(params ?? {}),
-      }));
+      client
+          .get(Urls.listMoviesWithRawParams({
+            'page': '$page',
+            ...(params ?? {}),
+          }))
+          .timeout(_timeout);
 }

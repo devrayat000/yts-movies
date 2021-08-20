@@ -8,18 +8,19 @@ final qualities = {
 };
 
 enum Sort {
-  TITLE,
-  YEAR,
+  TITLE, //
+  YEAR, //
   RATING,
-  PEERS,
-  SEEDS,
-  DOWNLOAD_COUNT,
-  LIKE_COUNT,
-  DATE_ADDED,
+  PEERS, //
+  SEEDS, //
+  DOWNLOAD_COUNT, //
+  LIKE_COUNT, //
+  DATE_ADDED, //
 }
 
 final sorts = {
   Sort.TITLE: 'Alphabetical',
+  Sort.RATING: 'Rating',
   Sort.DATE_ADDED: 'Latest',
   Sort.YEAR: 'Year',
   Sort.PEERS: 'Peers',

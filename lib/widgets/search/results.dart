@@ -4,6 +4,7 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
 import 'package:ytsmovies/mock/movie.dart';
 import 'package:ytsmovies/utils/constants.dart';
+import 'package:ytsmovies/utils/exceptions.dart';
 import 'package:ytsmovies/widgets/cards/actionbar.dart';
 import 'package:ytsmovies/widgets/cards/movie_card.dart';
 import 'package:ytsmovies/widgets/cards/shimmer_movie_card.dart';
@@ -91,16 +92,26 @@ class SearchResults extends StatelessWidget {
         ),
       );
 
-  Widget _errorBuilder(BuildContext context) => Column(
-        children: [
-          Text(
-            controller.error.toString(),
-            style: Theme.of(context).textTheme.headline5,
-          ),
-          TextButton(
-            onPressed: controller.refresh,
-            child: const Text('Retry'),
-          ),
-        ],
-      );
+  Widget _errorBuilder(BuildContext context) {
+    final e = controller.error;
+    String error;
+    if (e is CustomException) {
+      error = e.message;
+    } else {
+      error = e.toString();
+    }
+
+    return Column(
+      children: [
+        Text(
+          error,
+          style: Theme.of(context).textTheme.headline5,
+        ),
+        TextButton(
+          onPressed: controller.refresh,
+          child: const Text('Retry'),
+        ),
+      ],
+    );
+  }
 }

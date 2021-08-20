@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -21,7 +22,6 @@ import 'package:ytsmovies/mock/movie.dart';
 import 'package:ytsmovies/mock/torrent.dart';
 import 'package:ytsmovies/pages/home-2.dart';
 import 'package:ytsmovies/utils/constants.dart';
-import './providers/mamus_provider.dart';
 import './widgets/unfocus.dart';
 import './theme/index.dart';
 
@@ -47,58 +47,70 @@ class MyWidgetsBinding extends WidgetsFlutterBinding {
       WidgetsFlutterBinding.ensureInitialized();
 }
 
-void main() async {
-  // The constructor sets global variables.
-  MyWidgetsBinding.ensureInitialized();
+void main() {
+  runZonedGuarded(
+    () async {
+      // The constructor sets global variables.
+      MyWidgetsBinding.ensureInitialized();
 
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.dumpErrorToConsole(details);
-    if (kReleaseMode) exit(1);
-  };
+      FlutterError.onError = (FlutterErrorDetails details) {
+        FlutterError.dumpErrorToConsole(details);
+        if (kReleaseMode) exit(1);
+      };
 
-  Hive
-    ..init((await getTemporaryDirectory()).path)
-    ..registerAdapter(MovieAdapter())
-    // ..registerAdapter(MovieAdapter())
-    ..registerAdapter(TorrentAdapter());
+      Hive
+        ..init((await getTemporaryDirectory()).path)
+        ..registerAdapter(MovieAdapter())
+        // ..registerAdapter(MovieAdapter())
+        ..registerAdapter(TorrentAdapter());
 
-  HydratedBloc.storage = await HydratedStorage.build(
-    storageDirectory: kIsWeb
-        ? HydratedStorage.webStorageDirectory
-        : await getTemporaryDirectory(),
+      HydratedBloc.storage = await HydratedStorage.build(
+        storageDirectory: kIsWeb
+            ? HydratedStorage.webStorageDirectory
+            : await getTemporaryDirectory(),
+      );
+
+      final _apptheme = AppTheme();
+      // final _favsX = FavouriteMamus();
+
+      try {
+        await Future.wait([
+          Hive.openBox<Movie>(MyBoxs.favouriteBox),
+          Hive.openBox<String>(MyBoxs.searchHistoryBox),
+          // _favsX.init(),
+        ]);
+
+        SystemChrome.setSystemUIOverlayStyle(
+          const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarBrightness: Brightness.dark,
+          ),
+        );
+
+        runApp(MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: _apptheme),
+            // ChangeNotifierProvider.value(value: _favsX),
+            Provider<Filter>(
+              create: (_) => Filter(),
+              // updateShouldNotify: (old, newI) => old.values != newI.values,
+              dispose: (context, filter) => filter.reset(),
+            ),
+          ],
+          child: const MyApp(),
+        ));
+      } catch (e, s) {
+        print(e);
+        print(s);
+        rethrow;
+      }
+    },
+    (Object error, StackTrace stack) {
+      print(error);
+      print(stack);
+      // exit(1);
+    },
   );
-
-  final _apptheme = AppTheme();
-  final _favsX = FavouriteMamus();
-
-  try {
-    await Future.wait([
-      Hive.openLazyBox<Movie>(MyBoxs.favouriteBox),
-      Hive.openLazyBox<String>(MyBoxs.searchHistoryBox),
-      _favsX.init(),
-    ]);
-
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.dark,
-      ),
-    );
-
-    runApp(MultiProvider(
-      providers: [
-        ChangeNotifierProvider.value(value: _apptheme),
-        ChangeNotifierProvider.value(value: _favsX),
-        Provider<Filter>(
-          create: (context) => Filter(),
-          dispose: (context, filter) => filter.reset(),
-        ),
-      ],
-      child: const MyApp(),
-    ));
-  } catch (e) {
-    print(e);
-  }
 }
 
 class MyApp extends StatelessWidget {
@@ -106,31 +118,34 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Unfocus(
-      child: MaterialApp(
-        title: 'YTS Movies',
-        debugShowCheckedModeBanner: false,
-        home: HomePage2(),
-        scrollBehavior: const CupertinoScrollBehavior(),
-        localizationsDelegates: [
-          const LocaleNamesLocalizationsDelegate(fallbackLocale: 'en'),
-        ],
-        restorationScopeId: 'com.movies.yts',
-        builder: (BuildContext context, Widget? widget) {
-          Widget error = Text('...Unexpected error occurred...');
-          if (widget is Scaffold || widget is Navigator)
-            error = Scaffold(body: Center(child: error));
-          ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
+    final brightness = MediaQuery.platformBrightnessOf(context);
+    final systemTheme =
+        brightness == Brightness.dark ? DarkTheme.dark : LightTheme.light;
 
-          final brightness = MediaQuery.platformBrightnessOf(context);
-          final systemTheme =
-              brightness == Brightness.dark ? DarkTheme.dark : LightTheme.light;
+    return BlocProvider(
+      create: (context) => ThemeCubit(systemTheme),
+      child: Unfocus(
+        child: PageStorage(
+          bucket: MyGlobals.bucket,
+          child: MaterialApp(
+            title: 'YTS Movies',
+            debugShowCheckedModeBanner: false,
+            home: HomePage2(),
+            scrollBehavior: const CupertinoScrollBehavior(),
+            localizationsDelegates: [
+              const LocaleNamesLocalizationsDelegate(fallbackLocale: 'en'),
+            ],
+            restorationScopeId: 'com.movies.yts',
+            builder: (BuildContext context, Widget? widget) {
+              Widget error = Text('...Unexpected error occurred...');
+              if (widget is Scaffold || widget is Navigator)
+                error = Scaffold(body: Center(child: error));
+              ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
 
-          return BlocProvider<ThemeBloc>(
-            create: (_) => ThemeBloc(systemTheme),
-            child: _Screen(child: widget!),
-          );
-        },
+              return _Screen(child: widget!);
+            },
+          ),
+        ),
       ),
     );
   }
@@ -142,7 +157,7 @@ class _Screen extends SingleChildStatelessWidget {
 
   @override
   Widget buildWithChild(BuildContext context, Widget? child) {
-    return BlocBuilder<ThemeBloc, ThemeData>(
+    return BlocBuilder<ThemeCubit, ThemeData>(
       builder: (context, theme) {
         return AnimatedTheme(
           data: theme,

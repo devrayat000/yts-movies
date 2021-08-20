@@ -54,7 +54,7 @@ class FilterDrawer extends StatelessWidget {
           children: [
             _FilterItem(
               title: const Text('Rating'),
-              action: _provider<RatingBloc, double>(
+              action: _provider<RatingCubit, double>(
                 bloc: _filter.rating,
                 builder: (_, rating, __) => Slider.adaptive(
                   value: rating,
@@ -67,10 +67,10 @@ class FilterDrawer extends StatelessWidget {
             ),
             _FilterItem(
               title: const Text('Quality'),
-              action: _dropdown<QualityBloc>(
+              action: _dropdown<QualityCubit>(
                 bloc: _filter.quality,
                 hint: const Text('Select Resolution'),
-                items: QualityBloc.quality
+                items: QualityCubit.quality
                     .map((e) => DropdownMenuItem<String>(
                           child: Text(e),
                           value: e,
@@ -80,7 +80,7 @@ class FilterDrawer extends StatelessWidget {
             ),
             _FilterItem(
               title: const Text('Genre'),
-              action: _dropdown<GenreBloc>(
+              action: _dropdown<GenreCubit>(
                 bloc: _filter.genre,
                 items: list.genres
                     .map((e) => DropdownMenuItem<String>(
@@ -92,7 +92,7 @@ class FilterDrawer extends StatelessWidget {
             ),
             _FilterItem(
               title: const Text('Sort'),
-              action: _dropdown<SortBloc>(
+              action: _dropdown<SortCubit>(
                 bloc: _filter.sort,
                 items: list.sorts
                     .map((e) => DropdownMenuItem<String>(
@@ -104,7 +104,7 @@ class FilterDrawer extends StatelessWidget {
             ),
             _FilterItem(
               title: const Text('Descending'),
-              action: _provider<OrderBloc, bool>(
+              action: _provider<OrderCubit, bool>(
                 bloc: _filter.order,
                 builder: (_, order, __) => CupertinoSwitch(
                   value: order,
@@ -173,7 +173,7 @@ class FilterDrawer extends StatelessWidget {
     );
   }
 
-  Widget _dropdown<T extends DropdownBloc>({
+  Widget _dropdown<T extends DropdownCubit>({
     required T bloc,
     Widget? hint,
     required List<DropdownMenuItem<String>> items,

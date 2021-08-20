@@ -1,4 +1,6 @@
 // import 'package:async/async.dart';
+import 'dart:async';
+
 import 'package:async/async.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -13,6 +15,7 @@ import 'package:ytsmovies/bloc/filter/index.dart';
 import 'package:ytsmovies/mock/movie_data.dart';
 import 'package:ytsmovies/utils/api.dart';
 import 'package:ytsmovies/utils/constants.dart';
+import 'package:ytsmovies/utils/error_handler.dart';
 import 'package:ytsmovies/utils/exceptions.dart';
 import 'package:ytsmovies/utils/isolates.dart';
 import 'package:ytsmovies/widgets/search/animation.dart';
@@ -20,17 +23,17 @@ import 'package:ytsmovies/widgets/search/suggestions.dart';
 import '../../mock/movie.dart';
 
 class MovieSearchDelegate extends SearchDelegate<Movie?> {
-  List<String>? _history;
-  MovieSearchDelegate({required List<String>? history}) : _history = history;
+  MovieSearchDelegate();
 
   final _controller = PagingController<int, Movie>(firstPageKey: 1);
   // final _prefs = SharedPreferences.getInstance();
 
   Map<String, dynamic> _params = {};
-
   CancelableOperation<Response>? _subscriber;
+  Timer? _debouncer;
 
-  static const _historyKey = 'search-history';
+  List<String> get _history =>
+      Hive.box<String>(MyBoxs.searchHistoryBox).values.toList();
 
   @override
   List<Widget> buildActions(BuildContext context) {
@@ -70,19 +73,22 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
   Future<void> showResults(BuildContext context) async {
     // _controller.appendPage(_cachedMovies.toList(), 2);
     try {
+      _controller.removePageRequestListener(_pagehandler);
       _params = context.read<Filter>().values;
+      print(_params);
       _controller.addPageRequestListener(_pagehandler);
       await _setHistory();
-      print(_params);
       super.showResults(context);
-    } catch (e) {
+    } catch (e, s) {
       print(e);
+      print(s);
     }
   }
 
   void _pagehandler(int pageKey) async {
     try {
       final _data = await _moviesFuture(pageKey);
+      print(_data.movies);
       if (_data.isLastPage) {
         _controller.appendLastPage(_data.movies!.toList());
       } else {
@@ -96,13 +102,14 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
   @override
   void showSuggestions(BuildContext context) async {
     try {
-      if (_subscriber != null) {
-        await _subscriber?.cancel();
-      }
+      _debouncer?.cancel();
+      _subscriber?.cancel();
     } catch (e) {
       print(e);
     } finally {
-      super.showSuggestions(context);
+      _debouncer = Timer(Duration(seconds: 1), () {
+        super.showSuggestions(context);
+      });
     }
   }
 
@@ -130,7 +137,7 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
       future: query.isEmpty ? null : _firstMovies,
       onShowHistory: (i) async {
         try {
-          query = _history![i];
+          query = _history[i];
           await showResults(context);
         } catch (e) {
           print(e);
@@ -146,13 +153,14 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
           Api.listMovieByrawParams(page, {'query_term': query, ..._params}));
       final response = await _subscriber!.value;
       final data = await compute(Spawn.parseRawBody, response.body);
+
       if (data.movies == null) {
-        throw NotFoundException('No movie found! 😥');
+        throw CustomException('No movie found! 😥');
       } else {
         return data;
       }
-    } catch (e) {
-      rethrow;
+    } catch (e, s) {
+      return errorHandler(e, s);
     }
   }
 
@@ -164,11 +172,14 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   Future<void> _setHistory() async {
     try {
-      final prevHistory = _history ?? [];
-      _history = [query, ...prevHistory].toSet().toList();
       await Hive.box<String>(MyBoxs.searchHistoryBox).add(query);
-    } catch (e) {
+    } on HiveError catch (e, s) {
       print(e);
+      print(s);
+      throw CustomException(e.message, e.stackTrace);
+    } catch (e, s) {
+      print(e);
+      print(s);
     }
   }
 }

@@ -1,5 +1,8 @@
 // import 'dart:convert' show jsonDecode;
 
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -90,12 +93,22 @@ class _SuggestionsState extends State<Suggestions> {
       var response = await http.get(uri);
       final movies = await compute(MyGlobals.parseResponseData, response.body);
       if (movies == null) {
-        throw NotFoundException('No movie found! 😥', uri: uri);
+        throw CustomException('No movie found! 😥');
       } else {
         return movies;
       }
-    } catch (e) {
-      throw e;
+    } on HttpException catch (e, s) {
+      throw CustomException(e.message, s);
+    } on SocketException catch (_, s) {
+      throw CustomException('No internet connection', s);
+    } on TimeoutException catch (_, s) {
+      throw CustomException('The request timed out', s);
+    } on CustomException {
+      rethrow;
+    } catch (e, s) {
+      print(e);
+      print(s);
+      throw CustomException('Unknown error occured!', s);
     }
   }
 }

@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:ytsmovies/bloc/api/index.dart';
 
-import '../providers/mamus_provider.dart';
 import '../widgets/gas_page.dart';
 
 class LatestMoviesPage extends StatelessWidget {
   static const routeName = '/latest-movies';
   const LatestMoviesPage({Key? key}) : super(key: key);
 
-  static final _mamuKey = GlobalKey<MamuMovieListpageState<LatestMamus>>();
+  static final _mamuKey = GlobalKey<MamuMovieListpageState<LatestApiBloc>>();
 
   @override
   Widget build(BuildContext context) {
-    return MamuMovieListpage<LatestMamus>(
+    return MamuMovieListpage<LatestApiBloc>(
       key: _mamuKey,
       label: 'latest',
-      handler: LatestMamus(),
+      handler: LatestApiBloc(),
       appBar: AppBar(
         title: Text(
           'Latest Movies',
@@ -30,14 +30,14 @@ class HD4KMoviesPage extends StatelessWidget {
   static const routeName = '/hd4k-movies';
   const HD4KMoviesPage({Key? key}) : super(key: key);
 
-  static final _mamuKey = GlobalKey<MamuMovieListpageState<HDMamus>>();
+  static final _mamuKey = GlobalKey<MamuMovieListpageState<HDApiBloc>>();
 
   @override
   Widget build(BuildContext context) {
-    return MamuMovieListpage<HDMamus>(
+    return MamuMovieListpage<HDApiBloc>(
       key: _mamuKey,
       label: '4k',
-      handler: HDMamus(),
+      handler: HDApiBloc(),
       actions: [],
       appBar: AppBar(
         title: Text(
@@ -53,14 +53,14 @@ class RatedMoviesPage extends StatelessWidget {
   static const routeName = '/rated-movies';
   const RatedMoviesPage({Key? key}) : super(key: key);
 
-  static final _mamuKey = GlobalKey<MamuMovieListpageState<RatedMamus>>();
+  static final _mamuKey = GlobalKey<MamuMovieListpageState<RatedApiBloc>>();
 
   @override
   Widget build(BuildContext context) {
-    return MamuMovieListpage<RatedMamus>(
+    return MamuMovieListpage<RatedApiBloc>(
       key: _mamuKey,
       label: 'rated',
-      handler: RatedMamus(),
+      handler: RatedApiBloc(),
       actions: [],
       appBar: AppBar(
         title: Text(

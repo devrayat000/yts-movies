@@ -3,6 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hive/hive.dart';
 import 'package:ytsmovies/mock/cover_image.dart';
 import 'package:ytsmovies/mock/torrent.dart';
+import 'package:ytsmovies/utils/constants.dart';
 
 part 'movie.g.dart';
 
@@ -126,6 +127,12 @@ class Movie with EquatableMixin, HiveObjectMixin {
 
   @override
   bool? get stringify => true;
+
+  @override
+  BoxBase<Movie>? get box => Hive.box(MyBoxs.favouriteBox);
+
+  @override
+  int get key => id;
 }
 
 class MovieArg {

@@ -2,25 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:ytsmovies/theme/index.dart';
 
-class ThemeBloc extends HydratedBloc<ThemeMode, ThemeData> {
-  ThemeBloc(ThemeData state) : super(state);
-
-  @override
-  Stream<ThemeData> mapEventToState(ThemeMode event) async* {
-    switch (event) {
-      case ThemeMode.light:
-        yield LightTheme.light;
-        break;
-      case ThemeMode.dark:
-        yield DarkTheme.dark;
-        break;
-      default:
-        yield state;
-    }
-  }
+class ThemeCubit extends HydratedCubit<ThemeData> {
+  ThemeCubit(ThemeData _initialState) : super(_initialState);
 
   void toggle() {
-    this.add(this.state == DarkTheme.dark ? ThemeMode.light : ThemeMode.dark);
+    this.emit(this.state.brightness == Brightness.dark
+        ? LightTheme.light
+        : DarkTheme.dark);
   }
 
   @override

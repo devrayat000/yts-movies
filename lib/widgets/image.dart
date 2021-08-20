@@ -1,5 +1,4 @@
-import 'package:flutter/widgets.dart' show Alignment, AspectRatio, BorderRadius, BoxDecoration, BoxFit, BuildContext, Center, ColorTween, Container, Decoration, EdgeInsets, EdgeInsetsGeometry, Hero, Icon, Image, Key, StatelessWidget, ValueKey, Widget;
-import 'package:flutter/material.dart' show Colors, Icons, CircularProgressIndicator;
+import 'package:flutter/material.dart';
 
 class MovieImage extends StatelessWidget {
   final String src;

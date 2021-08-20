@@ -14,6 +14,7 @@ enum Query {
   mostDownloaded,
   mostLiked,
   rated,
+  year,
 }
 
 typedef Resolver = Future<Response> Function(int);
@@ -24,6 +25,7 @@ final Map<Query, Resolver> resolvers = {
   Query.mostDownloaded: (limit) => Api.mostDownloadedMovies(1, limit),
   Query.mostLiked: (limit) => Api.mostLikedMovies(1, limit),
   Query.rated: (limit) => Api.ratedMovies(1, limit),
+  Query.year: (limit) => Api.thisYearMovies(1, limit),
 };
 
 final Map<Query, Map<String, dynamic>> parseQuery = {

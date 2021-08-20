@@ -8,11 +8,17 @@ part './dropdown.dart';
 part './order.dart';
 
 class Filter {
-  final order = OrderBloc();
-  final sort = SortBloc();
-  final genre = GenreBloc();
-  final quality = QualityBloc();
-  final rating = RatingBloc();
+  final order = OrderCubit();
+  final sort = SortCubit();
+  final genre = GenreCubit();
+  final quality = QualityCubit();
+  final rating = RatingCubit();
+
+  // final order = OrderCubit();
+  // final sort = SortCubit();
+  // final genre = GenreCubit();
+  // final quality = QualityCubit();
+  // final rating = RatingCubit();
 
   void reset() {
     order.reset();
@@ -23,6 +29,7 @@ class Filter {
   }
 
   Map<String, dynamic> get values {
+    print('getting filter values');
     final params = {
       'order_by': order.state ? 'desc' : null,
       'sort': sort.state,
@@ -30,6 +37,7 @@ class Filter {
       'quality': quality.state,
       'rating': rating.state.round().toString(),
     };
+    print('mapping filter values');
     return params..removeWhere((_, value) => value == null || value == '0');
   }
 }

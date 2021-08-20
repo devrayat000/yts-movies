@@ -4,7 +4,6 @@ import 'package:ytsmovies/bloc/theme_bloc.dart';
 // import 'package:ytsmovies/theme/index.dart';
 
 import '../../utils/tweens.dart';
-import '../../theme/index.dart';
 
 class ThemeToggleButton extends StatefulWidget {
   const ThemeToggleButton({Key? key}) : super(key: key);
@@ -34,7 +33,7 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
   void didChangeDependencies() {
     // if (context.read<AppTheme>().current == ThemeMode.dark)
     //   _controller.forward();
-    if (context.read<ThemeBloc>().state == DarkTheme.dark)
+    if (context.read<ThemeCubit>().state.brightness == Brightness.dark)
       _controller.forward();
 
     super.didChangeDependencies();
@@ -49,7 +48,7 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
         } else if (_controller.status == AnimationStatus.completed) {
           _controller.reverse();
         }
-        context.read<ThemeBloc>().toggle();
+        context.read<ThemeCubit>().toggle();
       },
       enableFeedback: false,
       icon: AnimatedBuilder(

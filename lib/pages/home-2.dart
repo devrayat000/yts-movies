@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:async/async.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:hive_flutter/adapters.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:ytsmovies/utils/error_handler.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 
 import '../mock/movie.dart';
@@ -29,51 +31,57 @@ class _HomePage2State extends State<HomePage2>
     with PageStorageCache<HomePage2> {
   late http.Client _client;
 
-  late CancelableOperation<List<Movie>> _latestFuture;
-  late CancelableOperation<List<Movie>> _hdFuture;
-  late CancelableOperation<List<Movie>> _ratedFuture;
+  late Future<List<Movie>> _latestFuture;
+  late Future<List<Movie>> _hdFuture;
+  late Future<List<Movie>> _ratedFuture;
 
   final _latestCache = AsyncCache<List<Movie>>(Duration(hours: 1));
   final _hdCache = AsyncCache<List<Movie>>(Duration(hours: 1));
   final _ratedCache = AsyncCache<List<Movie>>(Duration(hours: 1));
 
-  static const _historyKey = 'search-history';
+  // static const _historyKey = 'search-history';
+
+  Future<List<List<Movie>>> get _fetcher async {
+    try {
+      final f = await Future.wait([
+        _fetch(_latestCache, Query.latest).onError(errorHandler),
+        _fetch(_hdCache, Query.hd).onError(errorHandler),
+        _fetch(_ratedCache, Query.year).onError(errorHandler),
+      ], eagerError: true, cleanUp: (list) {
+        print(list);
+      });
+
+      final a = await compute(
+        _waitFutures,
+        [f[0], f[1], f[2]],
+        debugLabel: 'fetchers',
+      );
+      return a;
+    } catch (e, s) {
+      return errorHandler(e, s);
+    }
+  }
 
   @override
   void initState() {
     _client = http.Client();
 
-    _latestFuture = CancelableOperation<List<Movie>>.fromFuture(
-        _fetch(_latestCache, Query.latest));
-    _hdFuture = CancelableOperation<List<Movie>>.fromFuture(Future.delayed(
-      Duration(seconds: 2),
-      () async {
-        final data = await _fetch(_hdCache, Query.hd);
-        final box = await Hive.openBox<Movie>('textBox');
-        if (Hive.isAdapterRegistered(1) && Hive.isAdapterRegistered(2)) {
-          print('registered');
-          final a = data[0];
-          await box.put('test1', a);
-          final movie = box.get('test1');
-          print(movie?.title);
-          print(movie);
-        }
-        return data;
-      },
-    ));
-    _ratedFuture = CancelableOperation<List<Movie>>.fromFuture(Future.delayed(
-      Duration(seconds: 4),
-      () => _fetch(_ratedCache, Query.rated),
-    ));
+    final a = _fetcher.catchError((e, s) {
+      print(e);
+      print(s);
+    });
+
+    _latestFuture =
+        a.then<List<Movie>>((value) => value[0]).onError(errorHandler);
+    _hdFuture = a.then<List<Movie>>((value) => value[1]).onError(errorHandler);
+    _ratedFuture =
+        a.then<List<Movie>>((value) => value[2]).onError(errorHandler);
 
     super.initState();
   }
 
   @override
   void deactivate() {
-    _latestFuture.cancel();
-    _hdFuture.cancel();
-    _ratedFuture.cancel();
     super.deactivate();
   }
 
@@ -82,72 +90,62 @@ class _HomePage2State extends State<HomePage2>
     Query query = Query.latest,
   ]) async {
     try {
-      final storedMovies = getCache<List<Movie>>(key: '$query');
-
-      if (storedMovies != null) {
-        return storedMovies;
-      }
-      Future<http.Response> _resolver;
       final _limit = 10;
-
-      _resolver = resolvers[query]!(_limit);
+      Future<http.Response> _resolver = resolvers[query]!(_limit);
 
       final movies = await _cacher.fetch(() async {
         try {
           final response = await _resolver;
-          final movies =
-              await compute(MyGlobals.parseResponseData, response.body);
+
+          final movies = MyGlobals.parseResponseData(response.body);
+
           if (movies == null) {
-            throw NotFoundException('No movie found! 😥');
+            return Future.error(CustomException('No movie found! 😥'));
           } else {
             return movies;
           }
-        } catch (e) {
-          throw e;
+        } catch (e, s) {
+          return errorHandler(e, s);
         }
       });
-      setCache<List<Movie>>(key: '$query', data: movies);
 
       return movies;
-    } catch (e) {
-      print(e);
-      throw e;
+    } catch (e, s) {
+      return errorHandler(e, s);
     }
   }
 
   void _routeHandler<T>(PageRoute<T> Function(BuildContext) handler) async {
     try {
       await Navigator.of(context).push(handler(context));
-    } catch (e) {
+    } catch (e, s) {
       print(e);
+      print(s);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return PageStorage(
-      bucket: MyGlobals.bucket,
-      child: Scaffold(
-        appBar: const HomeAppbar(),
-        body: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: ScrollConfiguration(
-            behavior: MaterialScrollBehavior(),
+    return Scaffold(
+      appBar: const HomeAppbar(),
+      body: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: ScrollConfiguration(
+          behavior: MaterialScrollBehavior(),
+          child: HeroMode(
+            enabled: false,
             child: ListView(
               children: [
                 InkWell(
                   onTap: () async {
                     try {
-                      final _history = Hive.box<String>(MyBoxs.searchHistoryBox)
-                          .values
-                          .toList();
-
-                      showSearch(
+                      await showSearch(
                         context: context,
-                        delegate: MovieSearchDelegate(history: _history),
+                        delegate: MovieSearchDelegate(),
                       );
-                    } catch (e) {
+                    } catch (e, s) {
                       print(e);
+                      print(s);
                     }
                   },
                   child: const SearchTile(),
@@ -158,7 +156,7 @@ class _HomePage2State extends State<HomePage2>
                   key: const PageStorageKey('latest-movies-intro'),
                   title: Text('Latest Movies'),
                   titleTextStyle: Theme.of(context).textTheme.headline5,
-                  future: _latestFuture.value,
+                  future: _latestFuture,
                   itemBuilder: (context, movie, i) {
                     return _image(movie);
                   },
@@ -169,7 +167,7 @@ class _HomePage2State extends State<HomePage2>
                   key: const PageStorageKey('4k-movies-intro'),
                   title: Text('4K Movies'),
                   titleTextStyle: Theme.of(context).textTheme.headline5,
-                  future: _hdFuture.value,
+                  future: _hdFuture,
                   itemBuilder: (context, movie, i) {
                     return _image(movie);
                   },
@@ -180,7 +178,7 @@ class _HomePage2State extends State<HomePage2>
                   key: const PageStorageKey('rated-movies-intro'),
                   title: Text('Highly Rated Movies'),
                   titleTextStyle: Theme.of(context).textTheme.headline5,
-                  future: _ratedFuture.value,
+                  future: _ratedFuture,
                   itemBuilder: (context, movie, i) {
                     return _image(movie);
                   },
@@ -203,8 +201,9 @@ class _HomePage2State extends State<HomePage2>
               context,
               argument: MovieArg(movie),
             ));
-          } catch (e) {
+          } catch (e, s) {
             print(e);
+            print(s);
           }
         },
         enableFeedback: false,
@@ -254,5 +253,15 @@ class _HomePage2State extends State<HomePage2>
   void dispose() {
     _client.close();
     super.dispose();
+  }
+
+  static Future<List<List<Movie>>> _waitFutures(
+      Iterable<List<Movie>> futures) async {
+    final xx = await Future.wait<List<Movie>>(
+      futures.map((e) => Future.value(e).onError(errorHandler)),
+      eagerError: true,
+    );
+    print(xx);
+    return xx;
   }
 }

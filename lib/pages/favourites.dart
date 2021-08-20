@@ -1,22 +1,22 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ytsmovies/bloc/api/index.dart';
 
-import '../providers/mamus_provider.dart';
 import '../widgets/gas_page.dart';
 
 class FavouratesPage extends StatelessWidget {
   static const routeName = '/favourites-movies';
   const FavouratesPage({Key? key}) : super(key: key);
 
-  static final _mamuKey = GlobalKey<MamuMovieListpageState<FavouriteMamus>>();
+  static final _mamuKey = GlobalKey<MamuMovieListpageState<FavouriteApiBloc>>();
 
   @override
   Widget build(BuildContext context) {
-    return MamuMovieListpage<FavouriteMamus>(
+    return MamuMovieListpage<FavouriteApiBloc>(
       key: _mamuKey,
       label: 'favourite',
-      handler: FavouriteMamus(),
+      handler: FavouriteApiBloc(),
       appBar: AppBar(
         title: Text(
           'Favourite Movies',

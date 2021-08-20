@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:ytsmovies/utils/tweens.dart';
+import 'package:hive/hive.dart';
+import 'package:ytsmovies/utils/constants.dart';
 
-import '../../providers/mamus_provider.dart';
+import 'package:ytsmovies/utils/tweens.dart';
+// import '../../providers/mamus_provider.dart';
 import '../../mock/movie.dart';
 
 class FavouriteButton extends StatefulWidget {
@@ -25,6 +26,8 @@ class _FavouriteButtonState extends State<FavouriteButton>
 
   late Animation<double> _sizeAnimation, _iconAnimation;
 
+  final _favBox = Hive.box<Movie>(MyBoxs.favouriteBox);
+
   @override
   void initState() {
     _controller = AnimationController(
@@ -44,21 +47,23 @@ class _FavouriteButtonState extends State<FavouriteButton>
   }
 
   void _favHandler() {
-    final fav = context.read<FavouriteMamus>();
-    if (fav.isLiked(widget._movie.id.toString())) {
+    final isLiked = _favBox.containsKey(widget._movie.id);
+    if (isLiked) {
       _controller.forward();
     }
   }
 
   void _addToFavourite() async {
-    final favmovie = context.read<FavouriteMamus>();
+    // final favmovie = context.read<FavouriteMamus>();
+    final movie = widget._movie;
+    final isLiked = _favBox.containsKey(movie.id);
     try {
-      if (favmovie.isLiked(widget._movie.id.toString())) {
+      if (isLiked) {
         _controller.reverse();
-        await favmovie.unlike(widget._movie.id.toString());
+        await _favBox.delete(movie.id);
       } else {
         _controller.forward();
-        await favmovie.like(widget._movie);
+        await _favBox.put(movie.id, movie);
       }
     } catch (e) {
       print(e);

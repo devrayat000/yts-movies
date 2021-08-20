@@ -56,7 +56,7 @@ class SearchSuggestions extends StatelessWidget {
             print('done');
             if (snapshot.hasError) {
               final error = snapshot.error;
-              if (error is NotFoundException) {
+              if (error is CustomException) {
                 return _text(context, error.message);
               }
               return _text(context, error.toString());
@@ -79,8 +79,9 @@ class SearchSuggestions extends StatelessWidget {
                           context,
                           argument: MovieArg(_movie),
                         ));
-                      } catch (e) {
+                      } catch (e, s) {
                         print(e);
+                        print(s);
                       } finally {
                         onTap?.call();
                       }

@@ -1,7 +1,10 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 class PopupFloatingActionButton extends StatefulWidget {
-  final void Function()? onScrollToTop;
+  final FutureOr<void> Function()? onScrollToTop;
   const PopupFloatingActionButton({Key? key, this.onScrollToTop})
       : super(key: key);
 
@@ -13,18 +16,13 @@ class PopupFloatingActionButton extends StatefulWidget {
 class PopupFloatingActionButtonState extends State<PopupFloatingActionButton>
     with SingleTickerProviderStateMixin<PopupFloatingActionButton> {
   late final AnimationController _animationController;
-  late final Animation<Offset> _animation;
-  static final _tween = Tween<Offset>(begin: Offset(0, -5), end: Offset(0, 5));
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 500),
-    );
-    _animation = _animationController.drive(
-      _tween.chain(CurveTween(curve: Curves.easeInOut)),
+      duration: Duration(seconds: 1),
     );
   }
 
@@ -32,16 +30,22 @@ class PopupFloatingActionButtonState extends State<PopupFloatingActionButton>
   Widget build(BuildContext context) {
     return FloatingActionButton(
       tooltip: 'Scroll To Top',
-      child: TranslateTransition(
-        offset: _animation,
+      child: AnimatedBuilder(
+        animation: _animationController,
         child: const Icon(Icons.arrow_upward),
+        builder: (context, child) {
+          final val = _animationController.value;
+          final angle = val * 2 * pi;
+          return Transform.translate(
+            offset: Offset(0, sin(angle) * 5.0),
+            child: child!,
+          );
+        },
       ),
       backgroundColor: const Color.fromRGBO(120, 120, 120, 1),
       onPressed: () async {
         try {
-          if (widget.onScrollToTop != null) {
-            widget.onScrollToTop!();
-          }
+          await widget.onScrollToTop?.call();
         } catch (e) {
           print(e);
         }
@@ -51,7 +55,7 @@ class PopupFloatingActionButtonState extends State<PopupFloatingActionButton>
 
   // Public methods
   void start() {
-    _animationController.repeat(reverse: true);
+    _animationController.repeat();
   }
 
   void stop() {
@@ -60,28 +64,7 @@ class PopupFloatingActionButtonState extends State<PopupFloatingActionButton>
 
   @override
   void dispose() {
-    // widget.controller.dispose();
     _animationController.dispose();
     super.dispose();
-  }
-}
-
-class TranslateTransition extends AnimatedWidget {
-  final Widget? _child;
-  const TranslateTransition({
-    Key? key,
-    required Animation<Offset> offset,
-    Widget? child,
-  })  : _child = child,
-        super(key: key, listenable: offset);
-
-  Animation<Offset> get _progress => listenable as Animation<Offset>;
-
-  @override
-  Widget build(BuildContext context) {
-    return Transform.translate(
-      offset: _progress.value,
-      child: _child,
-    );
   }
 }

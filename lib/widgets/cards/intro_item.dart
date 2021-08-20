@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ytsmovies/mock/movie.dart';
 import 'package:ytsmovies/utils/constants.dart';
+import 'package:ytsmovies/utils/exceptions.dart';
 import 'package:ytsmovies/widgets/buttons/show_more_button.dart';
 
 class IntroItem extends StatelessWidget {
@@ -79,6 +80,10 @@ class ItemBuilder extends StatelessWidget {
       future: future,
       // initialData: [],
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          print(snapshot.error);
+          print(snapshot.error.runtimeType);
+        }
         switch (snapshot.connectionState) {
           case ConnectionState.none:
             return Center(child: Text('😓'));
@@ -87,8 +92,14 @@ class ItemBuilder extends StatelessWidget {
             return MyGlobals.kCircularLoading;
           case ConnectionState.done:
             if (snapshot.hasError) {
+              final error = snapshot.error!;
+              if (error is CustomException) {
+                return Center(
+                  child: Text(error.message),
+                );
+              }
               return Center(
-                child: Text(snapshot.error.toString()),
+                child: Text(error.toString()),
               );
             }
             if (snapshot.hasData) {
