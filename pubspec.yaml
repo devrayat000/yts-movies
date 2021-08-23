@@ -31,14 +31,14 @@ dependencies:
   # animated_text_kit: ^4.2.1
   # flutter_animated_theme: ^1.0.0
   # shared_preferences: ^2.0.6
-  flutter_localized_locales: ^2.0.2
+  # flutter_localized_locales: ^2.0.2
   url_launcher: ^6.0.9
 
   # sqflite: ^2.0.0+3
   hive: ^2.0.4
-  hive_flutter:
+  # hive_flutter:
 
-  path: ^1.8.0
+  # path: ^1.8.0
   path_provider:
   async:
   infinite_scroll_pagination: ^3.1.0
@@ -59,6 +59,10 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  test:
+  bloc_test:
+  mockito:
+
   flutter_launcher_icons:
   flutter_native_splash:
   change_app_package_name: ^1.0.0
@@ -85,9 +89,6 @@ flutter:
   assets:
     - images/logo-imdb.png
     - images/logo-YTS.png
-    - images/stars.png
-    - images/4k.png
-    - images/4khd/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

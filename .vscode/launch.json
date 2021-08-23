@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Flutter (router)",
+            "type": "dart",
+            "request": "launch",
+            "program": "lib/main_2.dart",
+            "flutterMode": "debug",
+        },
+        {
             "name": "ytsmovies",
             "request": "launch",
             "type": "dart"

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 
 // flutter pub global run devtools --appSizeBase=C:\Users\rayat\.flutter-devtools\apk-code-size-analysis_02.json
@@ -22,6 +23,9 @@ import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/mock/movie.dart';
 import 'package:ytsmovies/src/mock/torrent.dart';
 import 'package:ytsmovies/src/pages/home-2.dart';
+import 'package:ytsmovies/src/router/delegate.dart';
+import 'package:ytsmovies/src/router/parser.dart';
+import 'package:ytsmovies/src/router/state.dart';
 import 'package:ytsmovies/src/utils/constants.dart';
 import 'package:ytsmovies/src/utils/repository.dart';
 import './src/widgets/unfocus.dart';
@@ -52,6 +56,7 @@ class MyWidgetsBinding extends WidgetsFlutterBinding {
 void main() {
   runZonedGuarded(
     () async {
+      Timeline.startSync('init');
       // The constructor sets global variables.
       MyWidgetsBinding.ensureInitialized();
 
@@ -82,6 +87,7 @@ void main() {
             statusBarBrightness: Brightness.dark,
           ),
         );
+        Timeline.finishSync();
 
         runApp(MultiProvider(
           providers: [
@@ -115,42 +121,83 @@ void main() {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final appTheme = AppTheme();
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final AppTheme appTheme;
+  late ThemeData systemTheme;
+  late final RootRouteState routeState;
+  late final RootRouterDelegate routerDelegate;
+  late final RootRouteInfoParser parser;
+
+  @override
+  void initState() {
+    appTheme = AppTheme();
+    systemTheme = appTheme.light;
+
+    routeState = RootRouteState();
+
+    routerDelegate = RootRouterDelegate(
+      appState: routeState,
+      repository: context.read<MovieRepository>(),
+    );
+    parser = RootRouteInfoParser();
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
     final brightness = MediaQuery.platformBrightnessOf(context);
-    final systemTheme =
+    systemTheme =
         brightness == Brightness.dark ? appTheme.dark : appTheme.light;
+    super.didChangeDependencies();
+  }
 
-    return BlocProvider(
-      create: (context) => ThemeCubit(
-        initialTheme: systemTheme,
-        theme: appTheme,
-      ),
-      child: Unfocus(
-        child: PageStorage(
-          bucket: MyGlobals.bucket,
-          child: MaterialApp(
-            title: 'YTS Movies',
-            debugShowCheckedModeBanner: false,
-            home: HomePage2(),
-            scrollBehavior: const CupertinoScrollBehavior(),
-            restorationScopeId: 'com.movies.yts',
-            builder: (BuildContext context, Widget? widget) {
-              Widget error = Text('...Unexpected error occurred...');
-              if (widget is Scaffold || widget is Navigator)
-                error = Scaffold(body: Center(child: error));
-              ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
+  @override
+  Widget build(BuildContext context) {
+    return RootRouteScope(
+      key: ValueKey('route-scope'),
+      notifier: routeState,
+      child: BlocProvider(
+        create: (context) => ThemeCubit(
+          initialTheme: systemTheme,
+          theme: appTheme,
+        ),
+        child: Unfocus(
+          child: PageStorage(
+            bucket: MyGlobals.bucket,
+            child: MaterialApp.router(
+              title: 'YTS Movies',
+              debugShowCheckedModeBanner: false,
+              routerDelegate: routerDelegate,
+              routeInformationParser: parser,
+              scrollBehavior: const CupertinoScrollBehavior(),
+              restorationScopeId: 'com.movies.yts',
+              builder: (BuildContext context, Widget? widget) {
+                Widget error = Text('...Unexpected error occurred...');
+                if (widget is Scaffold || widget is Navigator)
+                  error = Scaffold(body: Center(child: error));
+                ErrorWidget.builder =
+                    (FlutterErrorDetails errorDetails) => error;
 
-              return _Screen(child: widget!);
-            },
+                return _Screen(child: widget!);
+              },
+            ),
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    routerDelegate.dispose();
+    super.dispose();
   }
 }
 
