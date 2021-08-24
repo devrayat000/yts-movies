@@ -1,9 +1,4 @@
-import 'dart:math';
-
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import 'package:ytsmovies/src/bloc/theme_bloc.dart';
+part of app_widget.button;
 
 class ThemeToggleButton extends StatefulWidget {
   const ThemeToggleButton({Key? key}) : super(key: key);

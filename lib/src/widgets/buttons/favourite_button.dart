@@ -1,10 +1,4 @@
-import 'dart:math';
-
-import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-
-import 'package:ytsmovies/src/utils/constants.dart';
-import '../../mock/movie.dart';
+part of app_widget.button;
 
 class FavouriteButton extends StatefulWidget {
   final bool? isFavourite;
@@ -61,8 +55,8 @@ class _FavouriteButtonState extends State<FavouriteButton>
         _controller.forward();
         await _favBox.put(movie.id, movie);
       }
-    } catch (e) {
-      print(e);
+    } catch (e, s) {
+      log(e.toString(), error: e, stackTrace: s);
     }
   }
 

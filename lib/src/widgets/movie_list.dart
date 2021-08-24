@@ -1,12 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-
-import '../bloc/api/index.dart';
-import '../mock/movie.dart';
-import '../utils/constants.dart';
-import '../utils/exceptions.dart';
-import '../widgets/cards/movie_card.dart';
-import '../widgets/cards/shimmer_movie_card.dart';
+part of app_widgets;
 
 class MovieList<T extends ApiBloc> extends StatelessWidget {
   final WidgetBuilder? noItemBuilder;
@@ -25,7 +17,7 @@ class MovieList<T extends ApiBloc> extends StatelessWidget {
       shrinkWrapFirstPageIndicators: true,
       builderDelegate: PagedChildBuilderDelegate(
         itemBuilder: (context, item, index) {
-          return MovieCard(
+          return MovieCard.list(
             key: ValueKey('movie-${item.id}'),
             movie: item,
           );

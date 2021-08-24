@@ -1,14 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
-import 'package:ytsmovies/src/mock/movie.dart';
-import 'package:ytsmovies/src/mock/movie_data.dart';
-import 'package:ytsmovies/src/utils/api.dart';
-import 'package:ytsmovies/src/utils/enums.dart';
-import 'package:ytsmovies/src/utils/error_handler.dart';
-import 'package:ytsmovies/src/utils/exceptions.dart';
-import 'package:ytsmovies/src/utils/isolates.dart';
-import 'package:ytsmovies/src/utils/urls.dart';
+import 'package:ytsmovies/src/mock/index.dart';
+import 'package:ytsmovies/src/utils/index.dart';
 
 abstract class Repository {
   Apis get api;

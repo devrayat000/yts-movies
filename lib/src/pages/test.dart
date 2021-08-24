@@ -1,7 +1,4 @@
-import 'package:flutter/cupertino.dart' show CupertinoNavigationBarBackButton;
-import 'package:flutter/material.dart';
-
-import 'package:ytsmovies/src/theme/index.dart';
+part of app_pages;
 
 class ImageAppbar extends StatefulWidget {
   const ImageAppbar({Key? key}) : super(key: key);

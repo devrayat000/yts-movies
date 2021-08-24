@@ -1,11 +1,4 @@
-import 'package:flutter/material.dart';
-
-import '../../mock/movie.dart';
-import '../../pages/index.dart';
-import '../../utils/exceptions.dart';
-import '../../utils/locales.dart';
-import '../future_builder.dart';
-import '../image.dart';
+part of app_widget.search;
 
 class SearchSuggestions extends StatelessWidget {
   final Future<List<Object>> future;
@@ -50,8 +43,7 @@ class SearchSuggestions extends StatelessWidget {
                         argument: MovieArg(item),
                       ));
                     } catch (e, s) {
-                      print(e);
-                      print(s);
+                      log(e.toString(), error: e, stackTrace: s);
                     } finally {
                       onTap?.call();
                     }

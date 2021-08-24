@@ -1,9 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import 'package:ytsmovies/src/bloc/theme_bloc.dart';
-import 'package:ytsmovies/src/widgets/cards/shimmer_shapes.dart';
-import '../shimmer.dart';
+part of app_widget_card;
 
 class MovieListShimmer extends StatelessWidget {
   const MovieListShimmer({Key? key}) : super(key: key);

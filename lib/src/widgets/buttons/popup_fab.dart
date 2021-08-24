@@ -1,8 +1,4 @@
-import 'dart:async';
-import 'dart:math';
-
-import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+part of app_widget.button;
 
 class PopupFloatingActionButton extends StatefulWidget {
   final FutureOr<void> Function()? onScrollToTop;
@@ -66,8 +62,8 @@ class PopupFloatingActionButtonState extends State<PopupFloatingActionButton>
             onPressed: () async {
               try {
                 await widget.onScrollToTop?.call();
-              } catch (e) {
-                print(e);
+              } catch (e, s) {
+                log(e.toString(), error: e, stackTrace: s);
               }
             },
           ),

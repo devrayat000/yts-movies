@@ -1,10 +1,4 @@
-import 'package:flutter/cupertino.dart' show CupertinoScrollbar;
-import 'package:flutter/material.dart';
-
-import 'package:ytsmovies/src/mock/movie.dart';
-import 'package:ytsmovies/src/utils/exceptions.dart';
-import 'package:ytsmovies/src/widgets/buttons/show_more_button.dart';
-import 'package:ytsmovies/src/widgets/future_builder.dart';
+part of app_widget_card;
 
 class IntroItem extends StatelessWidget {
   final void Function()? onAction;

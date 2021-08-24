@@ -1,10 +1,4 @@
-import 'package:flutter/cupertino.dart' show CupertinoSlider, CupertinoSwitch;
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
-import 'package:ytsmovies/src/utils/lists.dart' as list;
-
-import '../../bloc/filter/index.dart';
+part of app_widgets;
 
 class _FilterItem extends StatelessWidget {
   final Widget title;

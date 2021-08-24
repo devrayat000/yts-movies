@@ -1,5 +1,4 @@
-import 'package:ytsmovies/src/utils/enums.dart';
-import '../utils/enums.dart' as enums;
+part of app_router;
 
 abstract class BasePath {
   const BasePath();
@@ -12,7 +11,7 @@ class HomePath extends BasePath {
 }
 
 class OtherPath extends BasePath {
-  final StaticPage page;
+  final enums.StaticPage page;
   const OtherPath(this.page);
 
   @override

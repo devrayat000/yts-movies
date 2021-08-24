@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+part of app_widgets;
 
 class Unfocus extends StatelessWidget {
   final Widget child;

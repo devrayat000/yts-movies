@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+part of app_widgets;
 
 class MyFutureBuilder<T> extends StatelessWidget {
   final Future<T>? future;

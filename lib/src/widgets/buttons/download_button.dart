@@ -1,8 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-import '../../utils/exceptions.dart';
-import '../../mock/torrent.dart' as m;
+part of app_widget.button;
 
 class DownloadButton extends StatefulWidget {
   final m.Torrent _torrent;
@@ -37,8 +33,9 @@ class _DownloadButtonState extends State<DownloadButton> {
         throw TorrentClientException('No torrent client found');
       }
       await launch(mg);
-    } on TorrentClientException catch (e) {
-      print(e.message);
+    } on TorrentClientException catch (e, s) {
+      log(e.toString(), error: e, stackTrace: s);
+
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         key: widget.key,
         action: SnackBarAction(
@@ -54,8 +51,8 @@ class _DownloadButtonState extends State<DownloadButton> {
           borderRadius: BorderRadius.circular(4.0),
         ),
       ));
-    } catch (e) {
-      print(e);
+    } catch (e, s) {
+      log(e.toString(), error: e, stackTrace: s);
     }
   }
 }

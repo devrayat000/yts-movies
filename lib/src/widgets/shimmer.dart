@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+part of app_widgets;
 
 class Shimmer extends StatefulWidget {
   static ShimmerState? of(BuildContext context) {

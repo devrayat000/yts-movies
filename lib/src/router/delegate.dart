@@ -1,11 +1,4 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-
-import 'package:ytsmovies/src/router/navigator.dart';
-import 'package:ytsmovies/src/router/path.dart';
-import 'package:ytsmovies/src/router/state.dart';
-import 'package:ytsmovies/src/utils/repository.dart';
+part of app_router;
 
 class RootRouterDelegate extends RouterDelegate<BasePath>
     with ChangeNotifier, PopNavigatorRouterDelegateMixin<BasePath> {

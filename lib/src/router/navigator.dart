@@ -1,10 +1,4 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:ytsmovies/src/pages/home-2.dart';
-import 'package:ytsmovies/src/pages/movie.dart';
-import 'package:ytsmovies/src/router/pages.dart';
-import 'package:ytsmovies/src/router/state.dart';
-import 'package:ytsmovies/src/utils/constants.dart';
+part of app_router;
 
 class RootNavigator extends StatelessWidget {
   final GlobalKey<NavigatorState> navigatorKey;

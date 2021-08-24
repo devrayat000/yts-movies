@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+part of app_widget_card;
 
 class SliverActionBar extends StatelessWidget {
   final bool floating;

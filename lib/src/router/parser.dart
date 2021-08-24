@@ -1,8 +1,4 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
-
-import 'package:ytsmovies/src/router/path.dart';
-import '../utils/enums.dart' as enums;
+part of app_router;
 
 class RootRouteInfoParser extends RouteInformationParser<BasePath> {
   @override

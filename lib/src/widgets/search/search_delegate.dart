@@ -1,5 +1,7 @@
-// import 'package:async/async.dart';
+library app_widget.search;
+
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:async/async.dart';
 import 'package:flutter/material.dart';
@@ -7,16 +9,20 @@ import 'package:hive/hive.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:provider/provider.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/cupertino.dart';
 
-import 'package:ytsmovies/src/bloc/filter/index.dart';
-import 'package:ytsmovies/src/utils/constants.dart';
-import 'package:ytsmovies/src/utils/error_handler.dart';
-import 'package:ytsmovies/src/utils/exceptions.dart';
-import 'package:ytsmovies/src/utils/repository.dart';
-import 'package:ytsmovies/src/widgets/search/animation.dart';
-import 'package:ytsmovies/src/widgets/search/suggestions.dart';
-import 'package:ytsmovies/src/mock/movie_data.dart';
 import 'package:ytsmovies/src/mock/movie.dart';
+import 'package:ytsmovies/src/widgets/cards/index.dart';
+import 'package:ytsmovies/src/widgets/index.dart';
+import '../../mock/movie.dart';
+import '../../pages/index.dart';
+import 'package:ytsmovies/src/bloc/filter/index.dart';
+import 'package:ytsmovies/src/utils/index.dart';
+import 'package:ytsmovies/src/mock/index.dart';
+
+part 'suggestions.dart';
+part 'results.dart';
+part 'animation.dart';
 
 class MovieSearchDelegate extends SearchDelegate<Movie?> {
   final MovieRepository _repo;
@@ -79,8 +85,7 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
       await _setHistory();
       super.showResults(context);
     } catch (e, s) {
-      print(e);
-      print(s);
+      log(e.toString(), error: e, stackTrace: s);
     }
   }
 
@@ -108,8 +113,8 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
         print('cancelled');
       });
       print('fun');
-    } catch (e) {
-      print(e);
+    } catch (e, s) {
+      log(e.toString(), error: e, stackTrace: s);
     } finally {
       // _debouncer = Timer(Duration(milliseconds: 500), () {
       super.showSuggestions(context);
@@ -127,8 +132,8 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
           print(_params);
           _controller.refresh();
           await showResults(context);
-        } catch (e) {
-          print(e);
+        } catch (e, s) {
+          log(e.toString(), error: e, stackTrace: s);
         }
       },
     );
@@ -149,8 +154,8 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
         try {
           query = _history[i];
           await showResults(context);
-        } catch (e) {
-          print(e);
+        } catch (e, s) {
+          log(e.toString(), error: e, stackTrace: s);
         }
       },
       onTap: () => _setHistory(),
@@ -188,12 +193,10 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
         await _box.add(_newHistory);
       }
     } on HiveError catch (e, s) {
-      print(e);
-      print(s);
+      log(e.toString(), error: e, stackTrace: s);
       throw CustomException(e.message, e.stackTrace);
     } catch (e, s) {
-      print(e);
-      print(s);
+      log(e.toString(), error: e, stackTrace: s);
     }
   }
 }

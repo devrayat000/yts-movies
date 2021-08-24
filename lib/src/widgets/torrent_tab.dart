@@ -1,8 +1,4 @@
-import 'package:flutter/widgets.dart';
-import 'package:flutter/painting.dart';
-import 'package:flutter/material.dart';
-
-import '../mock/torrent.dart';
+part of app_widgets;
 
 class TorrentTab extends StatelessWidget {
   final List<Torrent> _torrents;

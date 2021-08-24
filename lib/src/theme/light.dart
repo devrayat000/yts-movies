@@ -1,4 +1,4 @@
-part of './index.dart';
+part of app_theme;
 
 extension LightTheme on AppTheme {
   ThemeData get light {

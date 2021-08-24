@@ -1,10 +1,4 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-
-import 'package:ytsmovies/src/mock/movie.dart';
-import 'package:ytsmovies/src/widgets/cards/actionbar.dart';
-import 'package:ytsmovies/src/widgets/movie_list.dart';
+part of app_widget.search;
 
 class SearchResults extends StatelessWidget {
   final PagingController<int, Movie> controller;

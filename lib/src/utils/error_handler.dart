@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 import 'dart:isolate';
 
@@ -33,9 +34,8 @@ Exception errorParser(Object? error, StackTrace stackTrace) {
   } else {
     message = 'Unknown error occured!';
   }
-  print(error);
-  print(stackTrace);
 
+  log(message, error: error, stackTrace: stackTrace, time: DateTime.now());
   return CustomException(message, stackTrace);
 }
 

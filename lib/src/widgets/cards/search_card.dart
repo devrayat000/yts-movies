@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+part of app_widget_card;
 
 class SearchTile extends StatelessWidget {
   const SearchTile({Key? key}) : super(key: key);

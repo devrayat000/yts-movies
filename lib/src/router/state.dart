@@ -1,17 +1,13 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
-
-import 'package:ytsmovies/src/mock/movie.dart';
-import 'package:ytsmovies/src/utils/enums.dart';
+part of app_router;
 
 class RootRouteState with ChangeNotifier {
-  StaticPage? staticPage;
+  enums.StaticPage? staticPage;
   List<Movie> movies = [];
   RootRouteState() {
     print('state initialized');
   }
 
-  void push(StaticPage page) {
+  void push(enums.StaticPage page) {
     staticPage = page;
     notifyListeners();
   }

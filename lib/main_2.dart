@@ -9,56 +9,26 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:ytsmovies/src/bloc/api/index.dart';
-// import 'package:sqflite/sqflite.dart';
-// import 'package:path/path.dart' ;
 
-// import 'package:ytsmovies/pages/test.dart';
+import 'package:ytsmovies/src/bloc/api/index.dart';
 import 'package:ytsmovies/src/bloc/filter/index.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
-import 'package:ytsmovies/src/mock/movie.dart';
-import 'package:ytsmovies/src/mock/torrent.dart';
-import 'package:ytsmovies/src/pages/home-2.dart';
-import 'package:ytsmovies/src/router/delegate.dart';
-import 'package:ytsmovies/src/router/parser.dart';
-import 'package:ytsmovies/src/router/state.dart';
-import 'package:ytsmovies/src/utils/constants.dart';
-import 'package:ytsmovies/src/utils/repository.dart';
-import './src/widgets/unfocus.dart';
-import './src/theme/index.dart';
-
-class MyImageCache extends ImageCache {
-  @override
-  void clear() {
-    print('Clearing cache!');
-    super.clear();
-  }
-}
-
-class MyWidgetsBinding extends WidgetsFlutterBinding {
-  @override
-  ImageCache? get imageCache => createImageCache();
-
-  @override
-  ImageCache createImageCache() {
-    imageCache?.maximumSize = 999;
-    return MyImageCache();
-  }
-
-  static WidgetsBinding ensureInitialized() =>
-      WidgetsFlutterBinding.ensureInitialized();
-}
+import 'package:ytsmovies/src/mock/index.dart';
+import 'package:ytsmovies/src/router/index.dart';
+import 'package:ytsmovies/src/utils/index.dart';
+import 'package:ytsmovies/src/widgets.dart';
+import 'package:ytsmovies/src/theme/index.dart';
 
 void main() {
   runZonedGuarded(
     () async {
       Timeline.startSync('init');
       // The constructor sets global variables.
-      MyWidgetsBinding.ensureInitialized();
+      WidgetsFlutterBinding.ensureInitialized();
 
       FlutterError.onError = (FlutterErrorDetails details) {
         FlutterError.dumpErrorToConsole(details);
@@ -66,7 +36,7 @@ void main() {
       };
 
       Hive
-        ..init((await getTemporaryDirectory()).path)
+        ..initFlutter()
         ..registerAdapter(MovieAdapter())
         // ..registerAdapter(MovieAdapter())
         ..registerAdapter(TorrentAdapter());
@@ -108,14 +78,16 @@ void main() {
           child: const MyApp(),
         ));
       } catch (e, s) {
-        print(e);
-        print(s);
+        log(
+          e.toString(),
+          error: e,
+          stackTrace: s,
+        );
         rethrow;
       }
     },
     (Object error, StackTrace stack) {
-      print(error);
-      print(stack);
+      log(error.toString(), error: error, stackTrace: stack);
       // exit(1);
     },
   );

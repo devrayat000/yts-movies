@@ -1,12 +1,5 @@
+part of app_widget.search;
 // import 'package:async/async.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-
-import 'package:ytsmovies/src/widgets/drawers/filter_drawer.dart';
-import 'package:ytsmovies/src/widgets/search/results.dart';
-import '../../mock/movie.dart';
 
 class SearchResultPage extends StatefulWidget {
   final PagingController<int, Movie> controller;

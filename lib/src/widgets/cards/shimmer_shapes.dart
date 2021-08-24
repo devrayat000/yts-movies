@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+part of app_widget_card;
 
 class ShimmerShape extends StatelessWidget {
   late final _ShimmerShapes _shape;

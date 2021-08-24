@@ -1,10 +1,4 @@
-import 'dart:async';
-
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:ytsmovies/src/bloc/api/index.dart';
-
-import '../widgets/gas_page.dart';
+part of app_pages;
 
 class FavouratesPage extends StatelessWidget {
   static const routeName = '/favourites-movies';

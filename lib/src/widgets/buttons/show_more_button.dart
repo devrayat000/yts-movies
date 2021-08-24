@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+part of app_widget.button;
 
 class ShowMoreButton extends StatelessWidget {
   final void Function()? onPressed;

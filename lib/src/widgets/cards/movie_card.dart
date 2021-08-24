@@ -1,10 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:ytsmovies/src/router/state.dart';
-
-import '../buttons/favourite_button.dart';
-import '../../pages/index.dart';
-import '../image.dart';
-import '../../mock/movie.dart';
+part of app_widget_card;
 
 class MovieCard extends StatelessWidget {
   final Movie _movie;

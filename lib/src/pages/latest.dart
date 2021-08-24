@@ -1,8 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:ytsmovies/src/bloc/api/index.dart';
-
-import '../widgets/gas_page.dart';
+part of app_pages;
 
 class LatestMoviesPage extends StatelessWidget {
   static const routeName = '/latest-movies';

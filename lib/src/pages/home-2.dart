@@ -1,23 +1,6 @@
-import 'dart:async';
+part of app_pages;
 
-import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:ytsmovies/src/router/state.dart';
-import 'package:ytsmovies/src/utils/enums.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
-
-import 'package:ytsmovies/src/utils/error_handler.dart';
-import 'package:ytsmovies/src/utils/repository.dart';
-import '../mock/movie.dart';
-import 'index.dart';
-import '../utils/mixins.dart';
-import '../widgets/search/search_delegate.dart';
-import '../widgets/cards/intro_item.dart';
-import '../widgets/image.dart';
-import '../widgets/appbars/home_appbar.dart';
-import '../widgets/cards/search_card.dart';
 
 class HomePage2 extends StatefulWidget {
   static const routeName = '/';

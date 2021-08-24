@@ -1,10 +1,7 @@
-import 'package:flutter/widgets.dart';
-import 'package:ytsmovies/src/pages/favourites.dart';
-import 'package:ytsmovies/src/pages/latest.dart';
-import 'package:ytsmovies/src/utils/enums.dart';
+part of app_router;
 
 class OtherPage extends Page {
-  final StaticPage page;
+  final enums.StaticPage page;
   const OtherPage({
     LocalKey? key,
     String? name,
@@ -23,13 +20,13 @@ class OtherPage extends Page {
       settings: this,
       pageBuilder: (context, _, __) {
         switch (this.page) {
-          case StaticPage.LATEST:
+          case enums.StaticPage.LATEST:
             return const LatestMoviesPage();
-          case StaticPage.HD:
+          case enums.StaticPage.HD:
             return const HD4KMoviesPage();
-          case StaticPage.RATED:
+          case enums.StaticPage.RATED:
             return const RatedMoviesPage();
-          case StaticPage.FAVOURITES:
+          case enums.StaticPage.FAVOURITES:
             return const FavouratesPage();
           default:
             throw UnimplementedError();

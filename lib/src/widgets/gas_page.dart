@@ -1,17 +1,4 @@
-import 'dart:async';
-
-import 'package:flutter/cupertino.dart' show CupertinoScrollbar;
-import 'package:flutter/rendering.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-
-import '../bloc/api/index.dart';
-import '../widgets/movie_list.dart';
-import '../mock/movie.dart';
-import './cards/actionbar.dart';
-import './buttons/popup_fab.dart';
-import '../utils/mixins.dart';
+part of app_widgets;
 
 class MamuMovieListpage<T extends ApiCubit> extends StatefulWidget {
   final List<Widget> actions;

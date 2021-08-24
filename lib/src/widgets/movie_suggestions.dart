@@ -1,16 +1,4 @@
-// import 'dart:convert' show jsonDecode;
-
-import 'dart:async';
-
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import '../utils/exceptions.dart';
-import '../utils/repository.dart';
-import '../widgets/future_builder.dart';
-import './cards/movie_card.dart' show MovieCard;
-import '../mock/movie.dart';
+part of app_widgets;
 
 class Suggestions extends StatefulWidget {
   final String id;

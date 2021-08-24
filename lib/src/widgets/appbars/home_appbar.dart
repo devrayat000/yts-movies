@@ -1,8 +1,4 @@
-import 'package:flutter/material.dart';
-
-import 'package:ytsmovies/src/router/state.dart';
-import 'package:ytsmovies/src/utils/enums.dart';
-import 'package:ytsmovies/src/widgets/buttons/theme_button.dart';
+part of app_widgets;
 // import '../../pages/favourites.dart';
 
 class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
@@ -27,8 +23,8 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
             try {
               // await Navigator.of(context).push(Routes.favourites(context));
               RootRouteScope.of(context).push(StaticPage.FAVOURITES);
-            } catch (e) {
-              print(e);
+            } catch (e, s) {
+              log(e.toString(), error: e, stackTrace: s);
             }
           },
           icon: const Icon(

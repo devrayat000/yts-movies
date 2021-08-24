@@ -1,24 +1,5 @@
-import 'dart:developer';
-import 'dart:ui';
+part of app_pages;
 
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_breadcrumb/flutter_breadcrumb.dart'
-    show BreadCrumb, BreadCrumbItem;
-// import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
-import 'package:ytsmovies/src/utils/constants.dart';
-
-import '../utils/locales.dart' show all_native_names;
-import '../widgets/image.dart';
-import '../widgets/torrent_tab.dart';
-import '../widgets/movie_suggestions.dart';
-import '../widgets/buttons/download_button.dart' show DownloadButton;
-import '../widgets/buttons/favourite_button.dart';
-import '../mock/movie.dart';
-
-@immutable
 class MoviePage extends StatefulWidget {
   static const routeName = '/details';
 
