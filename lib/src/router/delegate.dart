@@ -16,13 +16,7 @@ class RootRouterDelegate extends RouterDelegate<BasePath>
 
   @override
   BasePath? get currentConfiguration {
-    if (appState.staticPage != null) {
-      return OtherPath(appState.staticPage!);
-    }
-    if (appState.movies.length > 0) {
-      return DetailsPath(appState.movies.last.id);
-    }
-    return HomePath();
+    return appState.path;
   }
 
   @override

@@ -12,8 +12,8 @@ class _SuggestionsState extends State<Suggestions> {
   late Future<List<Movie>> _future;
   @override
   void initState() {
-    _future = context.read<MovieRepository>().movieSuggestions(widget.id);
     super.initState();
+    _future = context.read<MovieRepository>().movieSuggestions(widget.id);
   }
 
   @override

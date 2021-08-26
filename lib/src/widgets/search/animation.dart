@@ -69,10 +69,10 @@ class _SearchResultPageState extends State<SearchResultPage>
 
   @override
   void dispose() {
-    super.dispose();
     _controller.dispose();
     _scrollController.dispose();
     _backdrop.dispose();
+    super.dispose();
   }
 
   void _toggle() async {

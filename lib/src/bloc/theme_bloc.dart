@@ -4,10 +4,13 @@ import 'package:ytsmovies/src/theme/index.dart';
 
 class ThemeCubit extends HydratedCubit<ThemeData> {
   final AppTheme theme;
-  ThemeCubit({
-    required this.theme,
-    required ThemeData initialTheme,
-  }) : super(initialTheme);
+  ThemeCubit({required this.theme}) : super(theme.light);
+
+  void sync(Brightness mode) {
+    if (mode != Brightness.dark) {
+      this.emit(this.theme.dark);
+    }
+  }
 
   void toggle() {
     this.emit(

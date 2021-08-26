@@ -12,8 +12,8 @@ import 'package:hive/hive.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:ytsmovies/src/bloc/api/index.dart';
 
+import 'package:ytsmovies/src/bloc/api/index.dart';
 import 'package:ytsmovies/src/bloc/filter/index.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/mock/index.dart';
@@ -93,6 +93,11 @@ void main() {
               // updateShouldNotify: (old, newI) => old.values != newI.values,
               dispose: (context, filter) => filter.reset(),
             ),
+            BlocProvider<ThemeCubit>(
+              create: (context) => ThemeCubit(
+                theme: AppTheme(),
+              ),
+            ),
           ],
           child: const MyApp(),
         ));
@@ -115,34 +120,23 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appTheme = AppTheme();
-    final brightness = MediaQuery.platformBrightnessOf(context);
-    final systemTheme =
-        brightness == Brightness.dark ? appTheme.dark : appTheme.light;
+    return Unfocus(
+      child: PageStorage(
+        bucket: MyGlobals.bucket,
+        child: MaterialApp(
+          title: 'YTS Movies',
+          debugShowCheckedModeBanner: false,
+          home: HomePage2(),
+          scrollBehavior: const CupertinoScrollBehavior(),
+          restorationScopeId: 'com.movies.yts',
+          builder: (BuildContext context, Widget? widget) {
+            Widget error = Text('...Unexpected error occurred...');
+            if (widget is Scaffold || widget is Navigator)
+              error = Scaffold(body: Center(child: error));
+            ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
 
-    return BlocProvider(
-      create: (context) => ThemeCubit(
-        initialTheme: systemTheme,
-        theme: appTheme,
-      ),
-      child: Unfocus(
-        child: PageStorage(
-          bucket: MyGlobals.bucket,
-          child: MaterialApp(
-            title: 'YTS Movies',
-            debugShowCheckedModeBanner: false,
-            home: HomePage2(),
-            scrollBehavior: const CupertinoScrollBehavior(),
-            restorationScopeId: 'com.movies.yts',
-            builder: (BuildContext context, Widget? widget) {
-              Widget error = Text('...Unexpected error occurred...');
-              if (widget is Scaffold || widget is Navigator)
-                error = Scaffold(body: Center(child: error));
-              ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
-
-              return _Screen(child: widget!);
-            },
-          ),
+            return _Screen(child: widget!);
+          },
         ),
       ),
     );
@@ -155,6 +149,9 @@ class _Screen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = MediaQuery.platformBrightnessOf(context);
+    context.read<ThemeCubit>().sync(brightness);
+
     return BlocBuilder<ThemeCubit, ThemeData>(
       builder: (context, theme) {
         return AnimatedTheme(

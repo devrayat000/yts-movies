@@ -60,7 +60,7 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
 
   @override
   void dispose() {
-    super.dispose();
     _controller.dispose();
+    super.dispose();
   }
 }

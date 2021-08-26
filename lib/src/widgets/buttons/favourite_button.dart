@@ -22,12 +22,11 @@ class _FavouriteButtonState extends State<FavouriteButton>
 
   @override
   void initState() {
+    super.initState();
     _controller = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 300),
     );
-
-    super.initState();
   }
 
   @override
@@ -86,10 +85,10 @@ class _FavouriteButtonState extends State<FavouriteButton>
 
   @override
   void didUpdateWidget(covariant FavouriteButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
     if (oldWidget._movie != widget._movie) {
       _favHandler();
     }
-    super.didUpdateWidget(oldWidget);
   }
 
   @override

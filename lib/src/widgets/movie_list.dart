@@ -1,6 +1,6 @@
 part of app_widgets;
 
-class MovieList<T extends ApiBloc> extends StatelessWidget {
+class MovieList<T extends ApiCubit> extends StatelessWidget {
   final WidgetBuilder? noItemBuilder;
   final PagingController<int, Movie> controller;
 

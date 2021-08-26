@@ -59,23 +59,27 @@ void main() {
         );
         Timeline.finishSync();
 
+        final repo = MovieRepository(favouriteBox);
+
         runApp(MultiProvider(
           providers: [
             Provider<MovieRepository>(
-              create: (context) => MovieRepository(favouriteBox),
+              create: (context) => repo,
               dispose: (context, repo) => repo.dispose(),
             ),
             Provider<ApiProvider>(create: (context) {
-              final repository = context.read<MovieRepository>();
-              return ApiProvider(repository);
+              return ApiProvider(repo);
             }),
             Provider<Filter>(
               create: (context) => Filter(),
               // updateShouldNotify: (old, newI) => old.values != newI.values,
               dispose: (context, filter) => filter.reset(),
             ),
+            BlocProvider<ThemeCubit>(
+              create: (context) => ThemeCubit(theme: AppTheme()),
+            ),
           ],
-          child: const MyApp(),
+          child: MyApp(repository: repo),
         ));
       } catch (e, s) {
         log(
@@ -94,40 +98,28 @@ void main() {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+  final MovieRepository repository;
+  const MyApp({Key? key, required this.repository}) : super(key: key);
 
   @override
   _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  late final AppTheme appTheme;
-  late ThemeData systemTheme;
   late final RootRouteState routeState;
   late final RootRouterDelegate routerDelegate;
   late final RootRouteInfoParser parser;
 
   @override
   void initState() {
-    appTheme = AppTheme();
-    systemTheme = appTheme.light;
-
+    super.initState();
     routeState = RootRouteState();
 
     routerDelegate = RootRouterDelegate(
       appState: routeState,
-      repository: context.read<MovieRepository>(),
+      repository: widget.repository,
     );
     parser = RootRouteInfoParser();
-    super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    final brightness = MediaQuery.platformBrightnessOf(context);
-    systemTheme =
-        brightness == Brightness.dark ? appTheme.dark : appTheme.light;
-    super.didChangeDependencies();
   }
 
   @override
@@ -135,31 +127,24 @@ class _MyAppState extends State<MyApp> {
     return RootRouteScope(
       key: ValueKey('route-scope'),
       notifier: routeState,
-      child: BlocProvider(
-        create: (context) => ThemeCubit(
-          initialTheme: systemTheme,
-          theme: appTheme,
-        ),
-        child: Unfocus(
-          child: PageStorage(
-            bucket: MyGlobals.bucket,
-            child: MaterialApp.router(
-              title: 'YTS Movies',
-              debugShowCheckedModeBanner: false,
-              routerDelegate: routerDelegate,
-              routeInformationParser: parser,
-              scrollBehavior: const CupertinoScrollBehavior(),
-              restorationScopeId: 'com.movies.yts',
-              builder: (BuildContext context, Widget? widget) {
-                Widget error = Text('...Unexpected error occurred...');
-                if (widget is Scaffold || widget is Navigator)
-                  error = Scaffold(body: Center(child: error));
-                ErrorWidget.builder =
-                    (FlutterErrorDetails errorDetails) => error;
+      child: Unfocus(
+        child: PageStorage(
+          bucket: MyGlobals.bucket,
+          child: MaterialApp.router(
+            title: 'YTS Movies',
+            debugShowCheckedModeBanner: false,
+            routerDelegate: routerDelegate,
+            routeInformationParser: parser,
+            scrollBehavior: const CupertinoScrollBehavior(),
+            // restorationScopeId: 'com.movies.yts',
+            builder: (BuildContext context, Widget? widget) {
+              Widget error = Text('...Unexpected error occurred...');
+              if (widget is Scaffold || widget is Navigator)
+                error = Scaffold(body: Center(child: error));
+              ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
 
-                return _Screen(child: widget!);
-              },
-            ),
+              return _Screen(child: widget!);
+            },
           ),
         ),
       ),
@@ -179,6 +164,9 @@ class _Screen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = MediaQuery.platformBrightnessOf(context);
+    context.read<ThemeCubit>().sync(brightness);
+
     return BlocBuilder<ThemeCubit, ThemeData>(
       builder: (context, theme) {
         return AnimatedTheme(

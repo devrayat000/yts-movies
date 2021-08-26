@@ -37,6 +37,15 @@ class PopupFloatingActionButtonState extends State<PopupFloatingActionButton>
   }
 
   @override
+  void didUpdateWidget(covariant PopupFloatingActionButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.scrollController != widget.scrollController) {
+      oldWidget.scrollController.removeListener(_popupFabScrollListener);
+      widget.scrollController.addListener(_popupFabScrollListener);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _fabScaleController,
@@ -46,28 +55,33 @@ class PopupFloatingActionButtonState extends State<PopupFloatingActionButton>
         builder: (context, child) {
           final val = _animationController.value;
           final angle = val * 2 * pi;
-          return Transform.translate(
-            offset: Offset(0, sin(angle) * 5.0),
-            child: child!,
-          );
+          return val == 0
+              ? const SizedBox.shrink()
+              : Transform.translate(
+                  offset: Offset(0, sin(angle) * 5.0),
+                  child: child!,
+                );
         },
       ),
       builder: (context, child) {
-        return Transform.scale(
-          scale: _fabScaleController.value,
-          child: FloatingActionButton(
-            tooltip: 'Scroll To Top',
-            child: child!,
-            backgroundColor: const Color.fromRGBO(120, 120, 120, 1),
-            onPressed: () async {
-              try {
-                await widget.onScrollToTop?.call();
-              } catch (e, s) {
-                log(e.toString(), error: e, stackTrace: s);
-              }
-            },
-          ),
-        );
+        final val = _fabScaleController.value;
+        return val == 0
+            ? const SizedBox.shrink()
+            : Transform.scale(
+                scale: val,
+                child: FloatingActionButton(
+                  tooltip: 'Scroll To Top',
+                  child: child!,
+                  backgroundColor: const Color.fromRGBO(120, 120, 120, 1),
+                  onPressed: () async {
+                    try {
+                      await widget.onScrollToTop?.call();
+                    } catch (e, s) {
+                      log(e.toString(), error: e, stackTrace: s);
+                    }
+                  },
+                ),
+              );
       },
     );
   }

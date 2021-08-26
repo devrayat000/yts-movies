@@ -38,6 +38,7 @@ class _MamuMovieListpageState<T extends ApiCubit>
 
   @override
   void initState() {
+    super.initState();
     // _listKey = ValueKey('${widget.label}-movies');
     // _pageKey = ValueKey('${widget.label}-movie-page');
 
@@ -54,16 +55,15 @@ class _MamuMovieListpageState<T extends ApiCubit>
     _pagingController.addPageRequestListener(widget.handler.getMovies);
 
     _pagingController.addStatusListener(_pageStatusListener);
-    super.initState();
   }
 
   @override
   void didUpdateWidget(covariant MamuMovieListpage<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
     if (oldWidget.handler != widget.handler) {
       _pagingController.removePageRequestListener(oldWidget.handler.getMovies);
       _pagingController.addPageRequestListener(widget.handler.getMovies);
     }
-    super.didUpdateWidget(oldWidget);
   }
 
   @override

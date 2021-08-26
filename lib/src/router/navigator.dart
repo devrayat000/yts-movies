@@ -30,24 +30,7 @@ class RootNavigator extends StatelessWidget {
             ),
         ],
       ],
-      onPopPage: (route, result) {
-        if (!route.didPop(result)) return false;
-
-        final page = route.settings as Page;
-
-        if (routeState.movies.length > 0) {
-          final lastMovie = routeState.movies.last;
-          if (page.key == ValueKey(lastMovie.id)) {
-            routeState.popDetails();
-          }
-        }
-
-        if (routeState.staticPage != null &&
-            page.key == ValueKey(routeState.staticPage)) {
-          routeState.pop();
-        }
-        return true;
-      },
+      onPopPage: routeState.pagePopHandler,
     );
   }
 }
