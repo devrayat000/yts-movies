@@ -40,12 +40,12 @@ class MovieRepository extends Repository {
       if (movies.length == 0 || movies == null) {
         throw CustomException('No movies found 😥');
       }
-      return MovieData(
+      return SynchronousFuture(MovieData(
         limit: 1,
         movieCount: 1,
         movies: movies.toList(),
         pageNumber: 1,
-      );
+      ));
     } catch (e, s) {
       return errorHandler(e, s);
     }

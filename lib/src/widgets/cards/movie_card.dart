@@ -1,4 +1,4 @@
-part of app_widget_card;
+part of app_widgets.card;
 
 class MovieCard extends StatelessWidget {
   final Movie _movie;
@@ -39,10 +39,6 @@ class MovieCard extends StatelessWidget {
 
   void _viewDetails(BuildContext context) async {
     try {
-      // await Navigator.of(context).push(Routes.details(
-      //   context,
-      //   argument: MovieArg(_movie),
-      // ));
       RootRouteScope.of(context).pushDetails(_movie);
     } catch (e) {
       print(e);
@@ -206,7 +202,10 @@ class _Title extends StatelessWidget {
         : Theme.of(context).textTheme.headline5;
     return Text.rich(
       TextSpan(
-        text: language != 'en' ? '[${language.toUpperCase()}] ' : '',
+        // ignore: unnecessary_null_comparison
+        text: language != 'en' && language != '' && language != null
+            ? '[${language.toUpperCase()}] '
+            : '',
         style: theme?.copyWith(
           color: Colors.blueGrey[400],
         ),

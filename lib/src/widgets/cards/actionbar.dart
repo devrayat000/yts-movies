@@ -1,4 +1,4 @@
-part of app_widget_card;
+part of app_widgets.card;
 
 class SliverActionBar extends StatelessWidget {
   final bool floating;

@@ -6,8 +6,8 @@ class ThemeCubit extends HydratedCubit<ThemeData> {
   final AppTheme theme;
   ThemeCubit({required this.theme}) : super(theme.light);
 
-  void sync(Brightness mode) {
-    if (mode != Brightness.dark) {
+  void sync(Brightness brightness) {
+    if (brightness == Brightness.dark) {
       this.emit(this.theme.dark);
     }
   }

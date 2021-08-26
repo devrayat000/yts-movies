@@ -92,6 +92,7 @@ class _MamuMovieListpageState<T extends ApiCubit>
             child: BlocListener<ApiCubit, PageState>(
               bloc: widget.handler,
               listener: (context, pageState) {
+                print(pageState);
                 _newPageListener(pageState);
               },
               child: CustomScrollView(

@@ -34,8 +34,9 @@ Exception errorParser(Object? error, StackTrace stackTrace) {
   } else {
     message = 'Unknown error occured!';
   }
-
-  log(message, error: error, stackTrace: stackTrace, time: DateTime.now());
+  if (error! is CustomException) {
+    log(message, error: error, stackTrace: stackTrace, time: DateTime.now());
+  }
   return CustomException(message, stackTrace);
 }
 

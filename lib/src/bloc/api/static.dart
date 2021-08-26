@@ -1,4 +1,4 @@
-part of 'index.dart';
+part of app_bloc.api;
 
 class LatestApiCubit extends ApiCubit {
   LatestApiCubit(MovieRepository _repository) : super(_repository);
@@ -7,14 +7,18 @@ class LatestApiCubit extends ApiCubit {
   Future<void> getMovies(int page) async {
     try {
       final movieData = await repository.latestMovies(page);
-      emit(PageStateSuccess(
+      print(movieData.runtimeType);
+      this.emit(PageStateInitial());
+      this.emit(PageStateSuccess(
         list: movieData.movies!,
         nextPage: ++page,
         isLast: movieData.isLastPage,
       ));
+      print('emitted');
     } catch (e, s) {
-      emit(PageStateError(e, s));
+      this.emit(PageStateError(e, s));
     }
+    return SynchronousFuture(null);
   }
 }
 
@@ -25,14 +29,18 @@ class RatedApiCubit extends ApiCubit {
   Future<void> getMovies(int page) async {
     try {
       final movieData = await repository.ratedMovies(page);
-      emit(PageStateSuccess(
+      print(movieData.runtimeType);
+      this.emit(PageStateInitial());
+      this.emit(PageStateSuccess(
         list: movieData.movies!,
         nextPage: ++page,
         isLast: movieData.isLastPage,
       ));
+      print('emitted');
     } catch (e, s) {
-      emit(PageStateError(e, s));
+      this.emit(PageStateError(e, s));
     }
+    return SynchronousFuture(null);
   }
 }
 
@@ -43,13 +51,16 @@ class HDApiCubit extends ApiCubit {
   Future<void> getMovies(int page) async {
     try {
       final movieData = await repository.hd4kMovies(page);
-      emit(PageStateSuccess(
+      print(movieData.runtimeType);
+      this.emit(PageStateSuccess(
         list: movieData.movies!,
         nextPage: ++page,
         isLast: movieData.isLastPage,
       ));
+      print('emitted');
     } catch (e, s) {
-      emit(PageStateError(e, s));
+      this.emit(PageStateError(e, s));
     }
+    return SynchronousFuture(null);
   }
 }

@@ -1,4 +1,4 @@
-part of app_widget.button;
+part of app_widgets.button;
 
 class FavouriteButton extends StatefulWidget {
   final bool? isFavourite;

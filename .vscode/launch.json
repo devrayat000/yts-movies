@@ -8,7 +8,7 @@
             "name": "Flutter (router)",
             "type": "dart",
             "request": "launch",
-            "program": "lib/main_2.dart",
+            "program": "lib/main.dart",
             "flutterMode": "debug",
         },
         {

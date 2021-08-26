@@ -1,4 +1,4 @@
-part of app_widget_card;
+part of app_widgets.card;
 
 class IntroItem extends StatelessWidget {
   final void Function()? onAction;

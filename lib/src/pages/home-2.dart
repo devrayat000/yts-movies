@@ -49,15 +49,6 @@ class _HomePage2State extends State<HomePage2>
     super.initState();
   }
 
-  void _routeHandler<T>(PageRoute<T> Function(BuildContext) handler) async {
-    try {
-      await Navigator.of(context).push(handler(context));
-    } catch (e, s) {
-      print(e);
-      print(s);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final repo = context.read<MovieRepository>();
@@ -142,10 +133,7 @@ class _HomePage2State extends State<HomePage2>
   Widget _image(Movie movie) => InkWell(
         onTap: () async {
           try {
-            await Navigator.of(context).push(Routes.details(
-              context,
-              argument: MovieArg(movie),
-            ));
+            RootRouteScope.of(context).pushDetails(movie);
           } catch (e, s) {
             print(e);
             print(s);

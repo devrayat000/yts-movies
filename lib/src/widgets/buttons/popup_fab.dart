@@ -1,4 +1,4 @@
-part of app_widget.button;
+part of app_widgets.button;
 
 class PopupFloatingActionButton extends StatefulWidget {
   final FutureOr<void> Function()? onScrollToTop;
@@ -75,7 +75,11 @@ class PopupFloatingActionButtonState extends State<PopupFloatingActionButton>
                   backgroundColor: const Color.fromRGBO(120, 120, 120, 1),
                   onPressed: () async {
                     try {
-                      await widget.onScrollToTop?.call();
+                      await widget.scrollController.animateTo(
+                        0,
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.easeInOutBack,
+                      );
                     } catch (e, s) {
                       log(e.toString(), error: e, stackTrace: s);
                     }

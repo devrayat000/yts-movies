@@ -39,27 +39,27 @@ android {
         main.java.srcDirs += 'src/main/kotlin'
     }
 
-    splits {
+    // splits {
 
-        // Configures multiple APKs based on ABI.
-        abi {
+    //     // Configures multiple APKs based on ABI.
+    //     abi {
 
-            // Enables building multiple APKs per ABI.
-            enable true
+    //         // Enables building multiple APKs per ABI.
+    //         enable false
 
-            // By default all ABIs are included, so use reset() and include to specify that we only
-            // want APKs for x86 and x86_64.
+    //         // By default all ABIs are included, so use reset() and include to specify that we only
+    //         // want APKs for x86 and x86_64.
 
-            // Resets the list of ABIs that Gradle should create APKs for to none.
-            reset()
+    //         // Resets the list of ABIs that Gradle should create APKs for to none.
+    //         reset()
 
-            // Specifies a list of ABIs that Gradle should create APKs for.
-            include "x86", "x86_64", 'armeabi', 'mips', 'mips64', "armeabi-v7a", "arm64-v8a"
+    //         // Specifies a list of ABIs that Gradle should create APKs for.
+    //         include "x86", "x64", "x86_64", 'armeabi', 'mips', 'mips64', "armeabi-v7a", "arm64-v8a", "arm64", "arm"
 
-            // Specifies that we do not want to also generate a universal APK that includes all ABIs.
-            universalApk false
-        }
-    }
+    //         // Specifies that we do not want to also generate a universal APK that includes all ABIs.
+    //         universalApk false
+    //     }
+    // }
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
@@ -86,8 +86,8 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             // Signing with the debug keys for now, so `flutter run --release` works.
-            // signingConfig signingConfigs.debug
-            signingConfig signingConfigs.release
+             signingConfig signingConfigs.debug
+//            signingConfig signingConfigs.release
         }
     }
     buildFeatures {
@@ -101,4 +101,5 @@ flutter {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'androidx.cardview:cardview:1.0.0'
 }

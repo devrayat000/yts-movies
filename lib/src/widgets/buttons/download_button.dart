@@ -1,4 +1,4 @@
-part of app_widget.button;
+part of app_widgets.button;
 
 class DownloadButton extends StatefulWidget {
   final m.Torrent _torrent;

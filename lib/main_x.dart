@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:io';
 
 // flutter pub global run devtools --appSizeBase=C:\Users\rayat\.flutter-devtools\apk-code-size-analysis_02.json
@@ -9,7 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive/hive.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
@@ -18,17 +17,38 @@ import 'package:ytsmovies/src/bloc/api/index.dart';
 import 'package:ytsmovies/src/bloc/filter/index.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/mock/index.dart';
-import 'package:ytsmovies/src/router/index.dart';
+import 'package:ytsmovies/src/pages.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/widgets.dart';
 import 'package:ytsmovies/src/theme/index.dart';
 
+class MyImageCache extends ImageCache {
+  @override
+  void clear() {
+    print('Clearing cache!');
+    super.clear();
+  }
+}
+
+class MyWidgetsBinding extends WidgetsFlutterBinding {
+  @override
+  ImageCache? get imageCache => createImageCache();
+
+  @override
+  ImageCache createImageCache() {
+    imageCache?.maximumSize = 999;
+    return MyImageCache();
+  }
+
+  static WidgetsBinding ensureInitialized() =>
+      WidgetsFlutterBinding.ensureInitialized();
+}
+
 void main() {
   runZonedGuarded(
     () async {
-      Timeline.startSync('init');
       // The constructor sets global variables.
-      WidgetsFlutterBinding.ensureInitialized();
+      MyWidgetsBinding.ensureInitialized();
 
       FlutterError.onError = (FlutterErrorDetails details) {
         FlutterError.dumpErrorToConsole(details);
@@ -36,7 +56,7 @@ void main() {
       };
 
       Hive
-        ..initFlutter()
+        ..init((await getTemporaryDirectory()).path)
         ..registerAdapter(MovieAdapter())
         // ..registerAdapter(MovieAdapter())
         ..registerAdapter(TorrentAdapter());
@@ -57,18 +77,16 @@ void main() {
             statusBarBrightness: Brightness.dark,
           ),
         );
-        Timeline.finishSync();
-
-        final repo = MovieRepository(favouriteBox);
 
         runApp(MultiProvider(
           providers: [
             Provider<MovieRepository>(
-              create: (context) => repo,
+              create: (context) => MovieRepository(favouriteBox),
               dispose: (context, repo) => repo.dispose(),
             ),
             Provider<ApiProvider>(create: (context) {
-              return ApiProvider(repo);
+              final repository = context.read<MovieRepository>();
+              return ApiProvider(repository);
             }),
             Provider<Filter>(
               create: (context) => Filter(),
@@ -76,85 +94,52 @@ void main() {
               dispose: (context, filter) => filter.reset(),
             ),
             BlocProvider<ThemeCubit>(
-              create: (context) => ThemeCubit(theme: AppTheme()),
+              create: (context) => ThemeCubit(
+                theme: AppTheme(),
+              ),
             ),
           ],
-          child: MyApp(repository: repo),
+          child: const MyApp(),
         ));
       } catch (e, s) {
-        log(
-          e.toString(),
-          error: e,
-          stackTrace: s,
-        );
+        print(e);
+        print(s);
         rethrow;
       }
     },
     (Object error, StackTrace stack) {
-      log(error.toString(), error: error, stackTrace: stack);
+      print(error);
+      print(stack);
       // exit(1);
     },
   );
 }
 
-class MyApp extends StatefulWidget {
-  final MovieRepository repository;
-  const MyApp({Key? key, required this.repository}) : super(key: key);
-
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  late final RootRouteState routeState;
-  late final RootRouterDelegate routerDelegate;
-  late final RootRouteInfoParser parser;
-
-  @override
-  void initState() {
-    super.initState();
-    routeState = RootRouteState();
-
-    routerDelegate = RootRouterDelegate(
-      appState: routeState,
-      repository: widget.repository,
-    );
-    parser = RootRouteInfoParser();
-  }
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return RootRouteScope(
-      key: ValueKey('route-scope'),
-      notifier: routeState,
-      child: Unfocus(
-        child: PageStorage(
-          bucket: MyGlobals.bucket,
-          child: MaterialApp.router(
-            title: 'YTS Movies',
-            debugShowCheckedModeBanner: false,
-            routerDelegate: routerDelegate,
-            routeInformationParser: parser,
-            scrollBehavior: const CupertinoScrollBehavior(),
-            // restorationScopeId: 'com.movies.yts',
-            builder: (BuildContext context, Widget? widget) {
-              Widget error = Text('...Unexpected error occurred...');
-              if (widget is Scaffold || widget is Navigator)
-                error = Scaffold(body: Center(child: error));
-              ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
+    return Unfocus(
+      child: PageStorage(
+        bucket: MyGlobals.bucket,
+        child: MaterialApp(
+          title: 'YTS Movies',
+          debugShowCheckedModeBanner: false,
+          home: HomePage2(),
+          scrollBehavior: const CupertinoScrollBehavior(),
+          restorationScopeId: 'com.movies.yts',
+          builder: (BuildContext context, Widget? widget) {
+            Widget error = Text('...Unexpected error occurred...');
+            if (widget is Scaffold || widget is Navigator)
+              error = Scaffold(body: Center(child: error));
+            ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
 
-              return _Screen(child: widget!);
-            },
-          ),
+            return _Screen(child: widget!);
+          },
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    routerDelegate.dispose();
-    super.dispose();
   }
 }
 

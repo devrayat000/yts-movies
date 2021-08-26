@@ -1,4 +1,4 @@
-part of app_widget.button;
+part of app_widgets.button;
 
 class ShowMoreButton extends StatelessWidget {
   final void Function()? onPressed;

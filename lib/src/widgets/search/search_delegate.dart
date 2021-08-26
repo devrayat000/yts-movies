@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:async/async.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
@@ -11,11 +12,8 @@ import 'package:provider/provider.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/cupertino.dart';
 
-import 'package:ytsmovies/src/mock/movie.dart';
-import 'package:ytsmovies/src/widgets/cards/index.dart';
+import 'package:ytsmovies/src/router/index.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
-import '../../mock/movie.dart';
-import '../../pages/index.dart';
 import 'package:ytsmovies/src/bloc/filter/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/mock/index.dart';
@@ -38,6 +36,21 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
   Timer? _debouncer;
 
   List<String> get _history => _box.values.toSet().toList().reversed.toList();
+
+  @override
+  set query(String value) {
+    print(super.query);
+    print(value);
+    if (value != super.query) {
+      super.query = value;
+    }
+  }
+
+  @override
+  void showSuggestions(BuildContext context) {
+    print('showing suggestions');
+    super.showSuggestions(context);
+  }
 
   @override
   List<Widget> buildActions(BuildContext context) {
@@ -63,11 +76,10 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   @override
   Widget buildLeading(BuildContext context) {
-    return IconButton(
+    return BackButton(
       onPressed: () {
         close(context, null);
       },
-      icon: Icon(Icons.arrow_back),
     );
   }
 
@@ -104,25 +116,6 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
   }
 
   @override
-  void showSuggestions(BuildContext context) async {
-    try {
-      _subscriber2?.cancel();
-      _debouncer?.cancel();
-      // _debouncer = null;
-      _subscriber2 = CancelableOperation.fromFuture(_firstMovies, onCancel: () {
-        print('cancelled');
-      });
-      print('fun');
-    } catch (e, s) {
-      log(e.toString(), error: e, stackTrace: s);
-    } finally {
-      // _debouncer = Timer(Duration(milliseconds: 500), () {
-      super.showSuggestions(context);
-      // });
-    }
-  }
-
-  @override
   Widget buildResults(BuildContext context) {
     return SearchResultPage(
       controller: _controller,
@@ -145,11 +138,10 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
     _subscriber2 = CancelableOperation.fromFuture(_firstMovies, onCancel: () {
       print('cancelled');
     });
-    print(_subscriber2.runtimeType);
+
     return SearchSuggestions(
-      future: query.trim().isEmpty
-          ? Future.value(_history)
-          : (_subscriber2?.value ?? Future.value(_history)),
+      history: _history,
+      future: query.trim().isEmpty ? null : _subscriber2?.value,
       onShowHistory: (i) async {
         try {
           query = _history[i];

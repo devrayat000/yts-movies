@@ -1,4 +1,4 @@
-part of 'index.dart';
+part of app_bloc.api;
 
 class FavouriteApiCubit extends ApiCubit {
   FavouriteApiCubit(MovieRepository _repository) : super(_repository);

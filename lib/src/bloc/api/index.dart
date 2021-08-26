@@ -1,13 +1,10 @@
-import 'package:async/async.dart';
+library app_bloc.api;
+
 import 'package:flutter/foundation.dart';
-// import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:bloc/bloc.dart';
 
 import 'package:ytsmovies/src/bloc/api/state.dart';
-import 'package:ytsmovies/src/mock/movie_data.dart';
-import 'package:ytsmovies/src/utils/exceptions.dart';
-import 'package:ytsmovies/src/utils/isolates.dart';
 import 'package:ytsmovies/src/utils/repository.dart';
 
 export 'state.dart';
@@ -36,4 +33,11 @@ abstract class ApiCubit extends Cubit<PageState> {
   ApiCubit(this.repository) : super(PageStateInitial());
 
   Future<void> getMovies(int page);
+
+  @override
+  void onChange(Change<PageState> change) {
+    print('Current: ${change.currentState.runtimeType}\n');
+    print('Next: ${change.nextState.runtimeType}\n');
+    super.onChange(change);
+  }
 }

@@ -1,4 +1,4 @@
-part of 'index.dart';
+part of app_bloc.api;
 
 // class SearchApiBloc extends ApiBloc {
 //   bool _searchInitiated = false;

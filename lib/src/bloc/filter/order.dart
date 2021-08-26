@@ -1,4 +1,4 @@
-part of 'index.dart';
+part of app_bloc.filter;
 
 class OrderEvent {
   final bool value;

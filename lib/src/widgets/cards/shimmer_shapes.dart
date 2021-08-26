@@ -1,4 +1,4 @@
-part of app_widget_card;
+part of app_widgets.card;
 
 class ShimmerShape extends StatelessWidget {
   late final _ShimmerShapes _shape;
