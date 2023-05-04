@@ -12,8 +12,8 @@ import 'package:provider/provider.dart';
 
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/utils/index.dart';
-import '../../mock/movie.dart';
-import '../../mock/torrent.dart' as m;
+import '../../models/movie.dart';
+import '../../models/torrent.dart' as m;
 
 part './download_button.dart';
 part './favourite_button.dart';

@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
-import 'package:ytsmovies/src/mock/movie.dart';
+import 'package:ytsmovies/src/models/movie.dart';
 
 @immutable
 abstract class PageState with EquatableMixin {}

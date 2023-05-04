@@ -65,18 +65,16 @@ class TorrentAdapter extends TypeAdapter<Torrent> {
 // JsonSerializableGenerator
 // **************************************************************************
 
-Torrent _$TorrentFromJson(Map<String, dynamic> json) {
-  return Torrent(
-    url: json['url'] as String,
-    hash: json['hash'] as String,
-    quality: json['quality'] as String,
-    seeds: json['seeds'] as int,
-    peers: json['peers'] as int,
-    size: json['size'] as String,
-    dateUploaded: DateTime.parse(json['date_uploaded'] as String),
-    type: json['type'] as String?,
-  );
-}
+Torrent _$TorrentFromJson(Map<String, dynamic> json) => Torrent(
+      url: json['url'] as String,
+      hash: json['hash'] as String,
+      quality: json['quality'] as String,
+      seeds: json['seeds'] as int,
+      peers: json['peers'] as int,
+      size: json['size'] as String,
+      dateUploaded: DateTime.parse(json['date_uploaded'] as String),
+      type: json['type'] as String?,
+    );
 
 Map<String, dynamic> _$TorrentToJson(Torrent instance) => <String, dynamic>{
       'url': instance.url,

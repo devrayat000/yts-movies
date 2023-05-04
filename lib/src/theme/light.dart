@@ -22,7 +22,7 @@ extension LightTheme on AppTheme {
       ),
       chipTheme: _chip.copyWith(
         backgroundColor: Colors.blueGrey[800],
-        labelStyle: _chip.labelStyle.copyWith(
+        labelStyle: _chip.labelStyle?.copyWith(
           color: Colors.white,
         ),
       ),

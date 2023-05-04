@@ -1,8 +1,10 @@
+import 'dart:developer';
+
 import 'package:equatable/equatable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hive/hive.dart';
-import 'package:ytsmovies/src/mock/cover_image.dart';
-import 'package:ytsmovies/src/mock/torrent.dart';
+import 'package:ytsmovies/src/models/cover_image.dart';
+import 'package:ytsmovies/src/models/torrent.dart';
 import 'package:ytsmovies/src/utils/constants.dart';
 
 part 'movie.g.dart';
@@ -17,7 +19,7 @@ class Movie with EquatableMixin, HiveObjectMixin {
   final String title;
 
   @HiveField(2)
-  final int year;
+  final int? year;
 
   @HiveField(18)
   final double rating;
@@ -35,13 +37,14 @@ class Movie with EquatableMixin, HiveObjectMixin {
   final String language;
 
   @HiveField(7)
-  final String mpaRating;
+  final String? mpaRating;
 
   @HiveField(8)
   final String descriptionFull;
 
   @HiveField(9)
-  final String synopsis;
+  @JsonKey(name: 'description_intro')
+  final String? synopsis;
 
   @HiveField(10)
   final int runtime;
@@ -71,26 +74,29 @@ class Movie with EquatableMixin, HiveObjectMixin {
   Movie({
     required this.id,
     required this.title,
-    required this.year,
     required this.rating,
     required this.backgroundImage,
     required this.url,
     required this.imdbCode,
     required this.language,
-    required this.mpaRating,
     required this.descriptionFull,
-    required this.synopsis,
     required this.runtime,
     required this.genres,
     required this.torrents,
     required this.smallCoverImage,
     required this.mediumCoverImage,
+    this.year,
+    this.synopsis,
+    this.mpaRating,
     this.largeCoverImage,
     this.trailer,
     DateTime? dateUploaded,
   }) : this.dateUploaded = dateUploaded ?? DateTime.now();
 
-  factory Movie.fromJson(Map<String, dynamic> data) => _$MovieFromJson(data);
+  factory Movie.fromJson(Map<String, dynamic> data) {
+    log(data.toString());
+    return _$MovieFromJson(data);
+  }
 
   Map<String, dynamic> toJson() => _$MovieToJson(this);
 

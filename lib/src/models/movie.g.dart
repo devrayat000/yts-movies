@@ -19,20 +19,20 @@ class MovieAdapter extends TypeAdapter<Movie> {
     return Movie(
       id: fields[0] as int,
       title: fields[1] as String,
-      year: fields[2] as int,
       rating: fields[18] as double,
       backgroundImage: fields[3] as String,
       url: fields[4] as String,
       imdbCode: fields[5] as String,
       language: fields[6] as String,
-      mpaRating: fields[7] as String,
       descriptionFull: fields[8] as String,
-      synopsis: fields[9] as String,
       runtime: fields[10] as int,
       genres: (fields[11] as List).cast<String>(),
       torrents: (fields[12] as List).cast<Torrent>(),
       smallCoverImage: fields[13] as String,
       mediumCoverImage: fields[14] as String,
+      year: fields[2] as int?,
+      synopsis: fields[9] as String?,
+      mpaRating: fields[7] as String?,
       largeCoverImage: fields[15] as String?,
       trailer: fields[17] as String?,
       dateUploaded: fields[16] as DateTime?,
@@ -98,33 +98,32 @@ class MovieAdapter extends TypeAdapter<Movie> {
 // JsonSerializableGenerator
 // **************************************************************************
 
-Movie _$MovieFromJson(Map<String, dynamic> json) {
-  return Movie(
-    id: json['id'] as int,
-    title: json['title'] as String,
-    year: json['year'] as int,
-    rating: (json['rating'] as num).toDouble(),
-    backgroundImage: json['background_image'] as String,
-    url: json['url'] as String,
-    imdbCode: json['imdb_code'] as String,
-    language: json['language'] as String,
-    mpaRating: json['mpa_rating'] as String,
-    descriptionFull: json['description_full'] as String,
-    synopsis: json['synopsis'] as String,
-    runtime: json['runtime'] as int,
-    genres: (json['genres'] as List<dynamic>).map((e) => e as String).toList(),
-    torrents: (json['torrents'] as List<dynamic>)
-        .map((e) => Torrent.fromJson(e as Map<String, dynamic>))
-        .toList(),
-    smallCoverImage: json['small_cover_image'] as String,
-    mediumCoverImage: json['medium_cover_image'] as String,
-    largeCoverImage: json['large_cover_image'] as String?,
-    trailer: json['yt_trailer_code'] as String?,
-    dateUploaded: json['date_uploaded'] == null
-        ? null
-        : DateTime.parse(json['date_uploaded'] as String),
-  );
-}
+Movie _$MovieFromJson(Map<String, dynamic> json) => Movie(
+      id: json['id'] as int,
+      title: json['title'] as String,
+      rating: (json['rating'] as num).toDouble(),
+      backgroundImage: json['background_image'] as String,
+      url: json['url'] as String,
+      imdbCode: json['imdb_code'] as String,
+      language: json['language'] as String,
+      descriptionFull: json['description_full'] as String,
+      runtime: json['runtime'] as int,
+      genres:
+          (json['genres'] as List<dynamic>).map((e) => e as String).toList(),
+      torrents: (json['torrents'] as List<dynamic>)
+          .map((e) => Torrent.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      smallCoverImage: json['small_cover_image'] as String,
+      mediumCoverImage: json['medium_cover_image'] as String,
+      year: json['year'] as int?,
+      synopsis: json['description_intro'] as String?,
+      mpaRating: json['mpa_rating'] as String?,
+      largeCoverImage: json['large_cover_image'] as String?,
+      trailer: json['yt_trailer_code'] as String?,
+      dateUploaded: json['date_uploaded'] == null
+          ? null
+          : DateTime.parse(json['date_uploaded'] as String),
+    );
 
 Map<String, dynamic> _$MovieToJson(Movie instance) => <String, dynamic>{
       'id': instance.id,
@@ -137,7 +136,7 @@ Map<String, dynamic> _$MovieToJson(Movie instance) => <String, dynamic>{
       'language': instance.language,
       'mpa_rating': instance.mpaRating,
       'description_full': instance.descriptionFull,
-      'synopsis': instance.synopsis,
+      'description_intro': instance.synopsis,
       'runtime': instance.runtime,
       'genres': instance.genres,
       'torrents': instance.torrents.map((e) => e.toJson()).toList(),

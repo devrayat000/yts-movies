@@ -19,7 +19,7 @@ import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/router/index.dart';
 import 'package:ytsmovies/src/bloc/api/index.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
-import '../mock/index.dart';
+import '../models/index.dart';
 import '../widgets/search/search_delegate.dart';
 
 part 'home-2.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import 'package:ytsmovies/src/mock/index.dart';
+import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 
 abstract class Repository {

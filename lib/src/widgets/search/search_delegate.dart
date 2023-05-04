@@ -16,7 +16,7 @@ import 'package:ytsmovies/src/router/index.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
 import 'package:ytsmovies/src/bloc/filter/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
-import 'package:ytsmovies/src/mock/index.dart';
+import 'package:ytsmovies/src/models/index.dart';
 
 part 'suggestions.dart';
 part 'results.dart';

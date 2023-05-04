@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/pages/index.dart';
-import 'package:ytsmovies/src/mock/movie.dart';
+import 'package:ytsmovies/src/models/movie.dart';
 import '../utils/enums.dart' as enums;
 
 part 'delegate.dart';

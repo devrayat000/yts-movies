@@ -17,7 +17,7 @@ import 'package:ytsmovies/src/app.dart';
 import 'package:ytsmovies/src/bloc/api/index.dart';
 import 'package:ytsmovies/src/bloc/filter/index.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
-import 'package:ytsmovies/src/mock/index.dart';
+import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/theme/index.dart';
 

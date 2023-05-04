@@ -1,6 +1,6 @@
 import 'package:ytsmovies/src/utils/enums.dart' as enums;
 
-import '../mock/label_value.dart';
+import '../models/label_value.dart';
 
 final genres = const [
   LabelValue("All", null),

@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:isolate';
 
-import 'package:ytsmovies/src/mock/movie.dart';
-import 'package:ytsmovies/src/mock/movie_data.dart';
+import 'package:ytsmovies/src/models/movie.dart';
+import 'package:ytsmovies/src/models/movie_data.dart';
 
 class Spawn {
   static List<Movie> parseMovies(List movies) {
