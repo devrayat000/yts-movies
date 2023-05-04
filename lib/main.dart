@@ -4,7 +4,6 @@ import 'dart:io';
 
 // flutter pub global run devtools --appSizeBase=C:\Users\rayat\.flutter-devtools\apk-code-size-analysis_02.json
 
-import 'package:flutter/cupertino.dart' show CupertinoScrollBehavior;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,14 +12,13 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:ytsmovies/src/app.dart';
 
 import 'package:ytsmovies/src/bloc/api/index.dart';
 import 'package:ytsmovies/src/bloc/filter/index.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/mock/index.dart';
-import 'package:ytsmovies/src/router/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
-import 'package:ytsmovies/src/widgets.dart';
 import 'package:ytsmovies/src/theme/index.dart';
 
 void main() {
@@ -79,7 +77,7 @@ void main() {
               create: (context) => ThemeCubit(theme: AppTheme()),
             ),
           ],
-          child: MyApp(repository: repo),
+          child: const YTSApp(),
         ));
       } catch (e, s) {
         log(
@@ -96,89 +94,3 @@ void main() {
     },
   );
 }
-
-class MyApp extends StatefulWidget {
-  final MovieRepository repository;
-  const MyApp({Key? key, required this.repository}) : super(key: key);
-
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  late final RootRouteState routeState;
-  late final RootRouterDelegate routerDelegate;
-  late final RootRouteInfoParser parser;
-
-  @override
-  void initState() {
-    super.initState();
-    routeState = RootRouteState();
-
-    routerDelegate = RootRouterDelegate(
-      appState: routeState,
-      repository: widget.repository,
-    );
-    parser = RootRouteInfoParser();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return RootRouteScope(
-      key: ValueKey('route-scope'),
-      notifier: routeState,
-      child: Unfocus(
-        child: PageStorage(
-          bucket: MyGlobals.bucket,
-          child: MaterialApp.router(
-            title: 'YTS Movies',
-            debugShowCheckedModeBanner: false,
-            routerDelegate: routerDelegate,
-            routeInformationParser: parser,
-            scrollBehavior: const CupertinoScrollBehavior(),
-            // restorationScopeId: 'com.movies.yts',
-            builder: (BuildContext context, Widget? widget) {
-              Widget error = Text('...Unexpected error occurred...');
-              if (widget is Scaffold || widget is Navigator)
-                error = Scaffold(body: Center(child: error));
-              ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
-
-              return _Screen(child: widget!);
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    routerDelegate.dispose();
-    super.dispose();
-  }
-}
-
-class _Screen extends StatelessWidget {
-  final Widget child;
-  const _Screen({Key? key, required this.child}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final brightness = MediaQuery.platformBrightnessOf(context);
-    context.read<ThemeCubit>().sync(brightness);
-
-    return BlocBuilder<ThemeCubit, ThemeData>(
-      builder: (context, theme) {
-        return AnimatedTheme(
-          data: theme,
-          child: child,
-          curve: Curves.easeOutCirc,
-        );
-      },
-      buildWhen: (prev, current) => prev != current,
-    );
-  }
-}
-
-//  keytool -genkey -v -keystore c:\Users\rayat\yts-movies-keystore.jks -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
-
