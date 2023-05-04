@@ -3,7 +3,7 @@ description: A new Flutter project.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -15,16 +15,16 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.0.0+3
+version: 2.0.0+3
 
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: ">=2.19.4 <3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  http: ^0.13.3
-  provider: ^5.0.0
+  http: ^0.13.6
+  provider: ^6.0.5
   flutter_breadcrumb: ^1.0.1
   # page_transition: ^2.0.2
   # animations: ^2.0.1
@@ -32,46 +32,43 @@ dependencies:
   # flutter_animated_theme: ^1.0.0
   # shared_preferences: ^2.0.6
   # flutter_localized_locales: ^2.0.2
-  url_launcher: ^6.0.9
+  url_launcher: ^6.1.10
 
   # sqflite: ^2.0.0+3
-  hive: ^2.0.4
-  hive_flutter:
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
 
   # path: ^1.8.0
-  path_provider:
-  async:
-  infinite_scroll_pagination: ^3.1.0
-  youtube_player_flutter: ^8.0.0
-  cached_network_image: ^3.1.0
+  path_provider: ^2.0.14
+  async: ^2.11.0
+  infinite_scroll_pagination: ^3.2.0
+  youtube_player_flutter: ^8.1.2
+  cached_network_image: ^3.2.3
   # speech_to_text: ^4.2.2
   # flutter_typeahead: ^3.2.0
-  flutter_bloc:
-  hydrated_bloc:
+  flutter_bloc: ^8.1.2
+  hydrated_bloc: ^9.1.0
 
-  freezed_annotation:
+  freezed_annotation: ^2.2.0
   # json_annotation:
-  equatable:
+  equatable: ^2.0.5
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.2
+  cupertino_icons: ^1.0.5
+  chopper: ^6.1.1
+  go_router: ^7.0.0
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  test:
-  bloc_test:
-  mockito:
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.2.19
+  change_app_package_name: ^1.1.0
 
-  flutter_launcher_icons:
-  flutter_native_splash:
-  change_app_package_name: ^1.0.0
-
-  hive_generator:
-  freezed:
-  json_serializable:
-  build_runner:
+  hive_generator: ^2.0.0
+  freezed: ^2.3.3
+  json_serializable: ^6.6.2
+  build_runner: ^2.3.3
+  chopper_generator: ^6.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
