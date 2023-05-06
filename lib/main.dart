@@ -12,10 +12,12 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:ytsmovies/src/api/client.dart';
+import 'package:ytsmovies/src/api/movies.dart';
 import 'package:ytsmovies/src/app.dart';
 
-import 'package:ytsmovies/src/bloc/api/index.dart';
-import 'package:ytsmovies/src/bloc/filter/index.dart';
+// import 'package:ytsmovies/src/bloc/api/index.dart';
+// import 'package:ytsmovies/src/bloc/filter/index.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
@@ -58,21 +60,25 @@ void main() {
         Timeline.finishSync();
 
         final repo = MovieRepository(favouriteBox);
+        final client = await initClient();
 
         runApp(MultiProvider(
           providers: [
-            Provider<MovieRepository>(
-              create: (context) => repo,
-              dispose: (context, repo) => repo.dispose(),
+            // Provider<MovieRepository>(
+            //   create: (context) => repo,
+            //   dispose: (context, repo) => repo.dispose(),
+            // ),
+            RepositoryProvider<MoviesListService>(
+              create: (context) => client.getService<MoviesListService>(),
             ),
-            Provider<ApiProvider>(create: (context) {
-              return ApiProvider(repo);
-            }),
-            Provider<Filter>(
-              create: (context) => Filter(),
-              // updateShouldNotify: (old, newI) => old.values != newI.values,
-              dispose: (context, filter) => filter.reset(),
-            ),
+            // Provider<ApiProvider>(create: (context) {
+            //   return ApiProvider(repo);
+            // }),
+            // Provider<Filter>(
+            //   create: (context) => Filter(),
+            //   // updateShouldNotify: (old, newI) => old.values != newI.values,
+            //   dispose: (context, filter) => filter.reset(),
+            // ),
             BlocProvider<ThemeCubit>(
               create: (context) => ThemeCubit(theme: AppTheme()),
             ),

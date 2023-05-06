@@ -784,6 +784,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.5"
+  squadron:
+    dependency: "direct main"
+    description:
+      name: squadron
+      sha256: "8fdb0f91dd9e2c558369fe532f4f9f9066beb33ae5250299ad63cb73808091ec"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.3.6"
   stack_trace:
     dependency: transitive
     description:

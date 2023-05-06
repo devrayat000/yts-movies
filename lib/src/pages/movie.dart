@@ -290,7 +290,8 @@ class _Screen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(language),
-                              Text(_movie.mpaRating),
+                              if (_movie.mpaRating != null)
+                                Text(_movie.mpaRating!),
                               Chip(
                                 avatar: Image.asset(
                                   'images/logo-imdb.png',
@@ -366,10 +367,11 @@ class _Screen extends StatelessWidget {
                     style: Theme.of(context).textTheme.headline4,
                   ),
                   _space(),
-                  SelectableText(
-                    _movie.synopsis,
-                    style: Theme.of(context).textTheme.headline5,
-                  ),
+                  if (_movie.synopsis != null)
+                    SelectableText(
+                      _movie.synopsis!,
+                      style: Theme.of(context).textTheme.headline5,
+                    ),
                   _space(),
                 ]),
               ),

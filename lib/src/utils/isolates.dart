@@ -11,10 +11,10 @@ class Spawn {
 
   static Map<String, dynamic> decodeJson(String body) => jsonDecode(body);
 
-  static MovieData parseRawBody(String body) {
+  static MovieListData parseRawBody(String body) {
     final respData = jsonDecode(body);
     final data = respData['data'];
-    return MovieData.fromJson(data as Map<String, dynamic>);
+    return MovieListData.fromJson(data as Map<String, dynamic>);
   }
 
   static Movie parseSingleMovie(String body) {

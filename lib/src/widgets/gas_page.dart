@@ -1,8 +1,10 @@
 part of app_widgets;
 
-class MamuMovieListpage<T extends ApiCubit> extends StatefulWidget {
+typedef ApiHandler<T> = Future<Response<T>> Function(int page);
+
+class MamuMovieListpage extends StatefulWidget {
   final List<Widget> actions;
-  final T handler;
+  final ApiHandler<MovieListResponse> handler;
   final PreferredSizeWidget? appBar;
   final String label;
   final Widget? endDrawer;
@@ -19,17 +21,15 @@ class MamuMovieListpage<T extends ApiCubit> extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _MamuMovieListpageState<T> createState() => _MamuMovieListpageState<T>();
+  _MamuMovieListpageState createState() => _MamuMovieListpageState();
 
-  static _MamuMovieListpageState<T>? of<T extends ApiCubit>(
-      BuildContext context) {
-    return context.findAncestorStateOfType<_MamuMovieListpageState<T>>();
+  static _MamuMovieListpageState? of<T extends ApiCubit>(BuildContext context) {
+    return context.findAncestorStateOfType<_MamuMovieListpageState>();
   }
 }
 
-class _MamuMovieListpageState<T extends ApiCubit>
-    extends State<MamuMovieListpage<T>>
-    with PageStorageCache<MamuMovieListpage<T>> {
+class _MamuMovieListpageState extends State<MamuMovieListpage>
+    with PageStorageCache<MamuMovieListpage> {
   late PagingController<int, Movie> _pagingController;
   late ScrollController _scrollController;
 
@@ -52,17 +52,17 @@ class _MamuMovieListpageState<T extends ApiCubit>
     //   _pagingController.appendPage(movies, pageKey);
     // }
 
-    _pagingController.addPageRequestListener(widget.handler.getMovies);
+    _pagingController.addPageRequestListener(widget.handler);
 
     _pagingController.addStatusListener(_pageStatusListener);
   }
 
   @override
-  void didUpdateWidget(covariant MamuMovieListpage<T> oldWidget) {
+  void didUpdateWidget(covariant MamuMovieListpage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.handler != widget.handler) {
-      _pagingController.removePageRequestListener(oldWidget.handler.getMovies);
-      _pagingController.addPageRequestListener(widget.handler.getMovies);
+      _pagingController.removePageRequestListener(oldWidget.handler);
+      _pagingController.addPageRequestListener(widget.handler);
     }
   }
 
@@ -89,30 +89,23 @@ class _MamuMovieListpageState<T extends ApiCubit>
           controller: _scrollController,
           child: RefreshIndicator(
             onRefresh: () => Future.sync(_pagingController.refresh),
-            child: BlocListener<ApiCubit, PageState>(
-              bloc: widget.handler,
-              listener: (context, pageState) {
-                print(pageState);
-                _newPageListener(pageState);
-              },
-              child: CustomScrollView(
-                controller: _scrollController,
-                key: PageStorageKey(widget.label),
-                shrinkWrap: true,
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  if (widget.actions.length != 0)
-                    SliverActionBar(
-                      actions: widget.actions,
-                      floating: true,
-                      snap: true,
-                    ),
-                  MovieList(
-                    controller: _pagingController,
-                    noItemBuilder: widget.noItemBuilder,
+            child: CustomScrollView(
+              controller: _scrollController,
+              key: PageStorageKey(widget.label),
+              shrinkWrap: true,
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                if (widget.actions.length != 0)
+                  SliverActionBar(
+                    actions: widget.actions,
+                    floating: true,
+                    snap: true,
                   ),
-                ],
-              ),
+                MovieList(
+                  controller: _pagingController,
+                  noItemBuilder: widget.noItemBuilder,
+                ),
+              ],
             ),
           ),
         ),

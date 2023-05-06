@@ -32,7 +32,7 @@ class MyImageCache extends ImageCache {
 
 class MyWidgetsBinding extends WidgetsFlutterBinding {
   @override
-  ImageCache? get imageCache => createImageCache();
+  ImageCache get imageCache => createImageCache();
 
   @override
   ImageCache createImageCache() {

@@ -154,7 +154,7 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
     );
   }
 
-  Future<MovieData> _moviesFuture(int page) async {
+  Future<MovieListData> _moviesFuture(int page) async {
     try {
       final _movieData = await _repo.listRawMovies(page, {
         'query_term': query.trim(),

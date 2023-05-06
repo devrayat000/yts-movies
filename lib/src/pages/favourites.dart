@@ -6,17 +6,18 @@ class FavouratesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MamuMovieListpage<FavouriteApiCubit>(
-      label: 'favourite',
-      handler: context.read<ApiProvider>().favouriteMovies,
-      appBar: AppBar(
-        title: Text(
-          'Favourite Movies',
-          style: Theme.of(context).appBarTheme.titleTextStyle,
-        ),
-      ),
-      actions: [],
-    );
+    return Center();
+    // return MamuMovieListpage<FavouriteApiCubit>(
+    //   label: 'favourite',
+    //   handler: context.read<ApiProvider>().favouriteMovies,
+    //   appBar: AppBar(
+    //     title: Text(
+    //       'Favourite Movies',
+    //       style: Theme.of(context).appBarTheme.titleTextStyle,
+    //     ),
+    //   ),
+    //   actions: [],
+    // );
   }
 }
 

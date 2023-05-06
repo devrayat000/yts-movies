@@ -1,4 +1,8 @@
-part of app_pages;
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:ytsmovies/src/api/movies.dart';
+import 'package:ytsmovies/src/utils/enums.dart';
+import 'package:ytsmovies/src/widgets/index.dart';
 
 class LatestMoviesPage extends StatelessWidget {
   static const routeName = '/latest-movies';
@@ -6,9 +10,10 @@ class LatestMoviesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MamuMovieListpage<LatestApiCubit>(
+    return MamuMovieListpage(
       label: 'latest',
-      handler: context.read<ApiProvider>().latestMovies,
+      handler: (page) =>
+          context.read<MoviesListService>().getMovieList(page: page),
       appBar: AppBar(
         title: Text(
           'Latest Movies',
@@ -26,9 +31,12 @@ class HD4KMoviesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MamuMovieListpage<HDApiCubit>(
+    return MamuMovieListpage(
       label: '4k',
-      handler: context.read<ApiProvider>().hdMovies,
+      handler: (page) => context.read<MoviesListService>().getMovieList(
+            page: page,
+            quality: Quality.$2160,
+          ),
       actions: [],
       appBar: AppBar(
         title: Text(
@@ -46,9 +54,12 @@ class RatedMoviesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MamuMovieListpage<RatedApiCubit>(
+    return MamuMovieListpage(
       label: 'rated',
-      handler: context.read<ApiProvider>().ratedMovies,
+      handler: (page) => context.read<MoviesListService>().getMovieList(
+            page: page,
+            minimumRating: 5,
+          ),
       actions: [],
       appBar: AppBar(
         title: Text(

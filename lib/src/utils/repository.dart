@@ -20,7 +20,7 @@ class MovieRepository extends Repository {
     api = MovieApi(urls);
   }
 
-  Future<MovieData> listMovies(Uri url) async {
+  Future<MovieListData> listMovies(Uri url) async {
     try {
       final response = await api.listMovies(url);
       final data = await compute(Spawn.parseRawBody, response.body);
@@ -33,14 +33,14 @@ class MovieRepository extends Repository {
     }
   }
 
-  Future<MovieData> favouriteMovies([int? page]) async {
+  Future<MovieListData> favouriteMovies([int? page]) async {
     try {
       final movies = _favouritesBox.values;
 
       if (movies.length == 0 || movies == null) {
         throw CustomException('No movies found 😥');
       }
-      return SynchronousFuture(MovieData(
+      return SynchronousFuture(MovieListData(
         limit: 1,
         movieCount: 1,
         movies: movies.toList(),
@@ -51,7 +51,7 @@ class MovieRepository extends Repository {
     }
   }
 
-  Future<MovieData> listRawMovies([
+  Future<MovieListData> listRawMovies([
     int? page,
     Map<String, dynamic>? params,
   ]) async {
@@ -67,11 +67,11 @@ class MovieRepository extends Repository {
     }
   }
 
-  Future<MovieData> latestMovies([int? page, int? limit]) {
+  Future<MovieListData> latestMovies([int? page, int? limit]) {
     return listMovies(urls.listMovies(limit: limit, page: page));
   }
 
-  Future<MovieData> hd4kMovies([int? page, int? limit]) {
+  Future<MovieListData> hd4kMovies([int? page, int? limit]) {
     return listMovies(urls.listMovies(
       limit: limit,
       page: page,
@@ -79,7 +79,7 @@ class MovieRepository extends Repository {
     ));
   }
 
-  Future<MovieData> ratedMovies([int? page, int? limit]) {
+  Future<MovieListData> ratedMovies([int? page, int? limit]) {
     return listMovies(urls.listMovies(
       limit: limit,
       page: page,
@@ -88,7 +88,7 @@ class MovieRepository extends Repository {
     ));
   }
 
-  Future<MovieData> mostDownloadedMovies([int? page, int? limit]) {
+  Future<MovieListData> mostDownloadedMovies([int? page, int? limit]) {
     return listMovies(urls.listMovies(
       limit: limit,
       page: page,
@@ -96,7 +96,7 @@ class MovieRepository extends Repository {
     ));
   }
 
-  Future<MovieData> mostLikedMovies([int? page, int? limit]) {
+  Future<MovieListData> mostLikedMovies([int? page, int? limit]) {
     return listMovies(urls.listMovies(
       limit: limit,
       page: page,
@@ -104,7 +104,7 @@ class MovieRepository extends Repository {
     ));
   }
 
-  Future<MovieData> thisYearMovies([int? page, int? limit]) {
+  Future<MovieListData> thisYearMovies([int? page, int? limit]) {
     return listMovies(urls.listMovies(
       limit: limit,
       page: page,
@@ -125,7 +125,7 @@ class MovieRepository extends Repository {
     }
   }
 
-  Future<Map<Query, MovieData>> homePageMovies() async {
+  Future<Map<Query, MovieListData>> homePageMovies() async {
     try {
       final latest = await api.listMovies(urls.listMovies(limit: 10, page: 1));
       final hd = await api.listMovies(urls.listMovies(
@@ -161,7 +161,8 @@ class MovieRepository extends Repository {
     }
   }
 
-  static Map<Query, MovieData> _parseHomePageMovies(Map<Query, String> param) {
+  static Map<Query, MovieListData> _parseHomePageMovies(
+      Map<Query, String> param) {
     return param.map((key, body) {
       return MapEntry(key, Spawn.parseRawBody(body));
     });
