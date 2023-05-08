@@ -5,7 +5,7 @@ class IntroItem extends StatelessWidget {
   final Widget Function(BuildContext, Movie, int) itemBuilder;
   final Widget title;
   final TextStyle? titleTextStyle;
-  final Future<List<Movie>> future;
+  final Future<MovieListResponse> future;
 
   const IntroItem({
     Key? key,
@@ -44,7 +44,7 @@ class IntroItem extends StatelessWidget {
               color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(4.0),
             ),
-            child: MyFutureBuilder<List<Movie>>(
+            child: MyFutureBuilder<MovieListResponse>(
               future: future,
               errorBuilder: (context, error) {
                 if (error is CustomException) {
@@ -56,11 +56,11 @@ class IntroItem extends StatelessWidget {
                   child: Text(error.toString()),
                 );
               },
-              successBuilder: (context, movies) {
+              successBuilder: (context, response) {
                 return ItemBuilder(
                   builder: itemBuilder,
                   onAction: onAction,
-                  items: movies!,
+                  items: response!.data.movies!,
                 );
               },
             ),

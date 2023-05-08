@@ -1,5 +1,8 @@
 import 'package:go_router/go_router.dart';
-import 'package:ytsmovies/src/pages/home-2.dart';
+
+import 'package:ytsmovies/src/models/movie.dart';
+import 'package:ytsmovies/src/pages/home.dart';
+import 'package:ytsmovies/src/pages/movie.dart';
 import 'package:ytsmovies/src/pages/others.dart';
 
 final router = GoRouter(
@@ -7,33 +10,38 @@ final router = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      builder: (context, state) => HomePage2(),
+      builder: (context, state) => const HomePage(),
       routes: [
         GoRoute(
           path: 'latest',
           name: "latest",
-          builder: (context, state) => LatestMoviesPage(),
+          builder: (context, state) => const LatestMoviesPage(),
         ),
         GoRoute(
           path: '4k',
           name: "4k",
-          builder: (context, state) => HD4KMoviesPage(),
+          builder: (context, state) => const HD4KMoviesPage(),
         ),
         GoRoute(
           path: 'rated',
           name: "rated",
-          builder: (context, state) => RatedMoviesPage(),
+          builder: (context, state) => const RatedMoviesPage(),
         ),
         // GoRoute(
         //   path: 'favourites',
         //   builder: (context, state) => FavouratesPage(),
         // ),
-        // GoRoute(
-        //   path: '/movie/:id',
-        //   pageBuilder: (context, state) => MoviePage(
-        //     id: state.params['id']!,
-        //   ),
-        // ),
+        GoRoute(
+          path: 'movie/:id',
+          name: "details",
+          builder: (context, state) {
+            if (state.extra != null && state.extra is Movie) {
+              return MoviePage.withMovie(item: state.extra as Movie);
+            }
+            final id = int.parse(state.pathParameters['id']!);
+            return MoviePage(id: id);
+          },
+        ),
       ],
     ),
   ],

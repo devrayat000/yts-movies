@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ytsmovies/src/api/movies.dart';
-import 'package:ytsmovies/src/api/movies.dart';
+import 'package:ytsmovies/src/bloc/filter/index.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
 import 'package:provider/provider.dart';
@@ -10,31 +10,26 @@ import 'package:ytsmovies/src/utils/index.dart';
 
 // import 'package:shared_preferences/shared_preferences.dart';
 
-class HomePage2 extends StatefulWidget {
+class HomePage extends StatefulWidget {
   static const routeName = '/';
-  const HomePage2({Key? key}) : super(key: key);
+  const HomePage({Key? key}) : super(key: key);
 
   @override
-  HomePage2State createState() => HomePage2State();
+  HomePageState createState() => HomePageState();
 }
 
-class HomePage2State extends State<HomePage2> with PageStorageCache<HomePage2> {
-  Future<List<Movie>> _getLatestMovie() async {
-    final repo = context.read<MoviesClient>();
-    final response = await repo.getMovieList();
-    return response.data.movies ?? [];
-  }
+class HomePageState extends State<HomePage> with PageStorageCache<HomePage> {
+  late final Future<MovieListResponse> _latestMovies;
+  late final Future<MovieListResponse> _hdMovies;
+  late final Future<MovieListResponse> _ratedMovies;
 
-  Future<List<Movie>> _getHDMovie() async {
+  @override
+  void initState() {
+    super.initState();
     final repo = context.read<MoviesClient>();
-    final response = await repo.getMovieList(quality: Quality.$2160);
-    return response.data.movies ?? [];
-  }
-
-  Future<List<Movie>> _getRatedMovie() async {
-    final repo = context.read<MoviesClient>();
-    final response = await repo.getMovieList(minimumRating: 5);
-    return response.data.movies ?? [];
+    _latestMovies = repo.getMovieList();
+    _hdMovies = repo.getMovieList(quality: Quality.$2160);
+    _ratedMovies = repo.getMovieList(minimumRating: 5);
   }
 
   @override
@@ -52,10 +47,12 @@ class HomePage2State extends State<HomePage2> with PageStorageCache<HomePage2> {
                 InkWell(
                   onTap: () async {
                     // try {
-                    //   await showSearch(
-                    //     context: context,
-                    //     delegate: MovieSearchDelegate(repo),
-                    //   );
+                    await showSearch(
+                      context: context,
+                      delegate: MovieSearchDelegate(
+                        repo: context.read<MoviesClient>(),
+                      ),
+                    );
                     // } catch (e, s) {
                     //   print(e);
                     //   print(s);
@@ -69,7 +66,7 @@ class HomePage2State extends State<HomePage2> with PageStorageCache<HomePage2> {
                   key: const PageStorageKey('latest-movies-intro'),
                   title: const Text('Latest Movies'),
                   titleTextStyle: Theme.of(context).textTheme.headlineSmall,
-                  future: _getLatestMovie(),
+                  future: _latestMovies,
                   itemBuilder: (context, movie, i) {
                     return _image(movie);
                   },
@@ -82,7 +79,7 @@ class HomePage2State extends State<HomePage2> with PageStorageCache<HomePage2> {
                   key: const PageStorageKey('4k-movies-intro'),
                   title: const Text('4K Movies'),
                   titleTextStyle: Theme.of(context).textTheme.headlineSmall,
-                  future: _getHDMovie(),
+                  future: _hdMovies,
                   itemBuilder: (context, movie, i) {
                     return _image(movie);
                   },
@@ -95,7 +92,7 @@ class HomePage2State extends State<HomePage2> with PageStorageCache<HomePage2> {
                   key: const PageStorageKey('rated-movies-intro'),
                   title: const Text('Highly Rated Movies'),
                   titleTextStyle: Theme.of(context).textTheme.headlineSmall,
-                  future: _getRatedMovie(),
+                  future: _ratedMovies,
                   itemBuilder: (context, movie, i) {
                     return _image(movie);
                   },

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ytsmovies/src/api/movies.dart';
-import 'package:ytsmovies/src/api/movies.dart';
 import 'package:ytsmovies/src/utils/enums.dart';
 import 'package:ytsmovies/src/widgets/movies_list.dart';
 

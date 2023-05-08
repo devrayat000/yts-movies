@@ -4,13 +4,13 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:async/async.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:provider/provider.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:ytsmovies/src/api/movies.dart';
 
 import 'package:ytsmovies/src/router/index.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
@@ -23,24 +23,24 @@ part 'results.dart';
 part 'animation.dart';
 
 class MovieSearchDelegate extends SearchDelegate<Movie?> {
-  final MovieRepository _repo;
-  MovieSearchDelegate(this._repo);
+  final MoviesClient repo;
+  MovieSearchDelegate({required this.repo});
 
   final _controller = PagingController<int, Movie>(firstPageKey: 1);
   final _box = Hive.box<String>(MyBoxs.searchHistoryBox);
   // final _prefs = SharedPreferences.getInstance();
 
   Map<String, dynamic> _params = {};
-  CancelableOperation<MovieData>? _subscriber;
-  CancelableOperation<List<Movie>>? _subscriber2;
-  Timer? _debouncer;
+  CancelableOperation<MovieData>? subscriber;
+  CancelableOperation<List<Movie>>? subscriber2;
+  Timer? debouncer;
 
   List<String> get _history => _box.values.toSet().toList().reversed.toList();
 
   @override
   set query(String value) {
-    print(super.query);
-    print(value);
+    debugPrint(super.query);
+    debugPrint(value);
     if (value != super.query) {
       super.query = value;
     }
@@ -48,7 +48,7 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   @override
   void showSuggestions(BuildContext context) {
-    print('showing suggestions');
+    debugPrint('showing suggestions');
     super.showSuggestions(context);
   }
 
@@ -63,8 +63,8 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
           }
         },
         icon: AnimatedSwitcher(
-          duration: Duration(milliseconds: 300),
-          child: query.trim().isEmpty ? null : Icon(Icons.clear),
+          duration: const Duration(milliseconds: 300),
+          child: query.trim().isEmpty ? null : const Icon(Icons.clear),
           transitionBuilder: (child, animation) => ScaleTransition(
             scale: animation,
             child: child,
@@ -92,10 +92,10 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
     try {
       _controller.removePageRequestListener(_pagehandler);
       _params = context.read<Filter>().values;
-      print(_params);
+      debugPrint(_params.toString());
       _controller.addPageRequestListener(_pagehandler);
-      await _setHistory();
       super.showResults(context);
+      await _setHistory();
     } catch (e, s) {
       log(e.toString(), error: e, stackTrace: s);
     }
@@ -103,12 +103,11 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   void _pagehandler(int pageKey) async {
     try {
-      final _data = await _moviesFuture(pageKey);
-      print(_data.movies);
-      if (_data.isLastPage) {
-        _controller.appendLastPage(_data.movies!.toList());
+      final data = await _moviesFuture(pageKey);
+      if (data.isLastPage) {
+        _controller.appendLastPage(data.movies!.toList());
       } else {
-        _controller.appendPage(_data.movies!.toList(), ++pageKey);
+        _controller.appendPage(data.movies!.toList(), ++pageKey);
       }
     } catch (e) {
       _controller.error = e;
@@ -122,7 +121,7 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
       onFiltered: () async {
         try {
           _params = context.read<Filter>().values;
-          print(_params);
+          debugPrint(_params.toString());
           _controller.refresh();
           await showResults(context);
         } catch (e, s) {
@@ -134,14 +133,14 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    _subscriber2?.cancel();
-    _subscriber2 = CancelableOperation.fromFuture(_firstMovies, onCancel: () {
-      print('cancelled');
+    subscriber2?.cancel();
+    subscriber2 = CancelableOperation.fromFuture(_firstMovies, onCancel: () {
+      debugPrint('cancelled');
     });
 
     return SearchSuggestions(
       history: _history,
-      future: query.trim().isEmpty ? null : _subscriber2?.value,
+      future: query.trim().isEmpty ? null : subscriber2?.value,
       onShowHistory: (i) async {
         try {
           query = _history[i];
@@ -156,11 +155,12 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   Future<MovieListData> _moviesFuture(int page) async {
     try {
-      final _movieData = await _repo.listRawMovies(page, {
-        'query_term': query.trim(),
-        ..._params,
-      });
-      return _movieData;
+      final movieData = await repo.getMovieList(
+        page: page,
+        queryTerm: query,
+        queries: _params,
+      );
+      return movieData.data;
     } catch (e, s) {
       return errorHandler(e, s);
     }
@@ -175,14 +175,14 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
   Future<void> _setHistory() async {
     try {
       _box.values.contains(query.trim());
-      final _newHistory = query.trim();
-      if (_history.contains(_newHistory)) {
+      final newHistory = query.trim();
+      if (_history.contains(newHistory)) {
         await Future.wait([
-          _box.deleteAt(_history.indexOf(_newHistory)),
-          _box.add(_newHistory),
+          _box.deleteAt(_history.indexOf(newHistory)),
+          _box.add(newHistory),
         ]);
       } else {
-        await _box.add(_newHistory);
+        await _box.add(newHistory);
       }
     } on HiveError catch (e, s) {
       log(e.toString(), error: e, stackTrace: s);

@@ -11,6 +11,7 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ytsmovies/src/api/movies.dart';
 
 import 'package:ytsmovies/src/widgets/buttons/index.dart';
 import 'package:ytsmovies/src/widgets/cards/index.dart';

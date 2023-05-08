@@ -17,8 +17,7 @@ import 'package:ytsmovies/src/bloc/api/index.dart';
 import 'package:ytsmovies/src/bloc/filter/index.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/models/index.dart';
-import 'package:ytsmovies/src/pages.dart';
-import 'package:ytsmovies/src/pages/home-2.dart';
+import 'package:ytsmovies/src/pages/home.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/widgets.dart';
 import 'package:ytsmovies/src/theme/index.dart';
@@ -127,7 +126,7 @@ class MyApp extends StatelessWidget {
         child: MaterialApp(
           title: 'YTS Movies',
           debugShowCheckedModeBanner: false,
-          home: HomePage2(),
+          home: HomePage(),
           scrollBehavior: const CupertinoScrollBehavior(),
           restorationScopeId: 'com.movies.yts',
           builder: (BuildContext context, Widget? widget) {
@@ -157,8 +156,8 @@ class _Screen extends StatelessWidget {
       builder: (context, theme) {
         return AnimatedTheme(
           data: theme,
-          child: child,
           curve: Curves.easeOutCirc,
+          child: child,
         );
       },
       buildWhen: (prev, current) => prev != current,

@@ -15,7 +15,7 @@ class RootNavigator extends StatelessWidget {
         MaterialPage(
           key: ValueKey('home'),
           maintainState: true,
-          child: HomePage2(),
+          child: HomePage(),
         ),
         if (routeState.staticPage != null)
           OtherPage(
@@ -26,7 +26,7 @@ class RootNavigator extends StatelessWidget {
           for (final movie in routeState.movies)
             MaterialPage(
               key: ValueKey(movie.id),
-              child: MoviePage(item: movie),
+              child: MoviePage.withMovie(item: movie),
             ),
         ],
       ],

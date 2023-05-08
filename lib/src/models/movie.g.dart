@@ -19,23 +19,23 @@ class MovieAdapter extends TypeAdapter<_$_Movie> {
     return _$_Movie(
       id: fields[0] as int,
       title: fields[1] as String,
-      rating: fields[18] as double,
+      year: fields[2] as int?,
       backgroundImage: fields[3] as String,
       url: fields[4] as String,
       imdbCode: fields[5] as String,
       language: fields[6] as String,
+      mpaRating: fields[7] as String?,
       descriptionFull: fields[8] as String,
+      synopsis: fields[9] as String?,
       runtime: fields[10] as int,
       genres: (fields[11] as List).cast<String>(),
       torrents: (fields[12] as List).cast<Torrent>(),
       smallCoverImage: fields[13] as String,
       mediumCoverImage: fields[14] as String,
-      year: fields[2] as int?,
-      synopsis: fields[9] as String?,
-      mpaRating: fields[7] as String?,
+      dateUploaded: fields[16] as DateTime?,
       largeCoverImage: fields[15] as String?,
       trailer: fields[17] as String?,
-      dateUploaded: fields[16] as DateTime?,
+      rating: fields[18] as double,
     );
   }
 
@@ -47,8 +47,8 @@ class MovieAdapter extends TypeAdapter<_$_Movie> {
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.title)
-      ..writeByte(18)
-      ..write(obj.rating)
+      ..writeByte(2)
+      ..write(obj.year)
       ..writeByte(3)
       ..write(obj.backgroundImage)
       ..writeByte(4)
@@ -57,26 +57,26 @@ class MovieAdapter extends TypeAdapter<_$_Movie> {
       ..write(obj.imdbCode)
       ..writeByte(6)
       ..write(obj.language)
+      ..writeByte(7)
+      ..write(obj.mpaRating)
       ..writeByte(8)
       ..write(obj.descriptionFull)
+      ..writeByte(9)
+      ..write(obj.synopsis)
       ..writeByte(10)
       ..write(obj.runtime)
       ..writeByte(13)
       ..write(obj.smallCoverImage)
       ..writeByte(14)
       ..write(obj.mediumCoverImage)
-      ..writeByte(2)
-      ..write(obj.year)
-      ..writeByte(9)
-      ..write(obj.synopsis)
-      ..writeByte(7)
-      ..write(obj.mpaRating)
+      ..writeByte(16)
+      ..write(obj.dateUploaded)
       ..writeByte(15)
       ..write(obj.largeCoverImage)
       ..writeByte(17)
       ..write(obj.trailer)
-      ..writeByte(16)
-      ..write(obj.dateUploaded)
+      ..writeByte(18)
+      ..write(obj.rating)
       ..writeByte(11)
       ..write(obj.genres)
       ..writeByte(12)
@@ -101,12 +101,14 @@ class MovieAdapter extends TypeAdapter<_$_Movie> {
 _$_Movie _$$_MovieFromJson(Map<String, dynamic> json) => _$_Movie(
       id: json['id'] as int,
       title: json['title'] as String,
-      rating: (json['rating'] as num).toDouble(),
+      year: json['year'] as int?,
       backgroundImage: json['background_image'] as String,
       url: json['url'] as String,
       imdbCode: json['imdb_code'] as String,
       language: json['language'] as String,
+      mpaRating: json['mpa_rating'] as String?,
       descriptionFull: json['description_full'] as String,
+      synopsis: json['description_intro'] as String?,
       runtime: json['runtime'] as int,
       genres:
           (json['genres'] as List<dynamic>).map((e) => e as String).toList(),
@@ -115,34 +117,32 @@ _$_Movie _$$_MovieFromJson(Map<String, dynamic> json) => _$_Movie(
           .toList(),
       smallCoverImage: json['small_cover_image'] as String,
       mediumCoverImage: json['medium_cover_image'] as String,
-      year: json['year'] as int?,
-      synopsis: json['description_intro'] as String?,
-      mpaRating: json['mpa_rating'] as String?,
-      largeCoverImage: json['large_cover_image'] as String?,
-      trailer: json['yt_trailer_code'] as String?,
       dateUploaded: json['date_uploaded'] == null
           ? null
           : DateTime.parse(json['date_uploaded'] as String),
+      largeCoverImage: json['large_cover_image'] as String?,
+      trailer: json['yt_trailer_code'] as String?,
+      rating: (json['rating'] as num).toDouble(),
     );
 
 Map<String, dynamic> _$$_MovieToJson(_$_Movie instance) => <String, dynamic>{
       'id': instance.id,
       'title': instance.title,
-      'rating': instance.rating,
+      'year': instance.year,
       'background_image': instance.backgroundImage,
       'url': instance.url,
       'imdb_code': instance.imdbCode,
       'language': instance.language,
+      'mpa_rating': instance.mpaRating,
       'description_full': instance.descriptionFull,
+      'description_intro': instance.synopsis,
       'runtime': instance.runtime,
       'genres': instance.genres,
       'torrents': instance.torrents.map((e) => e.toJson()).toList(),
       'small_cover_image': instance.smallCoverImage,
       'medium_cover_image': instance.mediumCoverImage,
-      'year': instance.year,
-      'description_intro': instance.synopsis,
-      'mpa_rating': instance.mpaRating,
+      'date_uploaded': instance.dateUploaded?.toIso8601String(),
       'large_cover_image': instance.largeCoverImage,
       'yt_trailer_code': instance.trailer,
-      'date_uploaded': instance.dateUploaded?.toIso8601String(),
+      'rating': instance.rating,
     };

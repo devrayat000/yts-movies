@@ -27,7 +27,7 @@ class OtherPage extends Page {
           case enums.StaticPage.RATED:
             return const RatedMoviesPage();
           case enums.StaticPage.FAVOURITES:
-            return const FavouratesPage();
+            return const FavouritesPage();
           default:
             throw UnimplementedError();
         }

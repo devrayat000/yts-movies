@@ -24,8 +24,8 @@ mixin _$Movie {
   int get id => throw _privateConstructorUsedError;
   @HiveField(1)
   String get title => throw _privateConstructorUsedError;
-  @HiveField(18)
-  double get rating => throw _privateConstructorUsedError;
+  @HiveField(2)
+  int? get year => throw _privateConstructorUsedError;
   @HiveField(3)
   String get backgroundImage => throw _privateConstructorUsedError;
   @HiveField(4)
@@ -34,8 +34,13 @@ mixin _$Movie {
   String get imdbCode => throw _privateConstructorUsedError;
   @HiveField(6)
   String get language => throw _privateConstructorUsedError;
+  @HiveField(7)
+  String? get mpaRating => throw _privateConstructorUsedError;
   @HiveField(8)
   String get descriptionFull => throw _privateConstructorUsedError;
+  @HiveField(9)
+  @JsonKey(name: 'description_intro')
+  String? get synopsis => throw _privateConstructorUsedError;
   @HiveField(10)
   int get runtime => throw _privateConstructorUsedError;
   @HiveField(11)
@@ -46,20 +51,15 @@ mixin _$Movie {
   String get smallCoverImage => throw _privateConstructorUsedError;
   @HiveField(14)
   String get mediumCoverImage => throw _privateConstructorUsedError;
-  @HiveField(2)
-  int? get year => throw _privateConstructorUsedError;
-  @HiveField(9)
-  @JsonKey(name: 'description_intro')
-  String? get synopsis => throw _privateConstructorUsedError;
-  @HiveField(7)
-  String? get mpaRating => throw _privateConstructorUsedError;
+  @HiveField(16)
+  DateTime? get dateUploaded => throw _privateConstructorUsedError;
   @HiveField(15)
   String? get largeCoverImage => throw _privateConstructorUsedError;
   @HiveField(17)
   @JsonKey(name: 'yt_trailer_code')
   String? get trailer => throw _privateConstructorUsedError;
-  @HiveField(16)
-  DateTime? get dateUploaded => throw _privateConstructorUsedError;
+  @HiveField(18)
+  double get rating => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -74,23 +74,23 @@ abstract class $MovieCopyWith<$Res> {
   $Res call(
       {@HiveField(0) int id,
       @HiveField(1) String title,
-      @HiveField(18) double rating,
+      @HiveField(2) int? year,
       @HiveField(3) String backgroundImage,
       @HiveField(4) String url,
       @HiveField(5) String imdbCode,
       @HiveField(6) String language,
+      @HiveField(7) String? mpaRating,
       @HiveField(8) String descriptionFull,
+      @HiveField(9) @JsonKey(name: 'description_intro') String? synopsis,
       @HiveField(10) int runtime,
       @HiveField(11) List<String> genres,
       @HiveField(12) List<Torrent> torrents,
       @HiveField(13) String smallCoverImage,
       @HiveField(14) String mediumCoverImage,
-      @HiveField(2) int? year,
-      @HiveField(9) @JsonKey(name: 'description_intro') String? synopsis,
-      @HiveField(7) String? mpaRating,
+      @HiveField(16) DateTime? dateUploaded,
       @HiveField(15) String? largeCoverImage,
       @HiveField(17) @JsonKey(name: 'yt_trailer_code') String? trailer,
-      @HiveField(16) DateTime? dateUploaded});
+      @HiveField(18) double rating});
 }
 
 /// @nodoc
@@ -108,23 +108,23 @@ class _$MovieCopyWithImpl<$Res, $Val extends Movie>
   $Res call({
     Object? id = null,
     Object? title = null,
-    Object? rating = null,
+    Object? year = freezed,
     Object? backgroundImage = null,
     Object? url = null,
     Object? imdbCode = null,
     Object? language = null,
+    Object? mpaRating = freezed,
     Object? descriptionFull = null,
+    Object? synopsis = freezed,
     Object? runtime = null,
     Object? genres = null,
     Object? torrents = null,
     Object? smallCoverImage = null,
     Object? mediumCoverImage = null,
-    Object? year = freezed,
-    Object? synopsis = freezed,
-    Object? mpaRating = freezed,
+    Object? dateUploaded = freezed,
     Object? largeCoverImage = freezed,
     Object? trailer = freezed,
-    Object? dateUploaded = freezed,
+    Object? rating = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -135,10 +135,10 @@ class _$MovieCopyWithImpl<$Res, $Val extends Movie>
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
               as String,
-      rating: null == rating
-          ? _value.rating
-          : rating // ignore: cast_nullable_to_non_nullable
-              as double,
+      year: freezed == year
+          ? _value.year
+          : year // ignore: cast_nullable_to_non_nullable
+              as int?,
       backgroundImage: null == backgroundImage
           ? _value.backgroundImage
           : backgroundImage // ignore: cast_nullable_to_non_nullable
@@ -155,10 +155,18 @@ class _$MovieCopyWithImpl<$Res, $Val extends Movie>
           ? _value.language
           : language // ignore: cast_nullable_to_non_nullable
               as String,
+      mpaRating: freezed == mpaRating
+          ? _value.mpaRating
+          : mpaRating // ignore: cast_nullable_to_non_nullable
+              as String?,
       descriptionFull: null == descriptionFull
           ? _value.descriptionFull
           : descriptionFull // ignore: cast_nullable_to_non_nullable
               as String,
+      synopsis: freezed == synopsis
+          ? _value.synopsis
+          : synopsis // ignore: cast_nullable_to_non_nullable
+              as String?,
       runtime: null == runtime
           ? _value.runtime
           : runtime // ignore: cast_nullable_to_non_nullable
@@ -179,18 +187,10 @@ class _$MovieCopyWithImpl<$Res, $Val extends Movie>
           ? _value.mediumCoverImage
           : mediumCoverImage // ignore: cast_nullable_to_non_nullable
               as String,
-      year: freezed == year
-          ? _value.year
-          : year // ignore: cast_nullable_to_non_nullable
-              as int?,
-      synopsis: freezed == synopsis
-          ? _value.synopsis
-          : synopsis // ignore: cast_nullable_to_non_nullable
-              as String?,
-      mpaRating: freezed == mpaRating
-          ? _value.mpaRating
-          : mpaRating // ignore: cast_nullable_to_non_nullable
-              as String?,
+      dateUploaded: freezed == dateUploaded
+          ? _value.dateUploaded
+          : dateUploaded // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       largeCoverImage: freezed == largeCoverImage
           ? _value.largeCoverImage
           : largeCoverImage // ignore: cast_nullable_to_non_nullable
@@ -199,10 +199,10 @@ class _$MovieCopyWithImpl<$Res, $Val extends Movie>
           ? _value.trailer
           : trailer // ignore: cast_nullable_to_non_nullable
               as String?,
-      dateUploaded: freezed == dateUploaded
-          ? _value.dateUploaded
-          : dateUploaded // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
+      rating: null == rating
+          ? _value.rating
+          : rating // ignore: cast_nullable_to_non_nullable
+              as double,
     ) as $Val);
   }
 }
@@ -216,23 +216,23 @@ abstract class _$$_MovieCopyWith<$Res> implements $MovieCopyWith<$Res> {
   $Res call(
       {@HiveField(0) int id,
       @HiveField(1) String title,
-      @HiveField(18) double rating,
+      @HiveField(2) int? year,
       @HiveField(3) String backgroundImage,
       @HiveField(4) String url,
       @HiveField(5) String imdbCode,
       @HiveField(6) String language,
+      @HiveField(7) String? mpaRating,
       @HiveField(8) String descriptionFull,
+      @HiveField(9) @JsonKey(name: 'description_intro') String? synopsis,
       @HiveField(10) int runtime,
       @HiveField(11) List<String> genres,
       @HiveField(12) List<Torrent> torrents,
       @HiveField(13) String smallCoverImage,
       @HiveField(14) String mediumCoverImage,
-      @HiveField(2) int? year,
-      @HiveField(9) @JsonKey(name: 'description_intro') String? synopsis,
-      @HiveField(7) String? mpaRating,
+      @HiveField(16) DateTime? dateUploaded,
       @HiveField(15) String? largeCoverImage,
       @HiveField(17) @JsonKey(name: 'yt_trailer_code') String? trailer,
-      @HiveField(16) DateTime? dateUploaded});
+      @HiveField(18) double rating});
 }
 
 /// @nodoc
@@ -246,23 +246,23 @@ class __$$_MovieCopyWithImpl<$Res> extends _$MovieCopyWithImpl<$Res, _$_Movie>
   $Res call({
     Object? id = null,
     Object? title = null,
-    Object? rating = null,
+    Object? year = freezed,
     Object? backgroundImage = null,
     Object? url = null,
     Object? imdbCode = null,
     Object? language = null,
+    Object? mpaRating = freezed,
     Object? descriptionFull = null,
+    Object? synopsis = freezed,
     Object? runtime = null,
     Object? genres = null,
     Object? torrents = null,
     Object? smallCoverImage = null,
     Object? mediumCoverImage = null,
-    Object? year = freezed,
-    Object? synopsis = freezed,
-    Object? mpaRating = freezed,
+    Object? dateUploaded = freezed,
     Object? largeCoverImage = freezed,
     Object? trailer = freezed,
-    Object? dateUploaded = freezed,
+    Object? rating = null,
   }) {
     return _then(_$_Movie(
       id: null == id
@@ -273,10 +273,10 @@ class __$$_MovieCopyWithImpl<$Res> extends _$MovieCopyWithImpl<$Res, _$_Movie>
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
               as String,
-      rating: null == rating
-          ? _value.rating
-          : rating // ignore: cast_nullable_to_non_nullable
-              as double,
+      year: freezed == year
+          ? _value.year
+          : year // ignore: cast_nullable_to_non_nullable
+              as int?,
       backgroundImage: null == backgroundImage
           ? _value.backgroundImage
           : backgroundImage // ignore: cast_nullable_to_non_nullable
@@ -293,10 +293,18 @@ class __$$_MovieCopyWithImpl<$Res> extends _$MovieCopyWithImpl<$Res, _$_Movie>
           ? _value.language
           : language // ignore: cast_nullable_to_non_nullable
               as String,
+      mpaRating: freezed == mpaRating
+          ? _value.mpaRating
+          : mpaRating // ignore: cast_nullable_to_non_nullable
+              as String?,
       descriptionFull: null == descriptionFull
           ? _value.descriptionFull
           : descriptionFull // ignore: cast_nullable_to_non_nullable
               as String,
+      synopsis: freezed == synopsis
+          ? _value.synopsis
+          : synopsis // ignore: cast_nullable_to_non_nullable
+              as String?,
       runtime: null == runtime
           ? _value.runtime
           : runtime // ignore: cast_nullable_to_non_nullable
@@ -317,18 +325,10 @@ class __$$_MovieCopyWithImpl<$Res> extends _$MovieCopyWithImpl<$Res, _$_Movie>
           ? _value.mediumCoverImage
           : mediumCoverImage // ignore: cast_nullable_to_non_nullable
               as String,
-      year: freezed == year
-          ? _value.year
-          : year // ignore: cast_nullable_to_non_nullable
-              as int?,
-      synopsis: freezed == synopsis
-          ? _value.synopsis
-          : synopsis // ignore: cast_nullable_to_non_nullable
-              as String?,
-      mpaRating: freezed == mpaRating
-          ? _value.mpaRating
-          : mpaRating // ignore: cast_nullable_to_non_nullable
-              as String?,
+      dateUploaded: freezed == dateUploaded
+          ? _value.dateUploaded
+          : dateUploaded // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       largeCoverImage: freezed == largeCoverImage
           ? _value.largeCoverImage
           : largeCoverImage // ignore: cast_nullable_to_non_nullable
@@ -337,10 +337,10 @@ class __$$_MovieCopyWithImpl<$Res> extends _$MovieCopyWithImpl<$Res, _$_Movie>
           ? _value.trailer
           : trailer // ignore: cast_nullable_to_non_nullable
               as String?,
-      dateUploaded: freezed == dateUploaded
-          ? _value.dateUploaded
-          : dateUploaded // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
+      rating: null == rating
+          ? _value.rating
+          : rating // ignore: cast_nullable_to_non_nullable
+              as double,
     ));
   }
 }
@@ -353,23 +353,23 @@ class _$_Movie extends _Movie {
   _$_Movie(
       {@HiveField(0) required this.id,
       @HiveField(1) required this.title,
-      @HiveField(18) required this.rating,
+      @HiveField(2) this.year,
       @HiveField(3) required this.backgroundImage,
       @HiveField(4) required this.url,
       @HiveField(5) required this.imdbCode,
       @HiveField(6) required this.language,
+      @HiveField(7) this.mpaRating,
       @HiveField(8) required this.descriptionFull,
+      @HiveField(9) @JsonKey(name: 'description_intro') this.synopsis,
       @HiveField(10) required this.runtime,
       @HiveField(11) required final List<String> genres,
       @HiveField(12) required final List<Torrent> torrents,
       @HiveField(13) required this.smallCoverImage,
       @HiveField(14) required this.mediumCoverImage,
-      @HiveField(2) this.year,
-      @HiveField(9) @JsonKey(name: 'description_intro') this.synopsis,
-      @HiveField(7) this.mpaRating,
+      @HiveField(16) this.dateUploaded,
       @HiveField(15) this.largeCoverImage,
       @HiveField(17) @JsonKey(name: 'yt_trailer_code') this.trailer,
-      @HiveField(16) this.dateUploaded})
+      @HiveField(18) required this.rating})
       : _genres = genres,
         _torrents = torrents,
         super._();
@@ -384,8 +384,8 @@ class _$_Movie extends _Movie {
   @HiveField(1)
   final String title;
   @override
-  @HiveField(18)
-  final double rating;
+  @HiveField(2)
+  final int? year;
   @override
   @HiveField(3)
   final String backgroundImage;
@@ -399,8 +399,15 @@ class _$_Movie extends _Movie {
   @HiveField(6)
   final String language;
   @override
+  @HiveField(7)
+  final String? mpaRating;
+  @override
   @HiveField(8)
   final String descriptionFull;
+  @override
+  @HiveField(9)
+  @JsonKey(name: 'description_intro')
+  final String? synopsis;
   @override
   @HiveField(10)
   final int runtime;
@@ -429,15 +436,8 @@ class _$_Movie extends _Movie {
   @HiveField(14)
   final String mediumCoverImage;
   @override
-  @HiveField(2)
-  final int? year;
-  @override
-  @HiveField(9)
-  @JsonKey(name: 'description_intro')
-  final String? synopsis;
-  @override
-  @HiveField(7)
-  final String? mpaRating;
+  @HiveField(16)
+  final DateTime? dateUploaded;
   @override
   @HiveField(15)
   final String? largeCoverImage;
@@ -446,8 +446,8 @@ class _$_Movie extends _Movie {
   @JsonKey(name: 'yt_trailer_code')
   final String? trailer;
   @override
-  @HiveField(16)
-  final DateTime? dateUploaded;
+  @HiveField(18)
+  final double rating;
 
   @JsonKey(ignore: true)
   @override
@@ -467,23 +467,23 @@ abstract class _Movie extends Movie {
   factory _Movie(
       {@HiveField(0) required final int id,
       @HiveField(1) required final String title,
-      @HiveField(18) required final double rating,
+      @HiveField(2) final int? year,
       @HiveField(3) required final String backgroundImage,
       @HiveField(4) required final String url,
       @HiveField(5) required final String imdbCode,
       @HiveField(6) required final String language,
+      @HiveField(7) final String? mpaRating,
       @HiveField(8) required final String descriptionFull,
+      @HiveField(9) @JsonKey(name: 'description_intro') final String? synopsis,
       @HiveField(10) required final int runtime,
       @HiveField(11) required final List<String> genres,
       @HiveField(12) required final List<Torrent> torrents,
       @HiveField(13) required final String smallCoverImage,
       @HiveField(14) required final String mediumCoverImage,
-      @HiveField(2) final int? year,
-      @HiveField(9) @JsonKey(name: 'description_intro') final String? synopsis,
-      @HiveField(7) final String? mpaRating,
+      @HiveField(16) final DateTime? dateUploaded,
       @HiveField(15) final String? largeCoverImage,
       @HiveField(17) @JsonKey(name: 'yt_trailer_code') final String? trailer,
-      @HiveField(16) final DateTime? dateUploaded}) = _$_Movie;
+      @HiveField(18) required final double rating}) = _$_Movie;
   _Movie._() : super._();
 
   factory _Movie.fromJson(Map<String, dynamic> json) = _$_Movie.fromJson;
@@ -495,8 +495,8 @@ abstract class _Movie extends Movie {
   @HiveField(1)
   String get title;
   @override
-  @HiveField(18)
-  double get rating;
+  @HiveField(2)
+  int? get year;
   @override
   @HiveField(3)
   String get backgroundImage;
@@ -510,8 +510,15 @@ abstract class _Movie extends Movie {
   @HiveField(6)
   String get language;
   @override
+  @HiveField(7)
+  String? get mpaRating;
+  @override
   @HiveField(8)
   String get descriptionFull;
+  @override
+  @HiveField(9)
+  @JsonKey(name: 'description_intro')
+  String? get synopsis;
   @override
   @HiveField(10)
   int get runtime;
@@ -528,15 +535,8 @@ abstract class _Movie extends Movie {
   @HiveField(14)
   String get mediumCoverImage;
   @override
-  @HiveField(2)
-  int? get year;
-  @override
-  @HiveField(9)
-  @JsonKey(name: 'description_intro')
-  String? get synopsis;
-  @override
-  @HiveField(7)
-  String? get mpaRating;
+  @HiveField(16)
+  DateTime? get dateUploaded;
   @override
   @HiveField(15)
   String? get largeCoverImage;
@@ -545,8 +545,8 @@ abstract class _Movie extends Movie {
   @JsonKey(name: 'yt_trailer_code')
   String? get trailer;
   @override
-  @HiveField(16)
-  DateTime? get dateUploaded;
+  @HiveField(18)
+  double get rating;
   @override
   @JsonKey(ignore: true)
   _$$_MovieCopyWith<_$_Movie> get copyWith =>

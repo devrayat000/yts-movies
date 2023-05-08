@@ -15,6 +15,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:ytsmovies/src/api/client.dart';
 import 'package:ytsmovies/src/api/movies.dart';
 import 'package:ytsmovies/src/app.dart';
+import 'package:ytsmovies/src/bloc/filter/index.dart';
 
 // import 'package:ytsmovies/src/bloc/api/index.dart';
 // import 'package:ytsmovies/src/bloc/filter/index.dart';
@@ -74,11 +75,10 @@ void main() {
             // Provider<ApiProvider>(create: (context) {
             //   return ApiProvider(repo);
             // }),
-            // Provider<Filter>(
-            //   create: (context) => Filter(),
-            //   // updateShouldNotify: (old, newI) => old.values != newI.values,
-            //   dispose: (context, filter) => filter.reset(),
-            // ),
+            Provider<Filter>(
+              create: (context) => Filter(),
+              dispose: (context, filter) => filter.reset(),
+            ),
             BlocProvider<ThemeCubit>(
               create: (context) => ThemeCubit(theme: AppTheme()),
             ),

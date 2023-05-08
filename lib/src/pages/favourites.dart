@@ -1,8 +1,8 @@
 part of app_pages;
 
-class FavouratesPage extends StatelessWidget {
+class FavouritesPage extends StatelessWidget {
   static const routeName = '/favourites-movies';
-  const FavouratesPage({Key? key}) : super(key: key);
+  const FavouritesPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

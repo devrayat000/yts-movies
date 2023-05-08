@@ -1,5 +1,6 @@
 library app_bloc.filter;
 
+import 'package:flutter/foundation.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:ytsmovies/src/utils/enums.dart';
 import 'package:ytsmovies/src/utils/lists.dart' as list;
@@ -15,12 +16,6 @@ class Filter {
   final quality = QualityCubit();
   final rating = RatingCubit();
 
-  // final order = OrderCubit();
-  // final sort = SortCubit();
-  // final genre = GenreCubit();
-  // final quality = QualityCubit();
-  // final rating = RatingCubit();
-
   void reset() {
     order.reset();
     sort.reset();
@@ -30,7 +25,7 @@ class Filter {
   }
 
   Map<String, dynamic> get values {
-    print('getting filter values');
+    debugPrint('getting filter values');
     final params = {
       'order_by': order.state ? 'desc' : null,
       'sort': sort.state,
@@ -38,7 +33,7 @@ class Filter {
       'quality': quality.state,
       'rating': rating.state.round().toString(),
     };
-    print('mapping filter values');
+    debugPrint('mapping filter values');
     return params..removeWhere((_, value) => value == null || value == '0');
   }
 }

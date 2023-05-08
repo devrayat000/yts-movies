@@ -17,23 +17,23 @@ class Movie with _$Movie, EquatableMixin, HiveObjectMixin {
   factory Movie({
     @HiveField(0) required int id,
     @HiveField(1) required String title,
-    @HiveField(18) required double rating,
+    @HiveField(2) int? year,
     @HiveField(3) required String backgroundImage,
     @HiveField(4) required String url,
     @HiveField(5) required String imdbCode,
     @HiveField(6) required String language,
+    @HiveField(7) String? mpaRating,
     @HiveField(8) required String descriptionFull,
+    @HiveField(9) @JsonKey(name: 'description_intro') String? synopsis,
     @HiveField(10) required int runtime,
     @HiveField(11) required List<String> genres,
     @HiveField(12) required List<Torrent> torrents,
     @HiveField(13) required String smallCoverImage,
     @HiveField(14) required String mediumCoverImage,
-    @HiveField(2) int? year,
-    @HiveField(9) @JsonKey(name: 'description_intro') String? synopsis,
-    @HiveField(7) String? mpaRating,
+    @HiveField(16) DateTime? dateUploaded,
     @HiveField(15) String? largeCoverImage,
     @HiveField(17) @JsonKey(name: 'yt_trailer_code') String? trailer,
-    @HiveField(16) DateTime? dateUploaded,
+    @HiveField(18) required double rating,
   }) = _Movie;
 
   factory Movie.fromJson(Map<String, dynamic> data) => _$MovieFromJson(data);

@@ -1,18 +1,88 @@
-part of app_pages;
+import 'dart:developer';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:flutter_breadcrumb/flutter_breadcrumb.dart'
+    show BreadCrumb, BreadCrumbItem;
 
-class MoviePage extends StatefulWidget {
+import 'package:ytsmovies/src/api/movies.dart';
+import 'package:ytsmovies/src/models/index.dart';
+import 'package:ytsmovies/src/widgets/index.dart';
+import 'package:ytsmovies/src/utils/index.dart';
+
+class MoviePage extends StatelessWidget {
   static const routeName = '/details';
 
-  final Movie _movie;
-  const MoviePage({Key? key, required Movie item})
-      : _movie = item,
+  final Movie? _movie;
+  final int id;
+  const MoviePage({Key? key, required this.id})
+      : _movie = null,
+        super(key: key);
+
+  MoviePage.withMovie({
+    Key? key,
+    required Movie item,
+  })  : _movie = item,
+        id = item.id,
         super(key: key);
 
   @override
-  MoviePageState createState() => MoviePageState();
+  Widget build(BuildContext context) {
+    if (_movie != null) {
+      return MovieDetails(movie: _movie!);
+    }
+    return FutureBuilder(
+      future: context.read<MoviesClient>().getMovieByid(id.toString()),
+      builder: (context, snapshot) {
+        switch (snapshot.connectionState) {
+          case ConnectionState.none:
+            return const Center(
+              child: Text('Could not load data!'),
+            );
+          case ConnectionState.waiting:
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          case ConnectionState.active:
+          case ConnectionState.done:
+            if (snapshot.hasError) {
+              debugPrint(snapshot.error.toString());
+              return const Center(
+                child: Text('Something went wrong!'),
+              );
+            } else if (snapshot.hasData) {
+              return MovieDetails(movie: snapshot.data!.data.movie);
+            } else {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+          default:
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+        }
+      },
+    );
+  }
 }
 
-class MoviePageState extends State<MoviePage> with RouteAware {
+class MovieDetails extends StatefulWidget {
+  final Movie _movie;
+
+  const MovieDetails({Key? key, required Movie movie})
+      : _movie = movie,
+        super(key: key);
+
+  @override
+  MovieDetailsState createState() => MovieDetailsState();
+}
+
+class MovieDetailsState extends State<MovieDetails> with RouteAware {
   YoutubePlayerController? _controller;
   late PlayerState playerState;
   late YoutubeMetaData videoMetaData;
@@ -78,7 +148,7 @@ class MoviePageState extends State<MoviePage> with RouteAware {
       _wasPlaying = true;
       _controller?.pause();
     }
-    print('pushed next');
+    debugPrint('pushed next');
     super.didPushNext();
   }
 
@@ -87,7 +157,7 @@ class MoviePageState extends State<MoviePage> with RouteAware {
     if (_wasPlaying) {
       _controller?.play();
     }
-    print('popped next');
+    debugPrint('popped next');
     super.didPopNext();
   }
 
@@ -214,12 +284,12 @@ class _Screen extends StatelessWidget {
         centerTitle: true,
         actions: [FavouriteButton(movie: _movie)],
       ),
-      backgroundColor: Theme.of(context).backgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: GestureDetector(
         onHorizontalDragUpdate: (details) {
           int sensitivity = 8;
           if (details.delta.dx > sensitivity) {
-            Navigator.of(context).pop();
+            context.pop();
           }
         },
         child: Padding(
@@ -267,7 +337,7 @@ class _Screen extends StatelessWidget {
                           Colors.black54,
                           BlendMode.overlay,
                         ),
-                        onError: (e, s) => print(e),
+                        onError: (e, s) => debugPrint(e.toString()),
                       ),
                     ),
                     child: Row(
@@ -299,6 +369,8 @@ class _Screen extends StatelessWidget {
                                       const Icon(Icons.star),
                                 ),
                                 label: Text('${_movie.rating} / 10'),
+                                labelStyle:
+                                    const TextStyle(color: Colors.white),
                                 padding:
                                     const EdgeInsets.only(left: 16, right: 4),
                                 deleteIcon: const Icon(Icons.star),
@@ -315,17 +387,17 @@ class _Screen extends StatelessWidget {
                               OutlinedButton.icon(
                                 onPressed: () async {
                                   try {
-                                    final subTitleUri =
-                                        'https://yifysubtitles.org/movie-imdb/${_movie.imdbCode}';
-                                    if (await canLaunch(subTitleUri)) {
-                                      launch(subTitleUri);
+                                    final subTitleUri = Uri.parse(
+                                        'https://yifysubtitles.org/movie-imdb/${_movie.imdbCode}');
+                                    if (await canLaunchUrl(subTitleUri)) {
+                                      launchUrl(subTitleUri);
                                     }
                                   } on PlatformException catch (e, s) {
-                                    print(e.message);
-                                    print(s);
+                                    debugPrint(e.message);
+                                    debugPrint(s.toString());
                                   } catch (e, s) {
-                                    print(e);
-                                    print(s);
+                                    debugPrint(e.toString());
+                                    debugPrint(s.toString());
                                   }
                                 },
                                 icon: const Icon(Icons.subtitles),
@@ -363,11 +435,12 @@ class _Screen extends StatelessWidget {
                     player!,
                     _space(),
                   ],
-                  Text(
-                    'Synopsis',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  _space(),
+                  if (_movie.synopsis != null)
+                    Text(
+                      'Synopsis',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                  if (_movie.synopsis != null) _space(),
                   if (_movie.synopsis != null)
                     SelectableText(
                       _movie.synopsis!,
@@ -375,6 +448,12 @@ class _Screen extends StatelessWidget {
                     ),
                   _space(),
                 ]),
+              ),
+              SliverToBoxAdapter(
+                child: Text(
+                  'Suggested movies',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
               ),
               Suggestions(id: _movie.id.toString()),
             ],

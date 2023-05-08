@@ -5,20 +5,20 @@ class Suggestions extends StatefulWidget {
   const Suggestions({Key? key, required this.id}) : super(key: key);
 
   @override
-  _SuggestionsState createState() => _SuggestionsState();
+  SuggestionsState createState() => SuggestionsState();
 }
 
-class _SuggestionsState extends State<Suggestions> {
-  late Future<List<Movie>> _future;
+class SuggestionsState extends State<Suggestions> {
+  late Future<MovieSuggestionResponse> _future;
   @override
   void initState() {
     super.initState();
-    _future = context.read<MovieRepository>().movieSuggestions(widget.id);
+    _future = context.read<MoviesClient>().getMovieSuggestions(widget.id);
   }
 
   @override
   Widget build(BuildContext context) {
-    return MyFutureBuilder<List<Movie>>(
+    return MyFutureBuilder<MovieSuggestionResponse>(
       future: _future,
       successBuilder: _builder,
       loadingBuilder: (_) => _loader,
@@ -41,13 +41,13 @@ class _SuggestionsState extends State<Suggestions> {
     );
   }
 
-  Widget _builder(BuildContext context, List<Movie>? movies) {
+  Widget _builder(BuildContext context, MovieSuggestionResponse? response) {
     return SliverGrid(
       delegate: SliverChildBuilderDelegate(
         (_, i) => MovieCard.grid(
-          movie: movies![i],
+          movie: response.data.movies![i],
         ),
-        childCount: movies!.length,
+        childCount: response!.data.movies!.length,
       ),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -58,7 +58,7 @@ class _SuggestionsState extends State<Suggestions> {
     );
   }
 
-  Widget get _loader => SliverToBoxAdapter(
+  Widget get _loader => const SliverToBoxAdapter(
         child: Center(
           child: CircularProgressIndicator(),
         ),

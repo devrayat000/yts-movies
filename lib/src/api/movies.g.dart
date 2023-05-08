@@ -31,6 +31,7 @@ class _MoviesClient implements MoviesClient {
     Sort? sortBy,
     Order? orderBy,
     bool? withRtRatings,
+    Map<String, dynamic>? queries,
   }) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
@@ -44,6 +45,7 @@ class _MoviesClient implements MoviesClient {
       r'order_by': await compute(serializeOrder, orderBy),
       r'with_rt_ratings': withRtRatings,
     };
+    queryParameters.addAll(queries ?? <String, dynamic>{});
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     final Map<String, dynamic>? _data = null;
@@ -97,13 +99,13 @@ class _MoviesClient implements MoviesClient {
   }
 
   @override
-  Future<MovieListResponse> getMovieSuggestions(String id) async {
+  Future<MovieSuggestionResponse> getMovieSuggestions(String id) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{r'movie_id': id};
     final _headers = <String, dynamic>{};
     final Map<String, dynamic>? _data = null;
-    final _result = await _dio
-        .fetch<Map<String, dynamic>>(_setStreamType<MovieListResponse>(Options(
+    final _result = await _dio.fetch<Map<String, dynamic>>(
+        _setStreamType<MovieSuggestionResponse>(Options(
       method: 'GET',
       headers: _headers,
       extra: _extra,
@@ -115,7 +117,8 @@ class _MoviesClient implements MoviesClient {
               data: _data,
             )
             .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
-    final value = await compute(deserializeMovieListResponse, _result.data!);
+    final value =
+        await compute(deserializeMovieSuggestionResponse, _result.data!);
     return value;
   }
 

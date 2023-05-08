@@ -26,6 +26,7 @@ abstract class MoviesClient {
     @Query('sort_by') Sort? sortBy,
     @Query('order_by') Order? orderBy,
     @Query('with_rt_ratings') bool? withRtRatings,
+    @Queries() Map<String, dynamic>? queries,
   });
 
   @GET('/movie_details.json')
@@ -36,5 +37,6 @@ abstract class MoviesClient {
   });
 
   @GET('/movie_suggestions.json')
-  Future<MovieListResponse> getMovieSuggestions(@Query('movie_id') String id);
+  Future<MovieSuggestionResponse> getMovieSuggestions(
+      @Query('movie_id') String id);
 }

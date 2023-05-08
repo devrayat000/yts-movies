@@ -12,10 +12,10 @@ class SearchResultPage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _SearchResultPageState createState() => _SearchResultPageState();
+  SearchResultPageState createState() => SearchResultPageState();
 }
 
-class _SearchResultPageState extends State<SearchResultPage>
+class SearchResultPageState extends State<SearchResultPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late ScrollController _scrollController;
@@ -23,7 +23,7 @@ class _SearchResultPageState extends State<SearchResultPage>
   late Animation<double> _drawerSizeAnimation;
   late OverlayEntry _backdrop;
 
-  static final double _maxSlide = -120;
+  static const double _maxSlide = -120;
 
   double get _openDragStartEdge => MediaQuery.of(context).size.width - 80;
   double get _closeDragStartEdge =>
@@ -38,7 +38,7 @@ class _SearchResultPageState extends State<SearchResultPage>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 250),
     );
     _scrollController = ScrollController();
 
@@ -78,7 +78,7 @@ class _SearchResultPageState extends State<SearchResultPage>
   void _toggle() async {
     if (_controller.isDismissed) {
       _controller.forward();
-      Overlay.of(context)?.insert(_backdrop);
+      Overlay.of(context).insert(_backdrop);
     } else {
       await _controller.reverse();
       _backdrop.remove();
@@ -167,11 +167,11 @@ class _SearchResultPageState extends State<SearchResultPage>
 
   void _onDragEnd(DragEndDetails details) {
     if (_controller.isDismissed || _controller.isCompleted) {
-      print('ops!');
+      debugPrint('ops!');
       return;
     }
-    print(_controller.value);
-    print(details.velocity.pixelsPerSecond.dx.abs());
+    debugPrint(_controller.value.toString());
+    debugPrint(details.velocity.pixelsPerSecond.dx.abs().toString());
     if (details.velocity.pixelsPerSecond.dx.abs() >= 365.0) {
       double visualVelocity = details.velocity.pixelsPerSecond.dx /
           MediaQuery.of(context).size.width;
@@ -199,12 +199,12 @@ class Backdrop extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        print('ON TAP OVERLAY!');
+        debugPrint('ON TAP OVERLAY!');
         onCloseOverlay?.call();
       },
       child: CompositedTransformFollower(
         link: link,
-        child: ColoredBox(
+        child: const ColoredBox(
           color: Colors.black45,
         ),
       ),
