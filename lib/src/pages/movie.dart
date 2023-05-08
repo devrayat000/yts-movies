@@ -9,16 +9,16 @@ class MoviePage extends StatefulWidget {
         super(key: key);
 
   @override
-  _MoviePageState createState() => _MoviePageState();
+  MoviePageState createState() => MoviePageState();
 }
 
-class _MoviePageState extends State<MoviePage> with RouteAware {
+class MoviePageState extends State<MoviePage> with RouteAware {
   YoutubePlayerController? _controller;
-  late PlayerState _playerState;
-  late YoutubeMetaData _videoMetaData;
+  late PlayerState playerState;
+  late YoutubeMetaData videoMetaData;
   String language = '';
 
-  int _volume = 100;
+  int volume = 100;
   bool _isPlayerReady = false;
   bool _wasPlaying = false;
 
@@ -26,11 +26,11 @@ class _MoviePageState extends State<MoviePage> with RouteAware {
 
   @override
   void initState() {
-    final _code = YoutubePlayer.convertUrlToId(widget._movie.trailer!);
+    final code = YoutubePlayer.convertUrlToId(widget._movie.trailer!);
 
-    if (_code != null) {
+    if (code != null) {
       _controller = YoutubePlayerController(
-        initialVideoId: _code,
+        initialVideoId: code,
         flags: const YoutubePlayerFlags(
           mute: false,
           autoPlay: false,
@@ -43,12 +43,12 @@ class _MoviePageState extends State<MoviePage> with RouteAware {
         ),
       )
         ..unMute()
-        ..setVolume(_volume)
+        ..setVolume(volume)
         ..addListener(_listener);
     }
 
-    _videoMetaData = const YoutubeMetaData();
-    _playerState = PlayerState.unknown;
+    videoMetaData = const YoutubeMetaData();
+    playerState = PlayerState.unknown;
 
     super.initState();
   }
@@ -101,8 +101,8 @@ class _MoviePageState extends State<MoviePage> with RouteAware {
   void _listener() {
     if (_isPlayerReady && mounted && !_controller!.value.isFullScreen) {
       setState(() {
-        _playerState = _controller!.value.playerState;
-        _videoMetaData = _controller!.metadata;
+        playerState = _controller!.value.playerState;
+        videoMetaData = _controller!.metadata;
       });
     }
   }
@@ -118,7 +118,7 @@ class _MoviePageState extends State<MoviePage> with RouteAware {
           controller: _controller!,
           showVideoProgressIndicator: true,
           progressIndicatorColor: Colors.red,
-          progressColors: ProgressBarColors(
+          progressColors: const ProgressBarColors(
             playedColor: Colors.red,
             handleColor: Colors.redAccent,
           ),
@@ -174,7 +174,7 @@ class _MoviePageState extends State<MoviePage> with RouteAware {
             const SizedBox(width: 8.0),
             ProgressBar(
               isExpanded: true,
-              colors: ProgressBarColors(
+              colors: const ProgressBarColors(
                 playedColor: Colors.red,
                 handleColor: Colors.redAccent,
               ),
@@ -236,12 +236,12 @@ class _Screen extends StatelessWidget {
                 delegate: SliverChildListDelegate.fixed([
                   SelectableText(
                     _movie.title,
-                    style: Theme.of(context).textTheme.headline4,
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   _space(),
                   Text(
                     _movie.year.toString(),
-                    style: Theme.of(context).textTheme.headline5,
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   _space(),
                   BreadCrumb.builder(
@@ -249,7 +249,7 @@ class _Screen extends StatelessWidget {
                     builder: (i) => BreadCrumbItem(
                       content: Text(
                         _movie.genres[i],
-                        style: Theme.of(context).textTheme.headline5,
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
                     ),
                     divider: const Text(
@@ -263,7 +263,7 @@ class _Screen extends StatelessWidget {
                       image: DecorationImage(
                         image: NetworkImage(_movie.backgroundImage),
                         fit: BoxFit.cover,
-                        colorFilter: ColorFilter.mode(
+                        colorFilter: const ColorFilter.mode(
                           Colors.black54,
                           BlendMode.overlay,
                         ),
@@ -278,7 +278,7 @@ class _Screen extends StatelessWidget {
                             src: _movie.mediumCoverImage,
                             padding: const EdgeInsets.all(4),
                             id: _movie.id.toString(),
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: Colors.white,
                             ),
                           ),
@@ -296,11 +296,12 @@ class _Screen extends StatelessWidget {
                                 avatar: Image.asset(
                                   'images/logo-imdb.png',
                                   errorBuilder: (_, __, ___) =>
-                                      Icon(Icons.star),
+                                      const Icon(Icons.star),
                                 ),
                                 label: Text('${_movie.rating} / 10'),
-                                padding: EdgeInsets.only(left: 16, right: 4),
-                                deleteIcon: Icon(Icons.star),
+                                padding:
+                                    const EdgeInsets.only(left: 16, right: 4),
+                                deleteIcon: const Icon(Icons.star),
                                 deleteIconColor: Colors.green,
                                 onDeleted: null,
                               ),
@@ -337,11 +338,11 @@ class _Screen extends StatelessWidget {
                               if (_movie.runtime != 0)
                                 TextButton.icon(
                                   onPressed: null,
-                                  icon: Icon(Icons.alarm),
+                                  icon: const Icon(Icons.alarm),
                                   label: Text(
                                     _runtimeFormat,
                                     style:
-                                        Theme.of(context).textTheme.subtitle1,
+                                        Theme.of(context).textTheme.titleMedium,
                                   ),
                                 ),
                             ],
@@ -356,7 +357,7 @@ class _Screen extends StatelessWidget {
                   if (player != null) ...[
                     Text(
                       'Trailer',
-                      style: Theme.of(context).textTheme.headline4,
+                      style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     _space(),
                     player!,
@@ -364,13 +365,13 @@ class _Screen extends StatelessWidget {
                   ],
                   Text(
                     'Synopsis',
-                    style: Theme.of(context).textTheme.headline4,
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   _space(),
                   if (_movie.synopsis != null)
                     SelectableText(
                       _movie.synopsis!,
-                      style: Theme.of(context).textTheme.headline5,
+                      style: Theme.of(context).textTheme.headlineSmall,
                     ),
                   _space(),
                 ]),
@@ -384,9 +385,9 @@ class _Screen extends StatelessWidget {
   }
 
   String get _runtimeFormat {
-    final _duration = Duration(minutes: _movie.runtime);
-    final hour = _duration.inHours;
-    final mins = _duration.inMinutes.remainder(60);
+    final duration = Duration(minutes: _movie.runtime);
+    final hour = duration.inHours;
+    final mins = duration.inMinutes.remainder(60);
     return '$hour h $mins min';
   }
 

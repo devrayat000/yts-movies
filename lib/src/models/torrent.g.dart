@@ -6,17 +6,17 @@ part of 'torrent.dart';
 // TypeAdapterGenerator
 // **************************************************************************
 
-class TorrentAdapter extends TypeAdapter<Torrent> {
+class TorrentAdapter extends TypeAdapter<_$_Torrent> {
   @override
   final int typeId = 2;
 
   @override
-  Torrent read(BinaryReader reader) {
+  _$_Torrent read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Torrent(
+    return _$_Torrent(
       url: fields[0] as String,
       hash: fields[1] as String,
       quality: fields[2] as String,
@@ -29,7 +29,7 @@ class TorrentAdapter extends TypeAdapter<Torrent> {
   }
 
   @override
-  void write(BinaryWriter writer, Torrent obj) {
+  void write(BinaryWriter writer, _$_Torrent obj) {
     writer
       ..writeByte(8)
       ..writeByte(0)
@@ -65,7 +65,7 @@ class TorrentAdapter extends TypeAdapter<Torrent> {
 // JsonSerializableGenerator
 // **************************************************************************
 
-Torrent _$TorrentFromJson(Map<String, dynamic> json) => Torrent(
+_$_Torrent _$$_TorrentFromJson(Map<String, dynamic> json) => _$_Torrent(
       url: json['url'] as String,
       hash: json['hash'] as String,
       quality: json['quality'] as String,
@@ -76,7 +76,8 @@ Torrent _$TorrentFromJson(Map<String, dynamic> json) => Torrent(
       type: json['type'] as String?,
     );
 
-Map<String, dynamic> _$TorrentToJson(Torrent instance) => <String, dynamic>{
+Map<String, dynamic> _$$_TorrentToJson(_$_Torrent instance) =>
+    <String, dynamic>{
       'url': instance.url,
       'hash': instance.hash,
       'quality': instance.quality,

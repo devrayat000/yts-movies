@@ -3,26 +3,22 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:ytsmovies/src/models/movie.dart';
 
 part 'movie_data.g.dart';
+part 'movie_data.freezed.dart';
 
-@JsonSerializable(fieldRename: FieldRename.snake)
-@immutable
-class MovieListData with EquatableMixin {
-  final int movieCount;
-  final int limit;
-  final int pageNumber;
-  final List<Movie>? movies;
+@Freezed(equal: false, toStringOverride: false)
+class MovieListData with _$MovieListData, EquatableMixin {
+  const MovieListData._();
 
-  const MovieListData({
-    required this.limit,
-    required this.movieCount,
-    required this.movies,
-    required this.pageNumber,
-  });
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory MovieListData({
+    required int movieCount,
+    required int limit,
+    required int pageNumber,
+    @Default([]) List<Movie>? movies,
+  }) = _MovieListData;
 
   factory MovieListData.fromJson(Map<String, dynamic> json) =>
       _$MovieListDataFromJson(json);
-
-  Map<String, dynamic> toJson() => _$MovieListDataToJson(this);
 
   int get lastPage => (movieCount / limit).ceil();
 
@@ -35,19 +31,15 @@ class MovieListData with EquatableMixin {
   bool? get stringify => true;
 }
 
-@JsonSerializable(fieldRename: FieldRename.snake)
-@immutable
-class MovieData with EquatableMixin {
-  final Movie movie;
+@Freezed(equal: false, toStringOverride: false)
+class MovieData with _$MovieData, EquatableMixin {
+  const MovieData._();
 
-  const MovieData({
-    required this.movie,
-  });
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory MovieData({required Movie movie}) = _MovieData;
 
   factory MovieData.fromJson(Map<String, dynamic> json) =>
       _$MovieDataFromJson(json);
-
-  Map<String, dynamic> toJson() => _$MovieDataToJson(this);
 
   @override
   List<Object?> get props => [movie];
@@ -56,40 +48,38 @@ class MovieData with EquatableMixin {
   bool? get stringify => true;
 }
 
-@JsonSerializable(fieldRename: FieldRename.snake)
-@immutable
-class MovieListResponse {
-  final String status;
-  final String statusMessage;
-  final MovieListData data;
+MovieListResponse deserializeMovieListResponse(Map<String, dynamic> json) =>
+    MovieListResponse.fromJson(json);
+Map<String, dynamic> serializeMovieListResponse(MovieListResponse object) =>
+    object.toJson();
 
-  const MovieListResponse({
-    required this.status,
-    required this.statusMessage,
-    required this.data,
-  });
+@Freezed(equal: false, toStringOverride: false)
+class MovieListResponse with _$MovieListResponse {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory MovieListResponse({
+    required String status,
+    required String statusMessage,
+    required MovieListData data,
+  }) = _MovieListResponse;
 
   factory MovieListResponse.fromJson(Map<String, dynamic> json) =>
       _$MovieListResponseFromJson(json);
-
-  Map<String, dynamic> toJson() => _$MovieListResponseToJson(this);
 }
 
-@JsonSerializable(fieldRename: FieldRename.snake)
-@immutable
-class MovieResponse {
-  final String status;
-  final String statusMessage;
-  final MovieData data;
+MovieResponse deserializeMovieResponse(Map<String, dynamic> json) =>
+    MovieResponse.fromJson(json);
+Map<String, dynamic> serializeMovieResponse(MovieResponse object) =>
+    object.toJson();
 
-  const MovieResponse({
-    required this.status,
-    required this.statusMessage,
-    required this.data,
-  });
+@Freezed(equal: false, toStringOverride: false)
+class MovieResponse with _$MovieResponse {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory MovieResponse({
+    required String status,
+    required String statusMessage,
+    required MovieData data,
+  }) = _MovieResponse;
 
   factory MovieResponse.fromJson(Map<String, dynamic> json) =>
       _$MovieResponseFromJson(json);
-
-  Map<String, dynamic> toJson() => _$MovieResponseToJson(this);
 }

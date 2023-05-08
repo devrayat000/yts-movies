@@ -3,56 +3,34 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hive/hive.dart';
 
 part 'torrent.g.dart';
+part 'torrent.freezed.dart';
 
-@JsonSerializable(fieldRename: FieldRename.snake)
-@HiveType(typeId: 2, adapterName: 'TorrentAdapter')
-class Torrent with EquatableMixin, HiveObjectMixin {
-  @HiveField(0)
-  final String url;
+@Freezed(equal: false, toStringOverride: false)
+class Torrent with _$Torrent, EquatableMixin, HiveObjectMixin {
+  Torrent._();
 
-  @HiveField(1)
-  final String hash;
-
-  @HiveField(2)
-  final String quality;
-
-  @HiveField(3)
-  final int seeds;
-
-  @HiveField(4)
-  final int peers;
-
-  @HiveField(5)
-  final String size;
-
-  @HiveField(6)
-  final DateTime dateUploaded;
-
-  @HiveField(7)
-  final String? type;
-
-  Torrent({
-    required this.url,
-    required this.hash,
-    required this.quality,
-    required this.seeds,
-    required this.peers,
-    required this.size,
-    required this.dateUploaded,
-    this.type,
-  });
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  @HiveType(typeId: 2, adapterName: 'TorrentAdapter')
+  factory Torrent({
+    @HiveField(0) required String url,
+    @HiveField(1) required String hash,
+    @HiveField(2) required String quality,
+    @HiveField(3) required int seeds,
+    @HiveField(4) required int peers,
+    @HiveField(5) required String size,
+    @HiveField(6) required DateTime dateUploaded,
+    @HiveField(7) String? type,
+  }) = _Torrent;
 
   factory Torrent.fromJson(Map<String, dynamic> json) =>
       _$TorrentFromJson(json);
 
-  Map<String, dynamic> toJson() => _$TorrentToJson(this);
-
-  Uri magnet(String _title) {
+  Uri magnet(String title) {
     return Uri(
       scheme: 'magnet',
       queryParameters: {
         'xt': 'urn:btih:$hash',
-        'dn': '$_title [$quality] [YTS.MX]',
+        'dn': '$title [$quality] [YTS.MX]',
         'tr': [
           'udp://glotorrents.pw:6969/announce',
           'udp://tracker.opentrackr.org:1337/announce',

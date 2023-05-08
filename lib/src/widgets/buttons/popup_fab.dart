@@ -24,11 +24,11 @@ class PopupFloatingActionButtonState extends State<PopupFloatingActionButton>
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 1),
+      duration: const Duration(seconds: 1),
     );
     _fabScaleController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 200),
     );
 
     if (widget.scrollController.hasClients) {
@@ -77,7 +77,7 @@ class PopupFloatingActionButtonState extends State<PopupFloatingActionButton>
                     try {
                       await widget.scrollController.animateTo(
                         0,
-                        duration: Duration(milliseconds: 300),
+                        duration: const Duration(milliseconds: 300),
                         curve: Curves.easeInOutBack,
                       );
                     } catch (e, s) {

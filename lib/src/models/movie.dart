@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:equatable/equatable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:hive/hive.dart';
@@ -8,97 +6,37 @@ import 'package:ytsmovies/src/models/torrent.dart';
 import 'package:ytsmovies/src/utils/constants.dart';
 
 part 'movie.g.dart';
+part 'movie.freezed.dart';
 
-@JsonSerializable(fieldRename: FieldRename.snake)
-@HiveType(typeId: 1, adapterName: 'MovieAdapter')
-class Movie with EquatableMixin, HiveObjectMixin {
-  @HiveField(0)
-  final int id;
+@Freezed(equal: false, toStringOverride: false)
+class Movie with _$Movie, EquatableMixin, HiveObjectMixin {
+  Movie._();
 
-  @HiveField(1)
-  final String title;
+  @HiveType(typeId: 1, adapterName: 'MovieAdapter')
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  factory Movie({
+    @HiveField(0) required int id,
+    @HiveField(1) required String title,
+    @HiveField(18) required double rating,
+    @HiveField(3) required String backgroundImage,
+    @HiveField(4) required String url,
+    @HiveField(5) required String imdbCode,
+    @HiveField(6) required String language,
+    @HiveField(8) required String descriptionFull,
+    @HiveField(10) required int runtime,
+    @HiveField(11) required List<String> genres,
+    @HiveField(12) required List<Torrent> torrents,
+    @HiveField(13) required String smallCoverImage,
+    @HiveField(14) required String mediumCoverImage,
+    @HiveField(2) int? year,
+    @HiveField(9) @JsonKey(name: 'description_intro') String? synopsis,
+    @HiveField(7) String? mpaRating,
+    @HiveField(15) String? largeCoverImage,
+    @HiveField(17) @JsonKey(name: 'yt_trailer_code') String? trailer,
+    @HiveField(16) DateTime? dateUploaded,
+  }) = _Movie;
 
-  @HiveField(2)
-  final int? year;
-
-  @HiveField(18)
-  final double rating;
-
-  @HiveField(3)
-  final String backgroundImage;
-
-  @HiveField(4)
-  final String url;
-
-  @HiveField(5)
-  final String imdbCode;
-
-  @HiveField(6)
-  final String language;
-
-  @HiveField(7)
-  final String? mpaRating;
-
-  @HiveField(8)
-  final String descriptionFull;
-
-  @HiveField(9)
-  @JsonKey(name: 'description_intro')
-  final String? synopsis;
-
-  @HiveField(10)
-  final int runtime;
-
-  @HiveField(11)
-  final List<String> genres;
-
-  @HiveField(12)
-  final List<Torrent> torrents;
-
-  @HiveField(13)
-  final String smallCoverImage;
-
-  @HiveField(14)
-  final String mediumCoverImage;
-
-  @HiveField(15)
-  final String? largeCoverImage;
-
-  @HiveField(16)
-  final DateTime? dateUploaded;
-
-  @HiveField(17)
-  @JsonKey(name: 'yt_trailer_code')
-  final String? trailer;
-
-  Movie({
-    required this.id,
-    required this.title,
-    required this.rating,
-    required this.backgroundImage,
-    required this.url,
-    required this.imdbCode,
-    required this.language,
-    required this.descriptionFull,
-    required this.runtime,
-    required this.genres,
-    required this.torrents,
-    required this.smallCoverImage,
-    required this.mediumCoverImage,
-    this.year,
-    this.synopsis,
-    this.mpaRating,
-    this.largeCoverImage,
-    this.trailer,
-    DateTime? dateUploaded,
-  }) : this.dateUploaded = dateUploaded ?? DateTime.now();
-
-  factory Movie.fromJson(Map<String, dynamic> data) {
-    log(data.toString());
-    return _$MovieFromJson(data);
-  }
-
-  Map<String, dynamic> toJson() => _$MovieToJson(this);
+  factory Movie.fromJson(Map<String, dynamic> data) => _$MovieFromJson(data);
 
   CoverImage get coverImage => CoverImage(
         small: smallCoverImage,

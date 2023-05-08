@@ -12,23 +12,23 @@ class ShowMoreButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: 100,
+      alignment: Alignment.center,
       child: SizedBox(
+        width: radius * 2,
         child: Material(
+          elevation: 4,
+          color: Colors.grey,
+          type: MaterialType.circle,
           child: IconButton(
             onPressed: onPressed,
-            icon: Icon(Icons.arrow_forward),
+            icon: const Icon(Icons.arrow_forward),
             splashRadius: 24,
             iconSize: 32,
             enableFeedback: false,
           ),
-          elevation: 4,
-          color: Colors.grey,
-          type: MaterialType.circle,
         ),
-        width: radius * 2,
       ),
-      width: 100,
-      alignment: Alignment.center,
     );
   }
 }

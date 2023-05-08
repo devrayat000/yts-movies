@@ -1,6 +1,6 @@
 part of app_widgets;
 
-class MovieList<T extends ApiCubit> extends StatelessWidget {
+class MovieList extends StatelessWidget {
   final WidgetBuilder? noItemBuilder;
   final PagingController<int, Movie> controller;
 
@@ -67,14 +67,14 @@ class MovieList<T extends ApiCubit> extends StatelessWidget {
         alignment: Alignment.topCenter,
         child: Text(
           'No movie found',
-          style: Theme.of(context).textTheme.headline5,
+          style: Theme.of(context).textTheme.headlineSmall,
         ),
       );
 
   Widget _noMoreItemsIndicator(BuildContext context) => Center(
         child: Text(
           'That\'s the last of it.',
-          style: Theme.of(context).textTheme.headline5,
+          style: Theme.of(context).textTheme.headlineSmall,
         ),
       );
 }

@@ -29,10 +29,10 @@ class IntroItem extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 DefaultTextStyle(
-                  style: TextStyle(fontSize: 24).merge(titleTextStyle),
+                  style: const TextStyle(fontSize: 24).merge(titleTextStyle),
                   child: title,
                 ),
-                Icon(Icons.arrow_forward_ios),
+                const Icon(Icons.arrow_forward_ios),
               ],
             ),
           ),
@@ -75,7 +75,7 @@ class ItemBuilder extends StatelessWidget {
   final void Function()? onAction;
   final List<Movie> items;
   final Widget Function(BuildContext, Movie, int) builder;
-  ItemBuilder({
+  const ItemBuilder({
     Key? key,
     required this.onAction,
     required this.items,

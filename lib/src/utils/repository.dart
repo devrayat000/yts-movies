@@ -25,7 +25,7 @@ class MovieRepository extends Repository {
       final response = await api.listMovies(url);
       final data = await compute(Spawn.parseRawBody, response.body);
       if (data.movies == null) {
-        throw CustomException('No movies found 😥');
+        throw const CustomException('No movies found 😥');
       }
       return data;
     } catch (e, s) {
@@ -38,7 +38,7 @@ class MovieRepository extends Repository {
       final movies = _favouritesBox.values;
 
       if (movies.length == 0 || movies == null) {
-        throw CustomException('No movies found 😥');
+        throw const CustomException('No movies found 😥');
       }
       return SynchronousFuture(MovieListData(
         limit: 1,
@@ -59,7 +59,7 @@ class MovieRepository extends Repository {
       final response = await api.listMovieByrawParams(page, params);
       final data = await compute(Spawn.parseRawBody, response.body);
       if (data.movies == null) {
-        throw CustomException('No movies found 😥');
+        throw const CustomException('No movies found 😥');
       }
       return data;
     } catch (e, s) {
@@ -117,7 +117,7 @@ class MovieRepository extends Repository {
       final response = await api.movieSuggestions(id);
       final movies = await compute(Spawn.parseResponseData, response.body);
       if (movies == null || movies.length == 0) {
-        throw CustomException('No movie found! 😥');
+        throw const CustomException('No movie found! 😥');
       }
       return movies;
     } catch (e, s) {

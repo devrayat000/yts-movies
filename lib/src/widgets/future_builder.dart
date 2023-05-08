@@ -50,7 +50,7 @@ class MyFutureBuilder<T> extends StatelessWidget {
   }
 
   Widget _defaultLoadingBuilder(BuildContext context) {
-    return Center(
+    return const Center(
       child: CircularProgressIndicator(),
     );
   }

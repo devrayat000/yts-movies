@@ -17,19 +17,19 @@ class SearchSuggestions extends StatelessWidget {
     return MyFutureBuilder<List<Movie>>(
       future: future,
       idleBuilder: (context) {
-        if (history == null || history!.length == 0) {
+        if (history == null || history!.isEmpty) {
           return _text(context, 'Search for movies..🤗');
         }
         return ListView.separated(
           itemCount: history!.length,
-          separatorBuilder: (context, i) => Divider(),
+          separatorBuilder: (context, i) => const Divider(),
           itemBuilder: (context, i) {
             final item = history![i];
 
             return ListTile(
-              leading: Icon(Icons.history),
+              leading: const Icon(Icons.history),
               title: Text(item),
-              trailing: Icon(Icons.find_in_page),
+              trailing: const Icon(Icons.find_in_page),
               onTap: () => onShowHistory.call(i),
             );
           },
@@ -44,7 +44,7 @@ class SearchSuggestions extends StatelessWidget {
       successBuilder: (context, data) {
         print(data);
         print('success');
-        if (data == null || data.length == 0) {
+        if (data == null || data.isEmpty) {
           if (data is List<String>) {
             _text(context, 'Search for movies..🤗');
           }
@@ -53,7 +53,7 @@ class SearchSuggestions extends StatelessWidget {
         print('success list');
         return ListView.separated(
           itemCount: data.length,
-          separatorBuilder: (context, i) => Divider(),
+          separatorBuilder: (context, i) => const Divider(),
           itemBuilder: (context, i) {
             final item = data[i];
 
@@ -87,15 +87,15 @@ class SearchSuggestions extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 8.0),
         child: Text(
           text,
-          style: Theme.of(context).textTheme.headline4,
+          style: Theme.of(context).textTheme.headlineMedium,
           textAlign: TextAlign.justify,
         ),
       );
 
-  String _runtimeFormat(Movie _movie) {
-    final _duration = Duration(minutes: _movie.runtime);
-    final hour = _duration.inHours;
-    final mins = _duration.inMinutes.remainder(60);
+  String _runtimeFormat(Movie movie) {
+    final duration = Duration(minutes: movie.runtime);
+    final hour = duration.inHours;
+    final mins = duration.inMinutes.remainder(60);
     return '$hour h $mins min';
   }
 }

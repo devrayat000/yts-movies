@@ -2,44 +2,25 @@ import 'package:equatable/equatable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:ytsmovies/src/utils/constants.dart';
 
-class CoverImage with EquatableMixin {
-  final String small;
-  final String medium;
-  final String? large;
-  const CoverImage({
-    required this.small,
-    required this.medium,
-    this.large,
-  });
+part 'cover_image.g.dart';
+part 'cover_image.freezed.dart';
 
-  Map<String, dynamic> toJson() {
-    return {
-      Col.smallImage: small,
-      Col.mediumImage: medium,
-      Col.largeImage: large,
-    };
-  }
+@Freezed(equal: false, toStringOverride: false)
+class CoverImage with _$CoverImage, EquatableMixin {
+  const CoverImage._();
+
+  const factory CoverImage({
+    @JsonKey(name: Col.smallImage) required String small,
+    @JsonKey(name: Col.mediumImage) required String medium,
+    @JsonKey(name: Col.largeImage) String? large,
+  }) = _CoverImage;
+
+  factory CoverImage.fromJson(Map<String, dynamic> json) =>
+      _$CoverImageFromJson(json);
 
   @override
   List<Object?> get props => [small, medium, large];
 
   @override
   bool? get stringify => true;
-}
-
-class CoverImageConverter
-    implements JsonConverter<CoverImage, Map<String, dynamic>> {
-  const CoverImageConverter();
-
-  @override
-  CoverImage fromJson(Map<String, dynamic> json) {
-    return CoverImage(
-      small: json[Col.smallImage],
-      medium: json[Col.mediumImage],
-      large: json[Col.largeImage],
-    );
-  }
-
-  @override
-  Map<String, dynamic> toJson(CoverImage object) => object.toJson();
 }

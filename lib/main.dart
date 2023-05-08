@@ -48,7 +48,7 @@ void main() {
       );
 
       try {
-        final favouriteBox = await Hive.openBox<Movie>(MyBoxs.favouriteBox);
+        await Hive.openBox<Movie>(MyBoxs.favouriteBox);
         await Hive.openBox<String>(MyBoxs.searchHistoryBox);
 
         SystemChrome.setSystemUIOverlayStyle(
@@ -59,7 +59,7 @@ void main() {
         );
         Timeline.finishSync();
 
-        final repo = MovieRepository(favouriteBox);
+        // final repo = MovieRepository(favouriteBox);
         final client = await initClient();
 
         runApp(MultiProvider(
@@ -68,8 +68,8 @@ void main() {
             //   create: (context) => repo,
             //   dispose: (context, repo) => repo.dispose(),
             // ),
-            RepositoryProvider<MoviesListService>(
-              create: (context) => client.getService<MoviesListService>(),
+            RepositoryProvider<MoviesClient>(
+              create: (context) => client,
             ),
             // Provider<ApiProvider>(create: (context) {
             //   return ApiProvider(repo);

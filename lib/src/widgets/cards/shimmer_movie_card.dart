@@ -9,7 +9,7 @@ class MovieListShimmer extends StatelessWidget {
     return Shimmer(
       linearGradient: context.read<ThemeCubit>().theme.shimmerGradient(isDark),
       child: GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 1,
           childAspectRatio: 9 / 4,
           crossAxisSpacing: 4,
@@ -53,7 +53,7 @@ class ShimmerMovieCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ShimmerShape.image(),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

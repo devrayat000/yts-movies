@@ -55,21 +55,22 @@ class TorrentTab extends StatelessWidget {
                 context: context,
                 tiles: [
                   ListTile(
-                    leading: Icon(Icons.folder),
+                    leading: const Icon(Icons.folder),
                     title: Text(torrent.size),
                   ),
                   ListTile(
-                    leading: Icon(Icons.fit_screen),
+                    leading: const Icon(Icons.fit_screen),
                     title: Text(torrent.quality),
                   ),
                   ListTile(
                     leading: Text(
                       'P/S',
-                      style: Theme.of(context).textTheme.headline5?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey.shade700,
-                            fontSize: 20,
-                          ),
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade700,
+                                fontSize: 20,
+                              ),
                     ),
                     title: Text('${torrent.peers} / ${torrent.seeds}'),
                   ),

@@ -18,6 +18,7 @@ import 'package:ytsmovies/src/bloc/filter/index.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/pages.dart';
+import 'package:ytsmovies/src/pages/home-2.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/widgets.dart';
 import 'package:ytsmovies/src/theme/index.dart';

@@ -2,7 +2,7 @@ import 'package:ytsmovies/src/utils/enums.dart' as enums;
 
 import '../models/label_value.dart';
 
-final genres = const [
+const genres = [
   LabelValue("All", null),
   LabelValue("Action", "action"),
   LabelValue("Adventure", "adventure"),
@@ -33,5 +33,5 @@ final genres = const [
 ];
 
 final List<LabelValue<String>> sorts = enums.Sort.values
-    .map((e) => LabelValue(enums.sorts[e]!, e.val))
+    .map((e) => LabelValue(enums.sorts[e]!, e.toJson()))
     .toList(growable: false);

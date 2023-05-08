@@ -7,6 +7,9 @@ enum Query {
   year,
 }
 
+Quality deserializeQuality(String json) => QualityValue.fromJson(json);
+String? serializeQuality(Quality? object) => object?.toJson();
+
 enum Quality { $720, $1080, $2160, $3D }
 
 final qualities = {
@@ -15,6 +18,9 @@ final qualities = {
   Quality.$2160: '2160p',
   Quality.$3D: '3D',
 };
+
+Sort deserializeSort(String json) => SortValue.fromJson(json);
+String? serializeSort(Sort? object) => object?.toJson();
 
 enum Sort {
   TITLE, //
@@ -38,19 +44,32 @@ final sorts = {
   Sort.LIKE_COUNT: 'Likes',
 };
 
-extension SortValue on Sort {
-  String get val => this.toString().split('.')[1].toLowerCase();
+extension QualityValue on Quality {
+  String toJson() => qualities[this]!;
+  static Quality fromJson(String val) =>
+      Quality.values.firstWhere((e) => e.toJson() == val);
 }
+
+extension SortValue on Sort {
+  String toJson() => sorts[this]!;
+  static Sort fromJson(String val) =>
+      Sort.values.firstWhere((e) => e.toJson() == val);
+}
+
+Order deserializeOrder(String json) => OrderValue.fromJson(json);
+String? serializeOrder(Order? object) => object?.toJson();
 
 enum Order { ASC, DESC }
 
 extension OrderValue on Order {
-  String get val => this.toString().split('.')[1].toLowerCase();
+  String toJson() => toString().split('.')[1].toLowerCase();
+  static Order fromJson(String val) =>
+      Order.values.firstWhere((e) => e.toJson() == val);
 }
 
 enum StaticPage { LATEST, HD, RATED, SEARCH, FAVOURITES }
 
-const Map<StaticPage, String> page = const {
+const Map<StaticPage, String> page = {
   StaticPage.LATEST: 'latest',
   StaticPage.HD: '4k',
   StaticPage.RATED: 'rated',

@@ -35,8 +35,8 @@ class Urls {
           'minimum_rating': '$minimumRating',
           'query_term': queryTerm,
           'genre': genre,
-          'sort_by': sortBy?.val,
-          'order_by': orderBy?.val,
+          'sort_by': sortBy?.toJson(),
+          'order_by': orderBy?.toJson(),
           'with_rt_ratings': '$withRtRatings',
         }));
   }

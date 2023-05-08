@@ -6,17 +6,17 @@ part of 'movie.dart';
 // TypeAdapterGenerator
 // **************************************************************************
 
-class MovieAdapter extends TypeAdapter<Movie> {
+class MovieAdapter extends TypeAdapter<_$_Movie> {
   @override
   final int typeId = 1;
 
   @override
-  Movie read(BinaryReader reader) {
+  _$_Movie read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Movie(
+    return _$_Movie(
       id: fields[0] as int,
       title: fields[1] as String,
       rating: fields[18] as double,
@@ -40,15 +40,13 @@ class MovieAdapter extends TypeAdapter<Movie> {
   }
 
   @override
-  void write(BinaryWriter writer, Movie obj) {
+  void write(BinaryWriter writer, _$_Movie obj) {
     writer
       ..writeByte(19)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.title)
-      ..writeByte(2)
-      ..write(obj.year)
       ..writeByte(18)
       ..write(obj.rating)
       ..writeByte(3)
@@ -59,28 +57,30 @@ class MovieAdapter extends TypeAdapter<Movie> {
       ..write(obj.imdbCode)
       ..writeByte(6)
       ..write(obj.language)
-      ..writeByte(7)
-      ..write(obj.mpaRating)
       ..writeByte(8)
       ..write(obj.descriptionFull)
-      ..writeByte(9)
-      ..write(obj.synopsis)
       ..writeByte(10)
       ..write(obj.runtime)
-      ..writeByte(11)
-      ..write(obj.genres)
-      ..writeByte(12)
-      ..write(obj.torrents)
       ..writeByte(13)
       ..write(obj.smallCoverImage)
       ..writeByte(14)
       ..write(obj.mediumCoverImage)
+      ..writeByte(2)
+      ..write(obj.year)
+      ..writeByte(9)
+      ..write(obj.synopsis)
+      ..writeByte(7)
+      ..write(obj.mpaRating)
       ..writeByte(15)
       ..write(obj.largeCoverImage)
+      ..writeByte(17)
+      ..write(obj.trailer)
       ..writeByte(16)
       ..write(obj.dateUploaded)
-      ..writeByte(17)
-      ..write(obj.trailer);
+      ..writeByte(11)
+      ..write(obj.genres)
+      ..writeByte(12)
+      ..write(obj.torrents);
   }
 
   @override
@@ -98,7 +98,7 @@ class MovieAdapter extends TypeAdapter<Movie> {
 // JsonSerializableGenerator
 // **************************************************************************
 
-Movie _$MovieFromJson(Map<String, dynamic> json) => Movie(
+_$_Movie _$$_MovieFromJson(Map<String, dynamic> json) => _$_Movie(
       id: json['id'] as int,
       title: json['title'] as String,
       rating: (json['rating'] as num).toDouble(),
@@ -125,24 +125,24 @@ Movie _$MovieFromJson(Map<String, dynamic> json) => Movie(
           : DateTime.parse(json['date_uploaded'] as String),
     );
 
-Map<String, dynamic> _$MovieToJson(Movie instance) => <String, dynamic>{
+Map<String, dynamic> _$$_MovieToJson(_$_Movie instance) => <String, dynamic>{
       'id': instance.id,
       'title': instance.title,
-      'year': instance.year,
       'rating': instance.rating,
       'background_image': instance.backgroundImage,
       'url': instance.url,
       'imdb_code': instance.imdbCode,
       'language': instance.language,
-      'mpa_rating': instance.mpaRating,
       'description_full': instance.descriptionFull,
-      'description_intro': instance.synopsis,
       'runtime': instance.runtime,
       'genres': instance.genres,
       'torrents': instance.torrents.map((e) => e.toJson()).toList(),
       'small_cover_image': instance.smallCoverImage,
       'medium_cover_image': instance.mediumCoverImage,
+      'year': instance.year,
+      'description_intro': instance.synopsis,
+      'mpa_rating': instance.mpaRating,
       'large_cover_image': instance.largeCoverImage,
-      'date_uploaded': instance.dateUploaded?.toIso8601String(),
       'yt_trailer_code': instance.trailer,
+      'date_uploaded': instance.dateUploaded?.toIso8601String(),
     };

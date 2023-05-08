@@ -23,16 +23,13 @@ class MovieCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      // height: isGrid ? 250 : 190,
-      child: Card(
-        color: Theme.of(context).cardColor,
-        elevation: 5,
-        child: InkWell(
-          splashFactory: NoSplash.splashFactory,
-          child: _isGrid ? _grid : _list,
-          onTap: () => _viewDetails(context),
-        ),
+    return Card(
+      color: Theme.of(context).cardColor,
+      elevation: 5,
+      child: InkWell(
+        splashFactory: NoSplash.splashFactory,
+        child: _isGrid ? _grid : _list,
+        onTap: () => _viewDetails(context),
       ),
     );
   }
@@ -75,8 +72,8 @@ class MovieCard extends StatelessWidget {
                           child: _quality_chip,
                         ),
                         Align(
-                          child: FavouriteButton(movie: _movie),
                           alignment: Alignment.bottomRight,
+                          child: FavouriteButton(movie: _movie),
                         ),
                       ],
                     ),
@@ -102,8 +99,8 @@ class MovieCard extends StatelessWidget {
                   child: Column(
                     children: [
                       Align(
-                        child: FavouriteButton(movie: _movie),
                         alignment: Alignment.topRight,
+                        child: FavouriteButton(movie: _movie),
                       ),
                       _YearRating(
                         isGrid: _isGrid,
@@ -134,14 +131,17 @@ class MovieCard extends StatelessWidget {
         children: _movie.quality
             .map((quality) => Chip(
                   label: Text(quality),
-                  labelStyle: const TextStyle(fontSize: 12.0),
+                  labelStyle: const TextStyle(
+                    fontSize: 12.0,
+                    color: Colors.white,
+                  ),
                 ))
             .toList(),
       );
 
   Widget get _image => MovieImage(
         src: _movie.mediumCoverImage,
-        padding: EdgeInsets.all(4.0),
+        padding: const EdgeInsets.all(4.0),
         label: _movie.title,
         id: _movie.id.toString(),
       );
@@ -168,7 +168,7 @@ class _YearRating extends StatelessWidget {
         children: [
           Text(
             year,
-            style: Theme.of(context).textTheme.headline6,
+            style: Theme.of(context).textTheme.titleLarge,
           ),
           Chip(
             label: Text("$rating / 10"),
@@ -176,7 +176,10 @@ class _YearRating extends StatelessWidget {
               Icons.star,
               color: Colors.green,
             ),
-            labelStyle: const TextStyle(fontSize: 12.0),
+            labelStyle: const TextStyle(
+              fontSize: 12.0,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
@@ -198,8 +201,8 @@ class _Title extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = isGrid
-        ? Theme.of(context).textTheme.headline6
-        : Theme.of(context).textTheme.headline5;
+        ? Theme.of(context).textTheme.titleLarge
+        : Theme.of(context).textTheme.headlineSmall;
     return Text.rich(
       TextSpan(
         // ignore: unnecessary_null_comparison

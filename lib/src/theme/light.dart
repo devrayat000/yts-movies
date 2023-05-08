@@ -2,75 +2,75 @@ part of app_theme;
 
 extension LightTheme on AppTheme {
   ThemeData get light {
-    final _light = ThemeData.light();
-    final _text = _light.textTheme;
-    final _appbar = _light.appBarTheme;
-    final _input = _light.inputDecorationTheme;
-    final _fab = _light.floatingActionButtonTheme;
-    final _chip = _light.chipTheme;
-    final _colorScheme = ColorScheme.light();
+    final defaultLight = ThemeData.light();
+    final text = defaultLight.textTheme;
+    final appbar = defaultLight.appBarTheme;
+    final input = defaultLight.inputDecorationTheme;
+    final fab = defaultLight.floatingActionButtonTheme;
+    final chip = defaultLight.chipTheme;
+    const colorScheme = ColorScheme.light();
 
-    return _light.copyWith(
+    return defaultLight.copyWith(
       canvasColor: Colors.grey[50],
       cardColor: Colors.teal[100],
-      appBarTheme: _appbar.copyWith(
+      appBarTheme: appbar.copyWith(
         backgroundColor: Colors.cyan[100],
-        iconTheme: IconThemeData(color: Colors.black87),
+        iconTheme: const IconThemeData(color: Colors.black87),
         titleTextStyle: TextStyle(
           color: Colors.grey.shade900,
         ),
       ),
-      chipTheme: _chip.copyWith(
+      chipTheme: chip.copyWith(
         backgroundColor: Colors.blueGrey[800],
-        labelStyle: _chip.labelStyle?.copyWith(
+        labelStyle: chip.labelStyle?.copyWith(
           color: Colors.white,
         ),
       ),
-      backgroundColor: Colors.grey[100],
       scaffoldBackgroundColor: Colors.grey[100],
-      colorScheme: _colorScheme.copyWith(
+      colorScheme: colorScheme.copyWith(
         onSurface: Colors.black,
         surface: Colors.black87,
+        background: Colors.grey[100],
       ),
-      buttonTheme: ButtonThemeData(
+      buttonTheme: const ButtonThemeData(
         buttonColor: Colors.black87,
-        colorScheme: _colorScheme,
+        colorScheme: colorScheme,
       ),
       textTheme: TextTheme(
-        headline1: _text.headline1?.copyWith(
+        displayLarge: text.displayLarge?.copyWith(
           color: Colors.grey.shade900,
         ),
-        headline2: _text.headline2?.copyWith(
+        displayMedium: text.displayMedium?.copyWith(
           color: Colors.grey.shade900,
         ),
-        headline3: _text.headline3?.copyWith(
+        displaySmall: text.displaySmall?.copyWith(
           color: Colors.grey.shade900,
         ),
-        headline4: _text.headline4?.copyWith(
+        headlineMedium: text.headlineMedium?.copyWith(
           color: Colors.grey.shade900,
         ),
-        headline5: _text.headline5?.copyWith(
+        headlineSmall: text.headlineSmall?.copyWith(
           color: Colors.black,
         ),
-        headline6: _text.headline6?.copyWith(
-          color: Colors.black,
-          fontWeight: FontWeight.normal,
-        ),
-        subtitle1: _text.subtitle1?.copyWith(
+        titleLarge: text.titleLarge?.copyWith(
           color: Colors.black,
           fontWeight: FontWeight.normal,
         ),
-        subtitle2: _text.subtitle2?.copyWith(
+        titleMedium: text.titleMedium?.copyWith(
+          color: Colors.black,
+          fontWeight: FontWeight.normal,
+        ),
+        titleSmall: text.titleSmall?.copyWith(
           color: Colors.black,
           fontWeight: FontWeight.normal,
         ),
       ),
-      inputDecorationTheme: _input.copyWith(
-        hintStyle: _input.hintStyle?.copyWith(
+      inputDecorationTheme: input.copyWith(
+        hintStyle: input.hintStyle?.copyWith(
           color: Colors.black87,
         ),
-        border: OutlineInputBorder(
-          borderRadius: const BorderRadius.all(
+        border: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(
             Radius.circular(999.0),
           ),
           borderSide: BorderSide.none,
@@ -80,7 +80,7 @@ extension LightTheme on AppTheme {
         filled: true,
         contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
       ),
-      floatingActionButtonTheme: _fab.copyWith(
+      floatingActionButtonTheme: fab.copyWith(
         backgroundColor: Colors.cyanAccent[700],
         foregroundColor: Colors.grey[50],
       ),

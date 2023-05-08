@@ -16,7 +16,7 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 250),
     );
   }
 

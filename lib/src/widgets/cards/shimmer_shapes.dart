@@ -70,7 +70,7 @@ class ShimmerShape extends StatelessWidget {
           count ?? 0,
           (i) => Container(
             height: height,
-            margin: EdgeInsets.symmetric(vertical: 4.0),
+            margin: const EdgeInsets.symmetric(vertical: 4.0),
             decoration: _decoration(context),
           ),
         ),
@@ -78,7 +78,7 @@ class ShimmerShape extends StatelessWidget {
           widthFactor: 0.6,
           child: Container(
             height: height,
-            margin: EdgeInsets.symmetric(vertical: 4.0),
+            margin: const EdgeInsets.symmetric(vertical: 4.0),
             decoration: _decoration(context),
           ),
         ),

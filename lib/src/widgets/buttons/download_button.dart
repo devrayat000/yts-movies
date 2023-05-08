@@ -15,11 +15,11 @@ class _DownloadButtonState extends State<DownloadButton> {
   Widget build(BuildContext context) {
     return OutlinedButton.icon(
       style: OutlinedButton.styleFrom(
-        padding: EdgeInsets.all(8.0),
-        textStyle: TextStyle(fontSize: 12),
+        padding: const EdgeInsets.all(8.0),
+        textStyle: const TextStyle(fontSize: 12),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       ),
-      icon: Icon(Icons.download, size: 12),
+      icon: const Icon(Icons.download, size: 12),
       onPressed: _download,
       label: Text(
           '${widget._torrent.quality}.${widget._torrent.type?.toUpperCase()}'),
@@ -30,7 +30,7 @@ class _DownloadButtonState extends State<DownloadButton> {
     try {
       var mg = widget._torrent.magnet.toString();
       if (!(await canLaunch(mg))) {
-        throw TorrentClientException('No torrent client found');
+        throw const TorrentClientException('No torrent client found');
       }
       await launch(mg);
     } on TorrentClientException catch (e, s) {

@@ -76,10 +76,10 @@ class ShimmerLoading extends StatefulWidget {
   final Widget child;
 
   @override
-  _ShimmerLoadingState createState() => _ShimmerLoadingState();
+  ShimmerLoadingState createState() => ShimmerLoadingState();
 }
 
-class _ShimmerLoadingState extends State<ShimmerLoading> {
+class ShimmerLoadingState extends State<ShimmerLoading> {
   Listenable? _shimmerChanges;
 
   @override
@@ -119,7 +119,7 @@ class _ShimmerLoadingState extends State<ShimmerLoading> {
     if (!shimmer.isSized) {
       // The ancestor Shimmer widget isn’t laid
       // out yet. Return an empty box.
-      return SizedBox();
+      return const SizedBox();
     }
     final shimmerSize = shimmer.size;
     final gradient = shimmer.gradient;

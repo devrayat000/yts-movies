@@ -1,53 +1,28 @@
-import 'dart:developer';
-
-import 'package:chopper/chopper.dart';
-import 'package:ytsmovies/src/api/converter.dart';
-import 'package:ytsmovies/src/api/decoder.dart';
-
+import 'package:dio/dio.dart';
+import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
+import 'package:flutter/rendering.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:ytsmovies/src/api/movies.dart';
-import 'package:ytsmovies/src/api/trim_request_interceptop.dart';
-import 'package:ytsmovies/src/models/index.dart';
-import 'package:squadron/squadron.dart';
+import 'package:dio_cache_interceptor_hive_store/dio_cache_interceptor_hive_store.dart';
 
-void initSquadron(String id) {
-  Squadron.setId(id);
-  Squadron.setLogger(ConsoleSquadronLogger());
-  Squadron.logLevel = SquadronLogLevel.all;
-  Squadron.debugMode = true;
-}
-
-Future<ChopperClient> initClient() async {
-  initSquadron('yts_worker_pool');
-  final jsonDecodeServiceWorkerPool = JsonDecodeServiceWorkerPool(
-    // Set whatever you want here
-    concurrencySettings: ConcurrencySettings.oneCpuThread,
+Future<MoviesClient> initClient() async {
+  final tempDir = await getTemporaryDirectory();
+  final options = CacheOptions(
+    store: HiveCacheStore(tempDir.path),
+    policy: CachePolicy.request,
+    hitCacheOnErrorExcept: [401, 403],
+    maxStale: const Duration(hours: 1),
+    priority: CachePriority.normal,
+    cipher: null,
+    keyBuilder: CacheOptions.defaultCacheKeyBuilder,
+    allowPostMethod: false,
   );
-
-  /// start the Worker Pool
-  await jsonDecodeServiceWorkerPool.start();
-
-  /// Instantiate the JsonConverter from above
-  final converter = JsonSerializableWorkerPoolConverter(
-    const {
-      MovieListResponse: MovieListResponse.fromJson,
-      MovieResponse: MovieResponse.fromJson,
-    },
-    jsonDecodeServiceWorkerPool,
-  );
-
-  return ChopperClient(
-    baseUrl: Uri.parse('https://yts.mx'),
-    converter: converter,
-    errorConverter: converter,
-    services: [
-      MoviesListService.create(),
-    ],
-    interceptors: [
-      HttpLoggingInterceptor(),
-      TrimRequestInterceptop(),
-      HeadersInterceptor({
-        "Content-Type": "application/json",
-      })
-    ],
-  );
+  final dio = Dio()
+    ..interceptors.add(DioCacheInterceptor(options: options))
+    ..interceptors.add(LogInterceptor(
+      responseBody: false,
+      requestBody: false,
+      logPrint: (obj) => debugPrint(obj.toString()),
+    ));
+  return MoviesClient(dio);
 }

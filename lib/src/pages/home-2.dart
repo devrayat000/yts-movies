@@ -1,4 +1,12 @@
-part of app_pages;
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:ytsmovies/src/api/movies.dart';
+import 'package:ytsmovies/src/api/movies.dart';
+import 'package:ytsmovies/src/models/index.dart';
+import 'package:ytsmovies/src/widgets/index.dart';
+import 'package:provider/provider.dart';
+import 'package:ytsmovies/src/utils/index.dart';
 
 // import 'package:shared_preferences/shared_preferences.dart';
 
@@ -7,117 +15,92 @@ class HomePage2 extends StatefulWidget {
   const HomePage2({Key? key}) : super(key: key);
 
   @override
-  _HomePage2State createState() => _HomePage2State();
+  HomePage2State createState() => HomePage2State();
 }
 
-class _HomePage2State extends State<HomePage2>
-    with PageStorageCache<HomePage2> {
-  late http.Client _client;
-
-  late Future<List<Movie>> _latestFuture;
-  late Future<List<Movie>> _hdFuture;
-  late Future<List<Movie>> _ratedFuture;
-
-  // static const _historyKey = 'search-history';
-
-  Future<List<List<Movie>>> get _fetcher async {
-    try {
-      final repo = context.read<MovieRepository>();
-      final f = await repo.homePageMovies();
-
-      return f.values.map((e) => e.movies!).toList();
-    } catch (e) {
-      rethrow;
-    }
+class HomePage2State extends State<HomePage2> with PageStorageCache<HomePage2> {
+  Future<List<Movie>> _getLatestMovie() async {
+    final repo = context.read<MoviesClient>();
+    final response = await repo.getMovieList();
+    return response.data.movies ?? [];
   }
 
-  @override
-  void initState() {
-    _client = http.Client();
+  Future<List<Movie>> _getHDMovie() async {
+    final repo = context.read<MoviesClient>();
+    final response = await repo.getMovieList(quality: Quality.$2160);
+    return response.data.movies ?? [];
+  }
 
-    final a = _fetcher.catchError((e, s) {
-      print(e);
-      print(s);
-    });
-
-    _latestFuture =
-        a.then<List<Movie>>((value) => value[0]).onError(errorHandler);
-    _hdFuture = a.then<List<Movie>>((value) => value[1]).onError(errorHandler);
-    _ratedFuture =
-        a.then<List<Movie>>((value) => value[2]).onError(errorHandler);
-
-    super.initState();
+  Future<List<Movie>> _getRatedMovie() async {
+    final repo = context.read<MoviesClient>();
+    final response = await repo.getMovieList(minimumRating: 5);
+    return response.data.movies ?? [];
   }
 
   @override
   Widget build(BuildContext context) {
-    final repo = context.read<MovieRepository>();
-
     return Scaffold(
       appBar: const HomeAppbar(),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: ScrollConfiguration(
-          behavior: MaterialScrollBehavior(),
+          behavior: const MaterialScrollBehavior(),
           child: HeroMode(
             enabled: false,
             child: ListView(
               children: [
                 InkWell(
                   onTap: () async {
-                    try {
-                      await showSearch(
-                        context: context,
-                        delegate: MovieSearchDelegate(repo),
-                      );
-                    } catch (e, s) {
-                      print(e);
-                      print(s);
-                    }
+                    // try {
+                    //   await showSearch(
+                    //     context: context,
+                    //     delegate: MovieSearchDelegate(repo),
+                    //   );
+                    // } catch (e, s) {
+                    //   print(e);
+                    //   print(s);
+                    // }
                   },
-                  child: const SearchTile(),
                   splashFactory: NoSplash.splashFactory,
+                  child: const SearchTile(),
                 ),
                 _space,
                 IntroItem(
                   key: const PageStorageKey('latest-movies-intro'),
-                  title: Text('Latest Movies'),
-                  titleTextStyle: Theme.of(context).textTheme.headline5,
-                  future: _latestFuture,
+                  title: const Text('Latest Movies'),
+                  titleTextStyle: Theme.of(context).textTheme.headlineSmall,
+                  future: _getLatestMovie(),
                   itemBuilder: (context, movie, i) {
                     return _image(movie);
                   },
                   onAction: () {
-                    RootRouteScope.of(context).push(StaticPage.LATEST);
-                    // _routeHandler(Routes.hd);
+                    context.goNamed("latest");
                   },
                 ),
                 _space,
                 IntroItem(
                   key: const PageStorageKey('4k-movies-intro'),
-                  title: Text('4K Movies'),
-                  titleTextStyle: Theme.of(context).textTheme.headline5,
-                  future: _hdFuture,
+                  title: const Text('4K Movies'),
+                  titleTextStyle: Theme.of(context).textTheme.headlineSmall,
+                  future: _getHDMovie(),
                   itemBuilder: (context, movie, i) {
                     return _image(movie);
                   },
                   onAction: () {
-                    RootRouteScope.of(context).push(StaticPage.HD);
-                    // _routeHandler(Routes.hd);
+                    context.goNamed("4k");
                   },
                 ),
                 _space,
                 IntroItem(
                   key: const PageStorageKey('rated-movies-intro'),
-                  title: Text('Highly Rated Movies'),
-                  titleTextStyle: Theme.of(context).textTheme.headline5,
-                  future: _ratedFuture,
+                  title: const Text('Highly Rated Movies'),
+                  titleTextStyle: Theme.of(context).textTheme.headlineSmall,
+                  future: _getRatedMovie(),
                   itemBuilder: (context, movie, i) {
                     return _image(movie);
                   },
                   onAction: () {
-                    RootRouteScope.of(context).push(StaticPage.RATED);
-                    // _routeHandler(Routes.hd);
+                    context.goNamed("rated");
                   },
                 ),
               ],
@@ -128,16 +111,15 @@ class _HomePage2State extends State<HomePage2>
     );
   }
 
-  Widget get _space => SizedBox(height: 8);
+  Widget get _space => const SizedBox(height: 8);
 
   Widget _image(Movie movie) => InkWell(
-        onTap: () async {
-          try {
-            RootRouteScope.of(context).pushDetails(movie);
-          } catch (e, s) {
-            print(e);
-            print(s);
-          }
+        onTap: () {
+          context.goNamed(
+            "details",
+            pathParameters: {"id": movie.id.toString()},
+            extra: movie,
+          );
         },
         enableFeedback: false,
         child: AspectRatio(
@@ -181,10 +163,4 @@ class _HomePage2State extends State<HomePage2>
           ),
         ),
       );
-
-  @override
-  void dispose() {
-    _client.close();
-    super.dispose();
-  }
 }

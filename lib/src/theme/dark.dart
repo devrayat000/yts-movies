@@ -2,66 +2,66 @@ part of app_theme;
 
 extension DarkTheme on AppTheme {
   ThemeData get dark {
-    final _dark = ThemeData.dark();
-    final _text = _dark.textTheme;
-    final _appbar = _dark.appBarTheme;
-    final _input = _dark.inputDecorationTheme;
-    final _fab = _dark.floatingActionButtonTheme;
-    final _colorScheme = ColorScheme.dark();
+    final defaultDark = ThemeData.dark();
+    final text = defaultDark.textTheme;
+    final appbar = defaultDark.appBarTheme;
+    final input = defaultDark.inputDecorationTheme;
+    final fab = defaultDark.floatingActionButtonTheme;
+    const colorScheme = ColorScheme.dark();
 
-    return _dark.copyWith(
+    return defaultDark.copyWith(
       canvasColor: Colors.blueGrey[900],
       cardColor: Colors.blueGrey[700],
-      appBarTheme: _appbar.copyWith(
+      appBarTheme: appbar.copyWith(
         backgroundColor: Colors.blueGrey[900],
         iconTheme: IconThemeData(color: Colors.grey[100]),
       ),
-      backgroundColor: Colors.blueGrey[900],
       scaffoldBackgroundColor: Colors.blueGrey[800],
-      colorScheme: _colorScheme.copyWith(
+      colorScheme: colorScheme.copyWith(
         onSurface: Colors.white,
         surface: Colors.white70,
+        background: Colors.blueGrey[900],
       ),
-      buttonTheme: ButtonThemeData(
+      buttonTheme: const ButtonThemeData(
         buttonColor: Colors.black87,
-        colorScheme: _colorScheme,
+        colorScheme: colorScheme,
       ),
       textTheme: TextTheme(
-        headline1: _text.headline1?.copyWith(
+        displayLarge: text.displayLarge?.copyWith(
           color: Colors.white,
         ),
-        headline2: _text.headline2?.copyWith(
+        displayMedium: text.displayMedium?.copyWith(
           color: Colors.white,
         ),
-        headline3: _text.headline3?.copyWith(
+        displaySmall: text.displaySmall?.copyWith(
           color: Colors.white,
         ),
-        headline4: _text.headline4?.copyWith(
+        headlineMedium: text.headlineMedium?.copyWith(
           color: Colors.white,
         ),
-        headline5: _text.headline5?.copyWith(
+        headlineSmall: text.headlineSmall?.copyWith(
           color: Colors.white,
         ),
-        headline6: _text.headline6?.copyWith(
+        titleLarge: text.titleLarge?.copyWith(
           color: Colors.white70,
           fontWeight: FontWeight.normal,
         ),
-        subtitle1: _text.subtitle1?.copyWith(
+        titleMedium: text.titleMedium?.copyWith(
           color: Colors.white,
           fontWeight: FontWeight.normal,
         ),
-        subtitle2: _text.subtitle2?.copyWith(
+        titleSmall: text.titleSmall?.copyWith(
           color: Colors.white,
           fontWeight: FontWeight.normal,
         ),
       ),
-      inputDecorationTheme: _input.copyWith(
-        hintStyle: _input.hintStyle?.copyWith(
+      inputDecorationTheme: input.copyWith(
+        hintStyle: input.hintStyle?.copyWith(
           color: Colors.blueGrey[50],
           fontStyle: FontStyle.italic,
         ),
-        border: OutlineInputBorder(
-          borderRadius: const BorderRadius.all(
+        border: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(
             Radius.circular(999.0),
           ),
           borderSide: BorderSide.none,
@@ -71,7 +71,7 @@ extension DarkTheme on AppTheme {
         filled: true,
         contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
       ),
-      floatingActionButtonTheme: _fab.copyWith(
+      floatingActionButtonTheme: fab.copyWith(
         backgroundColor: Colors.tealAccent[700],
         foregroundColor: Colors.grey[900],
       ),

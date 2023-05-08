@@ -156,26 +156,29 @@ class _ImageAppbarState extends State<ImageAppbar> {
                     label: Text('Action'),
                     backgroundColor: Colors.pink,
                     padding: EdgeInsets.zero,
-                    labelStyle: Theme.of(context).textTheme.subtitle2?.copyWith(
-                          fontSize: 10.0,
-                        ),
+                    labelStyle:
+                        Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontSize: 10.0,
+                            ),
                   ),
                   Chip(
                     label: Text('2.30 Hours'),
                     backgroundColor: Colors.purple,
                     padding: EdgeInsets.zero,
-                    labelStyle: Theme.of(context).textTheme.subtitle2?.copyWith(
-                          fontSize: 10.0,
-                        ),
+                    labelStyle:
+                        Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontSize: 10.0,
+                            ),
                   ),
                   Chip(
                     label: Text('7.8'),
                     // avatar: Icon(Icons.star),
                     backgroundColor: Colors.amber,
                     padding: EdgeInsets.zero,
-                    labelStyle: Theme.of(context).textTheme.subtitle2?.copyWith(
-                          fontSize: 10.0,
-                        ),
+                    labelStyle:
+                        Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontSize: 10.0,
+                            ),
                   ),
                 ],
               ),

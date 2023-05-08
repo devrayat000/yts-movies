@@ -31,7 +31,6 @@ part './shimmer.dart';
 part './movie_suggestions.dart';
 part './movie_list.dart';
 part './image.dart';
-part './gas_page.dart';
 part './future_builder.dart';
 part './drawers/filter_drawer.dart';
 part './appbars/home_appbar.dart';

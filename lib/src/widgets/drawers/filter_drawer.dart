@@ -68,8 +68,8 @@ class FilterDrawer extends StatelessWidget {
                 hint: const Text('Select Resolution'),
                 items: QualityCubit.quality
                     .map((e) => DropdownMenuItem<String>(
-                          child: Text(e),
                           value: e,
+                          child: Text(e),
                         ))
                     .toList(),
               ),
@@ -80,8 +80,8 @@ class FilterDrawer extends StatelessWidget {
                 bloc: _filter.genre,
                 items: list.genres
                     .map((e) => DropdownMenuItem<String>(
-                          child: Text(e.label),
                           value: e.value,
+                          child: Text(e.label),
                         ))
                     .toList(),
               ),
@@ -92,8 +92,8 @@ class FilterDrawer extends StatelessWidget {
                 bloc: _filter.sort,
                 items: list.sorts
                     .map((e) => DropdownMenuItem<String>(
-                          child: Text(e.label),
                           value: e.value,
+                          child: Text(e.label),
                         ))
                     .toList(),
               ),
@@ -123,7 +123,7 @@ class FilterDrawer extends StatelessWidget {
                     icon: Icons.search,
                     color: Colors.greenAccent[400],
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   _actionButton(
                     context,
                     onPressed: _filter.reset,
@@ -150,10 +150,10 @@ class FilterDrawer extends StatelessWidget {
       ElevatedButton.icon(
         onPressed: onPressed,
         icon: Icon(icon, color: Colors.white),
-        label: Text(label, style: TextStyle(color: Colors.white)),
+        label: Text(label, style: const TextStyle(color: Colors.white)),
         style: ElevatedButton.styleFrom(
           primary: color,
-          animationDuration: Duration(milliseconds: 300),
+          animationDuration: const Duration(milliseconds: 300),
         ),
       );
 
