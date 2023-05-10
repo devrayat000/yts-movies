@@ -1,0 +1,6 @@
+package_rename_config:
+  android:
+    app_name: YTS Movies
+
+  ios:
+    app_name: YTS Movies

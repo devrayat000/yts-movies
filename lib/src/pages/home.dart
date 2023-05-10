@@ -18,7 +18,7 @@ class HomePage extends StatefulWidget {
   HomePageState createState() => HomePageState();
 }
 
-class HomePageState extends State<HomePage> with PageStorageCache<HomePage> {
+class HomePageState extends State<HomePage> {
   late final Future<MovieListResponse> _latestMovies;
   late final Future<MovieListResponse> _hdMovies;
   late final Future<MovieListResponse> _ratedMovies;

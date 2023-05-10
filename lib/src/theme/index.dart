@@ -8,6 +8,6 @@ part './dark.dart';
 part './gradient.dart';
 
 class AppTheme {
-  LinearGradient shimmerGradient(bool _isDarkTheme) =>
-      _isDarkTheme ? darkGradient : lightGradient;
+  LinearGradient shimmerGradient(bool isDarkTheme) =>
+      isDarkTheme ? darkGradient : lightGradient;
 }

@@ -1,4 +1,4 @@
-const all_native_names = const {
+const allNativeNames = {
   "af": "Afrikaans",
   "af_NA": "Afrikaans (Namibië)",
   "af_ZA": "Afrikaans (Suid-Afrika)",

@@ -8,7 +8,7 @@ abstract class DropdownCubit extends HydratedCubit<String?> {
 
   void reset() {
     emit(_default);
-    this.clear();
+    clear();
   }
 
   @override

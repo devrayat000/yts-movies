@@ -23,44 +23,20 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^0.13.6
   provider: ^6.0.5
   flutter_breadcrumb: ^1.0.1
-  # page_transition: ^2.0.2
-  # animations: ^2.0.1
-  # animated_text_kit: ^4.2.1
-  # flutter_animated_theme: ^1.0.0
-  # shared_preferences: ^2.0.6
-  # flutter_localized_locales: ^2.0.2
   url_launcher: ^6.1.10
-
-  # sqflite: ^2.0.0+3
   hive: ^2.2.3
   hive_flutter: ^1.1.0
-
-  # path: ^1.8.0
   path_provider: ^2.0.14
-  async: ^2.11.0
   infinite_scroll_pagination: ^3.2.0
   youtube_player_flutter: ^8.1.2
   cached_network_image: ^3.2.3
-  # speech_to_text: ^4.2.2
-  # flutter_typeahead: ^3.2.0
   flutter_bloc: ^8.1.2
   hydrated_bloc: ^9.1.0
-
   freezed_annotation: ^2.2.0
   equatable: ^2.0.5
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.5
-  chopper: ^6.1.1
   go_router: ^7.0.0
-  squadron: ^4.3.6
-  flutter_cache_manager: ^3.3.0
-  json_cache: ^2.1.0
-  api_cache_manager: ^1.0.2
   retrofit: ^4.0.1
   dio: ^5.1.1
   json_annotation: ^4.8.1

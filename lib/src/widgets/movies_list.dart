@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:ytsmovies/src/bloc/api/index.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
@@ -28,32 +27,17 @@ class MoviesList extends StatefulWidget {
 
   @override
   MoviesListState createState() => MoviesListState();
-
-  static MoviesListState? of<T extends ApiCubit>(BuildContext context) {
-    return context.findAncestorStateOfType<MoviesListState>();
-  }
 }
 
-class MoviesListState extends State<MoviesList>
-    with PageStorageCache<MoviesList> {
+class MoviesListState extends State<MoviesList> {
   late PagingController<int, Movie> _pagingController;
   late ScrollController _scrollController;
-
-  // late final ValueKey<String> _listKey;
-  // late final ValueKey<String> _pageKey;
 
   @override
   void initState() {
     super.initState();
-    // _listKey = ValueKey('${widget.label}-movies');
-    // _pageKey = ValueKey('${widget.label}-movie-page');
     _scrollController = ScrollController(debugLabel: 'scroll-popup');
     _pagingController = PagingController(firstPageKey: 1);
-    // final pageKey = getCache<int>(key: _pageKey);
-    // final movies = getCache<List<Movie>>(key: _listKey);
-    // if (movies != null) {
-    //   _pagingController.appendPage(movies, pageKey);
-    // }
     _pagingController.addPageRequestListener(_fetchPage);
     _pagingController.addStatusListener(_pageStatusListener);
   }
@@ -69,8 +53,6 @@ class MoviesListState extends State<MoviesList>
 
   @override
   void dispose() {
-    // setCache<List<Movie>>(key: _listKey, data: _pagingController.itemList);
-    // setCache<int>(key: _pageKey, data: _pagingController.nextPageKey ?? 1);
     _pagingController.dispose();
     _scrollController.dispose();
     super.dispose();

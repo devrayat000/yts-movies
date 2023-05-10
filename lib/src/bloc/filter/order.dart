@@ -8,7 +8,7 @@ class OrderEvent {
 class OrderCubit extends HydratedCubit<bool> {
   OrderCubit() : super(false);
 
-  void changeHandler([bool? newValue]) => emit(newValue ?? !this.state);
+  void changeHandler([bool? newValue]) => emit(newValue ?? !state);
 
   void reset() {
     emit(false);

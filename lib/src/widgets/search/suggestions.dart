@@ -65,11 +65,11 @@ class SearchSuggestions extends StatelessWidget {
                 child: MovieImage(src: item.smallCoverImage),
               ),
               title: Text(item.title),
-              subtitle: Text(all_native_names[item.language] ?? 'English'),
+              subtitle: Text(allNativeNames[item.language] ?? 'English'),
               trailing: Text(_runtimeFormat(item)),
               onTap: () async {
                 try {
-                  RootRouteScope.of(context).pushDetails(item);
+                  context.pushNamed("details", extra: item);
                 } catch (e, s) {
                   log(e.toString(), error: e, stackTrace: s);
                 } finally {

@@ -273,7 +273,7 @@ class _Screen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final language = all_native_names[_movie.language] ?? 'English';
+    final language = allNativeNames[_movie.language] ?? 'English';
     return Scaffold(
       appBar: AppBar(
         title: Text(

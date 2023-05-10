@@ -28,10 +28,10 @@ class Filter {
     debugPrint('getting filter values');
     final params = {
       'order_by': order.state ? 'desc' : null,
-      'sort': sort.state,
+      'sort_by': sort.state,
       'genre': genre.state,
       'quality': quality.state,
-      'rating': rating.state.round().toString(),
+      'minimum_rating': rating.state.round().toString(),
     };
     debugPrint('mapping filter values');
     return params..removeWhere((_, value) => value == null || value == '0');

@@ -16,6 +16,7 @@ abstract class MoviesClient {
   factory MoviesClient(Dio dio, {String baseUrl}) = _MoviesClient;
 
   @GET('/list_movies.json')
+  @CancelRequest()
   Future<MovieListResponse> getMovieList({
     @Query("limit") int? limit = 10,
     @Query("page") int? page = 1,
@@ -27,6 +28,7 @@ abstract class MoviesClient {
     @Query('order_by') Order? orderBy,
     @Query('with_rt_ratings') bool? withRtRatings,
     @Queries() Map<String, dynamic>? queries,
+    @CancelRequest() CancelToken? token,
   });
 
   @GET('/movie_details.json')
@@ -35,9 +37,11 @@ abstract class MoviesClient {
     @Query('movie_id') String id, {
     @Query('with_image') bool? image,
     @Query('with_cast') bool? cast,
+    @CancelRequest() CancelToken? token,
   });
 
   @GET('/movie_suggestions.json')
   Future<MovieSuggestionResponse> getMovieSuggestions(
-      @Query('movie_id') String id);
+      @Query('movie_id') String id,
+      {@CancelRequest() CancelToken? token});
 }

@@ -20,7 +20,7 @@ final Map<Query, Map<String, dynamic>> parseQuery = {
 class MyGlobals {
   static final bucket = PageStorageBucket();
 
-  static const Widget kCircularLoading = const Center(
+  static const Widget kCircularLoading = Center(
     child: CircularProgressIndicator.adaptive(),
   );
 }

@@ -17,7 +17,7 @@
         </intent>
     </queries>
    <application
-        android:label="ytsmovies"
+        android:label="YTS Movies"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="true"

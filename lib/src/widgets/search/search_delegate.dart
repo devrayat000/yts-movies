@@ -3,16 +3,15 @@ library app_widget.search;
 import 'dart:async';
 import 'dart:developer';
 
-import 'package:async/async.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:provider/provider.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:ytsmovies/src/api/movies.dart';
 
-import 'package:ytsmovies/src/router/index.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
 import 'package:ytsmovies/src/bloc/filter/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
@@ -27,13 +26,10 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
   MovieSearchDelegate({required this.repo});
 
   final _controller = PagingController<int, Movie>(firstPageKey: 1);
-  final _box = Hive.box<String>(MyBoxs.searchHistoryBox);
-  // final _prefs = SharedPreferences.getInstance();
+  Box<String> get _box => Hive.box<String>(MyBoxs.searchHistoryBox);
 
   Map<String, dynamic> _params = {};
-  CancelableOperation<MovieData>? subscriber;
-  CancelableOperation<List<Movie>>? subscriber2;
-  Timer? debouncer;
+  CancelToken? _cancelToken;
 
   List<String> get _history => _box.values.toSet().toList().reversed.toList();
 
@@ -133,14 +129,11 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    subscriber2?.cancel();
-    subscriber2 = CancelableOperation.fromFuture(_firstMovies, onCancel: () {
-      debugPrint('cancelled');
-    });
+    _cancelToken?.cancel();
 
     return SearchSuggestions(
       history: _history,
-      future: query.trim().isEmpty ? null : subscriber2?.value,
+      future: query.trim().isEmpty ? null : _firstMovies,
       onShowHistory: (i) async {
         try {
           query = _history[i];
@@ -148,6 +141,7 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
         } catch (e, s) {
           log(e.toString(), error: e, stackTrace: s);
         }
+        // Dio().get("path", )
       },
       onTap: () => _setHistory(),
     );
@@ -155,10 +149,12 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   Future<MovieListData> _moviesFuture(int page) async {
     try {
+      _cancelToken = CancelToken();
       final movieData = await repo.getMovieList(
         page: page,
         queryTerm: query,
         queries: _params,
+        token: _cancelToken,
       );
       return movieData.data;
     } catch (e, s) {

@@ -1,13 +1,16 @@
-part of app_pages;
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
+import '../theme/index.dart';
 
 class ImageAppbar extends StatefulWidget {
   const ImageAppbar({Key? key}) : super(key: key);
 
   @override
-  _ImageAppbarState createState() => _ImageAppbarState();
+  ImageAppbarState createState() => ImageAppbarState();
 }
 
-class _ImageAppbarState extends State<ImageAppbar> {
+class ImageAppbarState extends State<ImageAppbar> {
   late ScrollController _scrollController;
 
   bool isDetails = true;

@@ -25,8 +25,9 @@ class TorrentClientException implements Exception {
 
   const TorrentClientException(this.message, {this.uri});
 
+  @override
   String toString() {
-    var b = new StringBuffer()
+    var b = StringBuffer()
       ..write('TorrentClientException: ')
       ..write(message);
     if (uri != null) {

@@ -32,6 +32,7 @@ class _MoviesClient implements MoviesClient {
     Order? orderBy,
     bool? withRtRatings,
     Map<String, dynamic>? queries,
+    CancelToken? token,
   }) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
@@ -60,6 +61,7 @@ class _MoviesClient implements MoviesClient {
               '/list_movies.json',
               queryParameters: queryParameters,
               data: _data,
+              cancelToken: token,
             )
             .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
     final value = await compute(deserializeMovieListResponse, _result.data!);
@@ -71,6 +73,7 @@ class _MoviesClient implements MoviesClient {
     String id, {
     bool? image,
     bool? cast,
+    CancelToken? token,
   }) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
@@ -93,6 +96,7 @@ class _MoviesClient implements MoviesClient {
               '/movie_details.json',
               queryParameters: queryParameters,
               data: _data,
+              cancelToken: token,
             )
             .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
     final value = await compute(deserializeMovieResponse, _result.data!);
@@ -100,9 +104,13 @@ class _MoviesClient implements MoviesClient {
   }
 
   @override
-  Future<MovieSuggestionResponse> getMovieSuggestions(String id) async {
+  Future<MovieSuggestionResponse> getMovieSuggestions(
+    String id, {
+    CancelToken? token,
+  }) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{r'movie_id': id};
+    queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     final Map<String, dynamic>? _data = null;
     final _result = await _dio.fetch<Map<String, dynamic>>(
@@ -116,6 +124,7 @@ class _MoviesClient implements MoviesClient {
               '/movie_suggestions.json',
               queryParameters: queryParameters,
               data: _data,
+              cancelToken: token,
             )
             .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
     final value =
