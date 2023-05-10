@@ -25,7 +25,7 @@ import 'package:ytsmovies/src/theme/index.dart';
 class MyImageCache extends ImageCache {
   @override
   void clear() {
-    print('Clearing cache!');
+    debugPrint('Clearing cache!');
     super.clear();
   }
 }
@@ -36,7 +36,7 @@ class MyWidgetsBinding extends WidgetsFlutterBinding {
 
   @override
   ImageCache createImageCache() {
-    imageCache?.maximumSize = 999;
+    imageCache.maximumSize = 999;
     return MyImageCache();
   }
 
@@ -102,14 +102,14 @@ void main() {
           child: const MyApp(),
         ));
       } catch (e, s) {
-        print(e);
-        print(s);
+        debugPrint(e.toString());
+        debugPrint(s.toString());
         rethrow;
       }
     },
     (Object error, StackTrace stack) {
-      print(error);
-      print(stack);
+      debugPrint(error.toString());
+      debugPrint(stack.toString());
       // exit(1);
     },
   );
@@ -126,13 +126,14 @@ class MyApp extends StatelessWidget {
         child: MaterialApp(
           title: 'YTS Movies',
           debugShowCheckedModeBanner: false,
-          home: HomePage(),
+          home: const HomePage(),
           scrollBehavior: const CupertinoScrollBehavior(),
           restorationScopeId: 'com.movies.yts',
           builder: (BuildContext context, Widget? widget) {
-            Widget error = Text('...Unexpected error occurred...');
-            if (widget is Scaffold || widget is Navigator)
+            Widget error = const Text('...Unexpected error occurred...');
+            if (widget is Scaffold || widget is Navigator) {
               error = Scaffold(body: Center(child: error));
+            }
             ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
 
             return _Screen(child: widget!);

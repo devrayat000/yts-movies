@@ -6,7 +6,7 @@ class RootRouteState with ChangeNotifier {
   BasePath path = HomePath();
 
   RootRouteState() {
-    print('state initialized');
+    debugPrint('state initialized');
   }
 
   void push(enums.StaticPage page) {

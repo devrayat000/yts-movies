@@ -187,8 +187,8 @@ class FilterDrawer extends StatelessWidget {
         hint: hintChild,
         elevation: 4,
         decoration: const InputDecoration(
-          border: const OutlineInputBorder(
-            borderRadius: const BorderRadius.all(Radius.circular(4)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(4)),
           ),
           isDense: true,
         ),

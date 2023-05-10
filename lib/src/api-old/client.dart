@@ -43,7 +43,7 @@ Future<ChopperClient> initClient() async {
     interceptors: [
       HttpLoggingInterceptor(),
       TrimRequestInterceptop(),
-      HeadersInterceptor({
+      const HeadersInterceptor({
         "Content-Type": "application/json",
       })
     ],

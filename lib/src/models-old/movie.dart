@@ -91,7 +91,7 @@ class Movie with EquatableMixin, HiveObjectMixin {
     this.largeCoverImage,
     this.trailer,
     DateTime? dateUploaded,
-  }) : this.dateUploaded = dateUploaded ?? DateTime.now();
+  }) : dateUploaded = dateUploaded ?? DateTime.now();
 
   factory Movie.fromJson(Map<String, dynamic> data) {
     log(data.toString());

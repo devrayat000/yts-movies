@@ -21,11 +21,11 @@ class ApiProvider {
   final HDApiCubit hdMovies;
   final FavouriteApiCubit favouriteMovies;
 
-  ApiProvider(MovieRepository _repository)
-      : latestMovies = LatestApiCubit(_repository),
-        ratedMovies = RatedApiCubit(_repository),
-        hdMovies = HDApiCubit(_repository),
-        favouriteMovies = FavouriteApiCubit(_repository);
+  ApiProvider(MovieRepository repository)
+      : latestMovies = LatestApiCubit(repository),
+        ratedMovies = RatedApiCubit(repository),
+        hdMovies = HDApiCubit(repository),
+        favouriteMovies = FavouriteApiCubit(repository);
 }
 
 abstract class ApiCubit extends Cubit<PageState> {
@@ -36,8 +36,8 @@ abstract class ApiCubit extends Cubit<PageState> {
 
   @override
   void onChange(Change<PageState> change) {
-    print('Current: ${change.currentState.runtimeType}\n');
-    print('Next: ${change.nextState.runtimeType}\n');
+    debugPrint('Current: ${change.currentState.runtimeType}\n');
+    debugPrint('Next: ${change.nextState.runtimeType}\n');
     super.onChange(change);
   }
 }

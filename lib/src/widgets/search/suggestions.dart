@@ -13,6 +13,7 @@ class SearchSuggestions extends StatelessWidget {
     required this.onShowHistory,
   }) : super(key: key);
 
+  @override
   Widget build(BuildContext context) {
     return MyFutureBuilder<List<Movie>>(
       future: future,
@@ -42,15 +43,15 @@ class SearchSuggestions extends StatelessWidget {
         return _text(context, error.toString());
       },
       successBuilder: (context, data) {
-        print(data);
-        print('success');
+        debugPrint(data.toString());
+        debugPrint('success');
         if (data == null || data.isEmpty) {
           if (data is List<String>) {
             _text(context, 'Search for movies..🤗');
           }
           return _text(context, 'Nothing found 😥!');
         }
-        print('success list');
+        debugPrint('success list');
         return ListView.separated(
           itemCount: data.length,
           separatorBuilder: (context, i) => const Divider(),

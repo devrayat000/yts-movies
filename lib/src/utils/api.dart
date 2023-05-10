@@ -20,10 +20,10 @@ class MovieApi extends Apis {
   @override
   final timeout = const Duration(seconds: 15);
 
-  final _latestCache = AsyncCache<http.Response>(Duration(hours: 1));
-  final _hdCache = AsyncCache<http.Response>(Duration(hours: 1));
-  final _ratedCache = AsyncCache<http.Response>(Duration(hours: 1));
-  final _thisYearCache = AsyncCache<http.Response>(Duration(hours: 1));
+  final _latestCache = AsyncCache<http.Response>(const Duration(hours: 1));
+  final _hdCache = AsyncCache<http.Response>(const Duration(hours: 1));
+  final _ratedCache = AsyncCache<http.Response>(const Duration(hours: 1));
+  final _thisYearCache = AsyncCache<http.Response>(const Duration(hours: 1));
 
   Future<http.Response> listMovies(Uri url) {
     return client.get(url).timeout(timeout);

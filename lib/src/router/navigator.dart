@@ -12,7 +12,7 @@ class RootNavigator extends StatelessWidget {
       key: navigatorKey,
       observers: [routeObserver],
       pages: [
-        MaterialPage(
+        const MaterialPage(
           key: ValueKey('home'),
           maintainState: true,
           child: HomePage(),

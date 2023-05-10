@@ -8,13 +8,12 @@ class ThemeCubit extends HydratedCubit<ThemeData> {
 
   void sync(Brightness brightness) {
     if (brightness == Brightness.dark) {
-      this.emit(this.theme.dark);
+      emit(theme.dark);
     }
   }
 
   void toggle() {
-    this.emit(
-        this.state.brightness == Brightness.dark ? theme.light : theme.dark);
+    emit(state.brightness == Brightness.dark ? theme.light : theme.dark);
   }
 
   @override

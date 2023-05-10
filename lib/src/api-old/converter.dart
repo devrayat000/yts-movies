@@ -3,6 +3,7 @@ import 'dart:convert' show jsonDecode;
 import 'dart:developer';
 
 import 'package:chopper/chopper.dart';
+import 'package:flutter/material.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import './decoder.dart';
 
@@ -25,7 +26,7 @@ class JsonSerializableWorkerPoolConverter extends JsonConverter {
           ? await workerPool!.jsonDecode(data)
           : jsonDecode(data);
     } catch (error) {
-      print(error);
+      debugPrint(error.toString());
 
       chopperLogger.warning(error);
 

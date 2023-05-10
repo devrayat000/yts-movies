@@ -1,7 +1,7 @@
 part of app_bloc.api;
 
 class FavouriteApiCubit extends ApiCubit {
-  FavouriteApiCubit(MovieRepository _repository) : super(_repository);
+  FavouriteApiCubit(MovieRepository repository) : super(repository);
 
   @override
   Future<void> getMovies(int page) async {

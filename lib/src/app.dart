@@ -24,9 +24,10 @@ class YTSApp extends StatelessWidget {
           scrollBehavior: const CupertinoScrollBehavior(),
           // restorationScopeId: 'com.movies.yts',
           builder: (BuildContext context, Widget? widget) {
-            Widget error = Text('...Unexpected error occurred...');
-            if (widget is Scaffold || widget is Navigator)
+            Widget error = const Text('...Unexpected error occurred...');
+            if (widget is Scaffold || widget is Navigator) {
               error = Scaffold(body: Center(child: error));
+            }
             ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
 
             return _Screen(child: widget!);
@@ -50,8 +51,8 @@ class _Screen extends StatelessWidget {
       builder: (context, theme) {
         return AnimatedTheme(
           data: theme,
-          child: child,
           curve: Curves.easeOutCirc,
+          child: child,
         );
       },
       buildWhen: (prev, current) => prev != current,

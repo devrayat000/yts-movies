@@ -3,8 +3,6 @@ import 'dart:io';
 
 import 'package:chopper/chopper.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:json_cache/json_cache.dart';
-import 'package:api_cache_manager/api_cache_manager.dart';
 
 class CacheInterceptop implements RequestInterceptor, ResponseInterceptor {
   @override

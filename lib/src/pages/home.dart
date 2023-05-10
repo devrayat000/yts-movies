@@ -54,8 +54,8 @@ class HomePageState extends State<HomePage> with PageStorageCache<HomePage> {
                       ),
                     );
                     // } catch (e, s) {
-                    //   print(e);
-                    //   print(s);
+                    //   debugPrint(e);
+                    //   debugPrint(s);
                     // }
                   },
                   splashFactory: NoSplash.splashFactory,

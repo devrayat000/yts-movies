@@ -54,7 +54,7 @@ class _ImageAppbarState extends State<ImageAppbar> {
                 stretchTriggerOffset: 100.0,
                 stretch: true,
                 onStretchTrigger: () async {
-                  print('stretched');
+                  debugPrint('stretched');
                 },
                 actions: [
                   if (!isDetails)
@@ -71,12 +71,12 @@ class _ImageAppbarState extends State<ImageAppbar> {
                 leading: ClipOval(
                   child: ColoredBox(
                     color: Colors.grey.withOpacity(isDetails ? 0.38 : 0.0),
-                    child: CupertinoNavigationBarBackButton(),
+                    child: const CupertinoNavigationBarBackButton(),
                   ),
                 ),
                 flexibleSpace: FlexibleSpaceBar(
                   background: ShaderMask(
-                    shaderCallback: (rect) => LinearGradient(
+                    shaderCallback: (rect) => const LinearGradient(
                       colors: [
                         Colors.transparent,
                         Colors.transparent,
@@ -88,13 +88,13 @@ class _ImageAppbarState extends State<ImageAppbar> {
                     blendMode: BlendMode.darken,
                     child: Image.network(
                       'https://img.yts.mx/assets/images/movies/the_suicide_squad_2021/medium-cover.jpg',
-                      errorBuilder: (c, e, s) => Center(
+                      errorBuilder: (c, e, s) => const Center(
                         child: Text('😥'),
                       ),
                       fit: BoxFit.cover,
                     ),
                   ),
-                  stretchModes: [StretchMode.zoomBackground],
+                  stretchModes: const [StretchMode.zoomBackground],
                   centerTitle: true,
                   title: _detailsCard,
                 ),
@@ -103,7 +103,7 @@ class _ImageAppbarState extends State<ImageAppbar> {
                 delegate: SliverChildBuilderDelegate(
                   (context, i) {
                     return ListTile(
-                      leading: Icon(Icons.list),
+                      leading: const Icon(Icons.list),
                       title: Text('$i'),
                     );
                   },
@@ -121,7 +121,7 @@ class _ImageAppbarState extends State<ImageAppbar> {
         padding: const EdgeInsets.symmetric(horizontal: 12.0),
         margin: const EdgeInsets.symmetric(horizontal: 8.0),
         width: double.infinity,
-        duration: Duration(milliseconds: 100),
+        duration: const Duration(milliseconds: 100),
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
           color: Colors.grey[400]?.withOpacity(isDetails ? 0.38 : 0.0),
@@ -153,7 +153,7 @@ class _ImageAppbarState extends State<ImageAppbar> {
                 alignment: WrapAlignment.start,
                 children: [
                   Chip(
-                    label: Text('Action'),
+                    label: const Text('Action'),
                     backgroundColor: Colors.pink,
                     padding: EdgeInsets.zero,
                     labelStyle:
@@ -162,7 +162,7 @@ class _ImageAppbarState extends State<ImageAppbar> {
                             ),
                   ),
                   Chip(
-                    label: Text('2.30 Hours'),
+                    label: const Text('2.30 Hours'),
                     backgroundColor: Colors.purple,
                     padding: EdgeInsets.zero,
                     labelStyle:
@@ -171,7 +171,7 @@ class _ImageAppbarState extends State<ImageAppbar> {
                             ),
                   ),
                   Chip(
-                    label: Text('7.8'),
+                    label: const Text('7.8'),
                     // avatar: Icon(Icons.star),
                     backgroundColor: Colors.amber,
                     padding: EdgeInsets.zero,
@@ -186,5 +186,5 @@ class _ImageAppbarState extends State<ImageAppbar> {
         ),
       );
 
-  Widget get _title => Text('The Suicide Squad');
+  Widget get _title => const Text('The Suicide Squad');
 }

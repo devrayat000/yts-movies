@@ -95,8 +95,8 @@ class MovieImage extends StatelessWidget {
     //     );
     //   },
     //   errorBuilder: (c, error, _) {
-    //     print('An error occurred loading "$src"');
-    //     print(error);
+    //     debugPrint('An error occurred loading "$src"');
+    //     debugPrint(error);
     //     return const Center(
     //       child: Icon(
     //         Icons.image,
