@@ -26,23 +26,24 @@ class MovieAdapter extends TypeAdapter<_$_Movie> {
       language: fields[6] as String,
       mpaRating: fields[7] as String?,
       descriptionFull: fields[8] as String,
-      synopsis: fields[9] as String?,
-      runtime: fields[10] as int,
-      genres: (fields[11] as List).cast<String>(),
-      torrents: (fields[12] as List).cast<Torrent>(),
-      smallCoverImage: fields[13] as String,
-      mediumCoverImage: fields[14] as String,
+      descriptionIntro: fields[9] as String?,
+      synopsis: fields[10] as String?,
+      runtime: fields[11] as int,
+      genres: (fields[12] as List).cast<String>(),
+      torrents: (fields[13] as List).cast<Torrent>(),
+      smallCoverImage: fields[14] as String,
+      mediumCoverImage: fields[15] as String,
       dateUploaded: fields[16] as DateTime?,
-      largeCoverImage: fields[15] as String?,
-      trailer: fields[17] as String?,
-      rating: fields[18] as double,
+      largeCoverImage: fields[17] as String?,
+      trailer: fields[18] as String?,
+      rating: fields[19] as double,
     );
   }
 
   @override
   void write(BinaryWriter writer, _$_Movie obj) {
     writer
-      ..writeByte(19)
+      ..writeByte(20)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -62,24 +63,26 @@ class MovieAdapter extends TypeAdapter<_$_Movie> {
       ..writeByte(8)
       ..write(obj.descriptionFull)
       ..writeByte(9)
-      ..write(obj.synopsis)
+      ..write(obj.descriptionIntro)
       ..writeByte(10)
+      ..write(obj.synopsis)
+      ..writeByte(11)
       ..write(obj.runtime)
-      ..writeByte(13)
-      ..write(obj.smallCoverImage)
       ..writeByte(14)
+      ..write(obj.smallCoverImage)
+      ..writeByte(15)
       ..write(obj.mediumCoverImage)
       ..writeByte(16)
       ..write(obj.dateUploaded)
-      ..writeByte(15)
-      ..write(obj.largeCoverImage)
       ..writeByte(17)
-      ..write(obj.trailer)
+      ..write(obj.largeCoverImage)
       ..writeByte(18)
+      ..write(obj.trailer)
+      ..writeByte(19)
       ..write(obj.rating)
-      ..writeByte(11)
-      ..write(obj.genres)
       ..writeByte(12)
+      ..write(obj.genres)
+      ..writeByte(13)
       ..write(obj.torrents);
   }
 
@@ -108,7 +111,8 @@ _$_Movie _$$_MovieFromJson(Map<String, dynamic> json) => _$_Movie(
       language: json['language'] as String,
       mpaRating: json['mpa_rating'] as String?,
       descriptionFull: json['description_full'] as String,
-      synopsis: json['description_intro'] as String?,
+      descriptionIntro: json['description_intro'] as String?,
+      synopsis: json['synopsis'] as String?,
       runtime: json['runtime'] as int,
       genres:
           (json['genres'] as List<dynamic>).map((e) => e as String).toList(),
@@ -135,7 +139,8 @@ Map<String, dynamic> _$$_MovieToJson(_$_Movie instance) => <String, dynamic>{
       'language': instance.language,
       'mpa_rating': instance.mpaRating,
       'description_full': instance.descriptionFull,
-      'description_intro': instance.synopsis,
+      'description_intro': instance.descriptionIntro,
+      'synopsis': instance.synopsis,
       'runtime': instance.runtime,
       'genres': instance.genres,
       'torrents': instance.torrents.map((e) => e.toJson()).toList(),

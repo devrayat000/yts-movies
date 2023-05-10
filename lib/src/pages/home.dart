@@ -71,7 +71,7 @@ class HomePageState extends State<HomePage> with PageStorageCache<HomePage> {
                     return _image(movie);
                   },
                   onAction: () {
-                    context.goNamed("latest");
+                    context.pushNamed("latest");
                   },
                 ),
                 _space,
@@ -84,7 +84,7 @@ class HomePageState extends State<HomePage> with PageStorageCache<HomePage> {
                     return _image(movie);
                   },
                   onAction: () {
-                    context.goNamed("4k");
+                    context.pushNamed("4k");
                   },
                 ),
                 _space,
@@ -97,7 +97,7 @@ class HomePageState extends State<HomePage> with PageStorageCache<HomePage> {
                     return _image(movie);
                   },
                   onAction: () {
-                    context.goNamed("rated");
+                    context.pushNamed("rated");
                   },
                 ),
               ],
@@ -112,7 +112,7 @@ class HomePageState extends State<HomePage> with PageStorageCache<HomePage> {
 
   Widget _image(Movie movie) => InkWell(
         onTap: () {
-          context.goNamed(
+          context.pushNamed(
             "details",
             pathParameters: {"id": movie.id.toString()},
             extra: movie,

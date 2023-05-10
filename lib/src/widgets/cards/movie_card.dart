@@ -36,7 +36,7 @@ class MovieCard extends StatelessWidget {
 
   void _viewDetails(BuildContext context) async {
     try {
-      context.goNamed(
+      context.pushNamed(
         "details",
         pathParameters: {'id': _movie.id.toString()},
         extra: _movie,

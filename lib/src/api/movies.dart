@@ -1,5 +1,5 @@
 import "dart:async";
-import 'package:dio/dio.dart';
+import 'package:dio/dio.dart' hide Headers;
 import 'package:flutter/foundation.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:ytsmovies/src/models/index.dart';
@@ -30,6 +30,7 @@ abstract class MoviesClient {
   });
 
   @GET('/movie_details.json')
+  @Headers({'Cache-Control': 'max-age=864000'})
   Future<MovieResponse> getMovieByid(
     @Query('movie_id') String id, {
     @Query('with_image') bool? image,

@@ -39,26 +39,27 @@ mixin _$Movie {
   @HiveField(8)
   String get descriptionFull => throw _privateConstructorUsedError;
   @HiveField(9)
-  @JsonKey(name: 'description_intro')
-  String? get synopsis => throw _privateConstructorUsedError;
+  String? get descriptionIntro => throw _privateConstructorUsedError;
   @HiveField(10)
-  int get runtime => throw _privateConstructorUsedError;
+  String? get synopsis => throw _privateConstructorUsedError;
   @HiveField(11)
-  List<String> get genres => throw _privateConstructorUsedError;
+  int get runtime => throw _privateConstructorUsedError;
   @HiveField(12)
-  List<Torrent> get torrents => throw _privateConstructorUsedError;
+  List<String> get genres => throw _privateConstructorUsedError;
   @HiveField(13)
-  String get smallCoverImage => throw _privateConstructorUsedError;
+  List<Torrent> get torrents => throw _privateConstructorUsedError;
   @HiveField(14)
+  String get smallCoverImage => throw _privateConstructorUsedError;
+  @HiveField(15)
   String get mediumCoverImage => throw _privateConstructorUsedError;
   @HiveField(16)
   DateTime? get dateUploaded => throw _privateConstructorUsedError;
-  @HiveField(15)
-  String? get largeCoverImage => throw _privateConstructorUsedError;
   @HiveField(17)
+  String? get largeCoverImage => throw _privateConstructorUsedError;
+  @HiveField(18)
   @JsonKey(name: 'yt_trailer_code')
   String? get trailer => throw _privateConstructorUsedError;
-  @HiveField(18)
+  @HiveField(19)
   double get rating => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -81,16 +82,17 @@ abstract class $MovieCopyWith<$Res> {
       @HiveField(6) String language,
       @HiveField(7) String? mpaRating,
       @HiveField(8) String descriptionFull,
-      @HiveField(9) @JsonKey(name: 'description_intro') String? synopsis,
-      @HiveField(10) int runtime,
-      @HiveField(11) List<String> genres,
-      @HiveField(12) List<Torrent> torrents,
-      @HiveField(13) String smallCoverImage,
-      @HiveField(14) String mediumCoverImage,
+      @HiveField(9) String? descriptionIntro,
+      @HiveField(10) String? synopsis,
+      @HiveField(11) int runtime,
+      @HiveField(12) List<String> genres,
+      @HiveField(13) List<Torrent> torrents,
+      @HiveField(14) String smallCoverImage,
+      @HiveField(15) String mediumCoverImage,
       @HiveField(16) DateTime? dateUploaded,
-      @HiveField(15) String? largeCoverImage,
-      @HiveField(17) @JsonKey(name: 'yt_trailer_code') String? trailer,
-      @HiveField(18) double rating});
+      @HiveField(17) String? largeCoverImage,
+      @HiveField(18) @JsonKey(name: 'yt_trailer_code') String? trailer,
+      @HiveField(19) double rating});
 }
 
 /// @nodoc
@@ -115,6 +117,7 @@ class _$MovieCopyWithImpl<$Res, $Val extends Movie>
     Object? language = null,
     Object? mpaRating = freezed,
     Object? descriptionFull = null,
+    Object? descriptionIntro = freezed,
     Object? synopsis = freezed,
     Object? runtime = null,
     Object? genres = null,
@@ -163,6 +166,10 @@ class _$MovieCopyWithImpl<$Res, $Val extends Movie>
           ? _value.descriptionFull
           : descriptionFull // ignore: cast_nullable_to_non_nullable
               as String,
+      descriptionIntro: freezed == descriptionIntro
+          ? _value.descriptionIntro
+          : descriptionIntro // ignore: cast_nullable_to_non_nullable
+              as String?,
       synopsis: freezed == synopsis
           ? _value.synopsis
           : synopsis // ignore: cast_nullable_to_non_nullable
@@ -223,16 +230,17 @@ abstract class _$$_MovieCopyWith<$Res> implements $MovieCopyWith<$Res> {
       @HiveField(6) String language,
       @HiveField(7) String? mpaRating,
       @HiveField(8) String descriptionFull,
-      @HiveField(9) @JsonKey(name: 'description_intro') String? synopsis,
-      @HiveField(10) int runtime,
-      @HiveField(11) List<String> genres,
-      @HiveField(12) List<Torrent> torrents,
-      @HiveField(13) String smallCoverImage,
-      @HiveField(14) String mediumCoverImage,
+      @HiveField(9) String? descriptionIntro,
+      @HiveField(10) String? synopsis,
+      @HiveField(11) int runtime,
+      @HiveField(12) List<String> genres,
+      @HiveField(13) List<Torrent> torrents,
+      @HiveField(14) String smallCoverImage,
+      @HiveField(15) String mediumCoverImage,
       @HiveField(16) DateTime? dateUploaded,
-      @HiveField(15) String? largeCoverImage,
-      @HiveField(17) @JsonKey(name: 'yt_trailer_code') String? trailer,
-      @HiveField(18) double rating});
+      @HiveField(17) String? largeCoverImage,
+      @HiveField(18) @JsonKey(name: 'yt_trailer_code') String? trailer,
+      @HiveField(19) double rating});
 }
 
 /// @nodoc
@@ -253,6 +261,7 @@ class __$$_MovieCopyWithImpl<$Res> extends _$MovieCopyWithImpl<$Res, _$_Movie>
     Object? language = null,
     Object? mpaRating = freezed,
     Object? descriptionFull = null,
+    Object? descriptionIntro = freezed,
     Object? synopsis = freezed,
     Object? runtime = null,
     Object? genres = null,
@@ -301,6 +310,10 @@ class __$$_MovieCopyWithImpl<$Res> extends _$MovieCopyWithImpl<$Res, _$_Movie>
           ? _value.descriptionFull
           : descriptionFull // ignore: cast_nullable_to_non_nullable
               as String,
+      descriptionIntro: freezed == descriptionIntro
+          ? _value.descriptionIntro
+          : descriptionIntro // ignore: cast_nullable_to_non_nullable
+              as String?,
       synopsis: freezed == synopsis
           ? _value.synopsis
           : synopsis // ignore: cast_nullable_to_non_nullable
@@ -360,16 +373,17 @@ class _$_Movie extends _Movie {
       @HiveField(6) required this.language,
       @HiveField(7) this.mpaRating,
       @HiveField(8) required this.descriptionFull,
-      @HiveField(9) @JsonKey(name: 'description_intro') this.synopsis,
-      @HiveField(10) required this.runtime,
-      @HiveField(11) required final List<String> genres,
-      @HiveField(12) required final List<Torrent> torrents,
-      @HiveField(13) required this.smallCoverImage,
-      @HiveField(14) required this.mediumCoverImage,
+      @HiveField(9) this.descriptionIntro,
+      @HiveField(10) this.synopsis,
+      @HiveField(11) required this.runtime,
+      @HiveField(12) required final List<String> genres,
+      @HiveField(13) required final List<Torrent> torrents,
+      @HiveField(14) required this.smallCoverImage,
+      @HiveField(15) required this.mediumCoverImage,
       @HiveField(16) this.dateUploaded,
-      @HiveField(15) this.largeCoverImage,
-      @HiveField(17) @JsonKey(name: 'yt_trailer_code') this.trailer,
-      @HiveField(18) required this.rating})
+      @HiveField(17) this.largeCoverImage,
+      @HiveField(18) @JsonKey(name: 'yt_trailer_code') this.trailer,
+      @HiveField(19) required this.rating})
       : _genres = genres,
         _torrents = torrents,
         super._();
@@ -406,14 +420,16 @@ class _$_Movie extends _Movie {
   final String descriptionFull;
   @override
   @HiveField(9)
-  @JsonKey(name: 'description_intro')
-  final String? synopsis;
+  final String? descriptionIntro;
   @override
   @HiveField(10)
+  final String? synopsis;
+  @override
+  @HiveField(11)
   final int runtime;
   final List<String> _genres;
   @override
-  @HiveField(11)
+  @HiveField(12)
   List<String> get genres {
     if (_genres is EqualUnmodifiableListView) return _genres;
     // ignore: implicit_dynamic_type
@@ -422,7 +438,7 @@ class _$_Movie extends _Movie {
 
   final List<Torrent> _torrents;
   @override
-  @HiveField(12)
+  @HiveField(13)
   List<Torrent> get torrents {
     if (_torrents is EqualUnmodifiableListView) return _torrents;
     // ignore: implicit_dynamic_type
@@ -430,23 +446,23 @@ class _$_Movie extends _Movie {
   }
 
   @override
-  @HiveField(13)
+  @HiveField(14)
   final String smallCoverImage;
   @override
-  @HiveField(14)
+  @HiveField(15)
   final String mediumCoverImage;
   @override
   @HiveField(16)
   final DateTime? dateUploaded;
   @override
-  @HiveField(15)
+  @HiveField(17)
   final String? largeCoverImage;
   @override
-  @HiveField(17)
+  @HiveField(18)
   @JsonKey(name: 'yt_trailer_code')
   final String? trailer;
   @override
-  @HiveField(18)
+  @HiveField(19)
   final double rating;
 
   @JsonKey(ignore: true)
@@ -474,16 +490,17 @@ abstract class _Movie extends Movie {
       @HiveField(6) required final String language,
       @HiveField(7) final String? mpaRating,
       @HiveField(8) required final String descriptionFull,
-      @HiveField(9) @JsonKey(name: 'description_intro') final String? synopsis,
-      @HiveField(10) required final int runtime,
-      @HiveField(11) required final List<String> genres,
-      @HiveField(12) required final List<Torrent> torrents,
-      @HiveField(13) required final String smallCoverImage,
-      @HiveField(14) required final String mediumCoverImage,
+      @HiveField(9) final String? descriptionIntro,
+      @HiveField(10) final String? synopsis,
+      @HiveField(11) required final int runtime,
+      @HiveField(12) required final List<String> genres,
+      @HiveField(13) required final List<Torrent> torrents,
+      @HiveField(14) required final String smallCoverImage,
+      @HiveField(15) required final String mediumCoverImage,
       @HiveField(16) final DateTime? dateUploaded,
-      @HiveField(15) final String? largeCoverImage,
-      @HiveField(17) @JsonKey(name: 'yt_trailer_code') final String? trailer,
-      @HiveField(18) required final double rating}) = _$_Movie;
+      @HiveField(17) final String? largeCoverImage,
+      @HiveField(18) @JsonKey(name: 'yt_trailer_code') final String? trailer,
+      @HiveField(19) required final double rating}) = _$_Movie;
   _Movie._() : super._();
 
   factory _Movie.fromJson(Map<String, dynamic> json) = _$_Movie.fromJson;
@@ -517,35 +534,37 @@ abstract class _Movie extends Movie {
   String get descriptionFull;
   @override
   @HiveField(9)
-  @JsonKey(name: 'description_intro')
-  String? get synopsis;
+  String? get descriptionIntro;
   @override
   @HiveField(10)
-  int get runtime;
+  String? get synopsis;
   @override
   @HiveField(11)
-  List<String> get genres;
+  int get runtime;
   @override
   @HiveField(12)
-  List<Torrent> get torrents;
+  List<String> get genres;
   @override
   @HiveField(13)
-  String get smallCoverImage;
+  List<Torrent> get torrents;
   @override
   @HiveField(14)
+  String get smallCoverImage;
+  @override
+  @HiveField(15)
   String get mediumCoverImage;
   @override
   @HiveField(16)
   DateTime? get dateUploaded;
   @override
-  @HiveField(15)
+  @HiveField(17)
   String? get largeCoverImage;
   @override
-  @HiveField(17)
+  @HiveField(18)
   @JsonKey(name: 'yt_trailer_code')
   String? get trailer;
   @override
-  @HiveField(18)
+  @HiveField(19)
   double get rating;
   @override
   @JsonKey(ignore: true)

@@ -429,32 +429,33 @@ class _Screen extends StatelessWidget {
                   if (player != null) ...[
                     Text(
                       'Trailer',
-                      style: Theme.of(context).textTheme.headlineMedium,
+                      style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     _space(),
                     player!,
                     _space(),
                   ],
-                  if (_movie.synopsis != null)
-                    Text(
-                      'Synopsis',
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                  if (_movie.synopsis != null) _space(),
-                  if (_movie.synopsis != null)
-                    SelectableText(
-                      _movie.synopsis!,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
+                  Text(
+                    'Synopsis',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  _space(),
+                  SelectableText(
+                    _movie.synopsis ??
+                        _movie.descriptionIntro ??
+                        _movie.descriptionFull,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                   _space(),
                 ]),
               ),
               SliverToBoxAdapter(
                 child: Text(
                   'Suggested movies',
-                  style: Theme.of(context).textTheme.headlineMedium,
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
               ),
+              SliverToBoxAdapter(child: _space()),
               Suggestions(id: _movie.id.toString()),
             ],
           ),
