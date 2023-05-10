@@ -11,21 +11,19 @@ class FavouriteButton extends StatefulWidget {
         super(key: key);
 
   @override
-  _FavouriteButtonState createState() => _FavouriteButtonState();
+  FavouriteButtonState createState() => FavouriteButtonState();
 }
 
-class _FavouriteButtonState extends State<FavouriteButton>
+class FavouriteButtonState extends State<FavouriteButton>
     with SingleTickerProviderStateMixin<FavouriteButton> {
   late final AnimationController _controller;
-
-  final _favBox = Hive.box<Movie>(MyBoxs.favouriteBox);
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
     );
   }
 
@@ -35,24 +33,22 @@ class _FavouriteButtonState extends State<FavouriteButton>
     super.didChangeDependencies();
   }
 
-  void _favHandler() {
-    final isLiked = _favBox.containsKey(widget._movie.id);
+  void _favHandler() async {
+    final isLiked =
+        await FavouritesService.instance.isFavourite(widget._movie.id);
     if (isLiked) {
       _controller.forward();
     }
   }
 
   void _addToFavourite() async {
-    // final favmovie = context.read<FavouriteMamus>();
-    final movie = widget._movie;
-    final isLiked = _favBox.containsKey(movie.id);
+    final isLiked = await FavouritesService.instance
+        .toggleAddOrRemoveFavourite(widget._movie);
     try {
-      if (isLiked) {
+      if (!isLiked) {
         _controller.reverse();
-        await _favBox.delete(movie.id);
       } else {
         _controller.forward();
-        await _favBox.put(movie.id, movie);
       }
     } catch (e, s) {
       log(e.toString(), error: e, stackTrace: s);

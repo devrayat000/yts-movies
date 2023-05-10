@@ -37,7 +37,7 @@ class MovieRepository extends Repository {
     try {
       final movies = _favouritesBox.values;
 
-      if (movies.length == 0 || movies == null) {
+      if (movies.isEmpty) {
         throw const CustomException('No movies found 😥');
       }
       return SynchronousFuture(MovieListData(

@@ -40,7 +40,7 @@ class ActionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 5,
-      child: Container(
+      child: SizedBox(
         width: double.infinity,
         child: Wrap(
           alignment: WrapAlignment.end,

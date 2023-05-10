@@ -21,7 +21,7 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
         IconButton(
           onPressed: () async {
             try {
-              RootRouteScope.of(context).push(StaticPage.FAVOURITES);
+              await context.pushNamed("favourites");
             } catch (e, s) {
               log(e.toString(), error: e, stackTrace: s);
             }

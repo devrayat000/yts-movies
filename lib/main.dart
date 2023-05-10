@@ -36,6 +36,13 @@ void main() {
         if (kReleaseMode) exit(1);
       };
 
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarBrightness: Brightness.dark,
+        ),
+      );
+
       Hive
         ..initFlutter()
         ..registerAdapter(MovieAdapter())
@@ -52,12 +59,6 @@ void main() {
         await Hive.openBox<Movie>(MyBoxs.favouriteBox);
         await Hive.openBox<String>(MyBoxs.searchHistoryBox);
 
-        SystemChrome.setSystemUIOverlayStyle(
-          const SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarBrightness: Brightness.dark,
-          ),
-        );
         Timeline.finishSync();
 
         // final repo = MovieRepository(favouriteBox);

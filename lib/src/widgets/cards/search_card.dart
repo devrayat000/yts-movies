@@ -22,11 +22,11 @@ class SearchTile extends StatelessWidget {
           filled: Theme.of(context).inputDecorationTheme.filled,
           contentPadding: Theme.of(context).inputDecorationTheme.contentPadding,
           suffixIcon: Padding(
+            padding: const EdgeInsets.only(right: 24),
             child: Icon(
               Icons.search,
               color: Theme.of(context).buttonTheme.colorScheme?.onSurface,
             ),
-            padding: const EdgeInsets.only(right: 24),
           ),
         ),
       ),

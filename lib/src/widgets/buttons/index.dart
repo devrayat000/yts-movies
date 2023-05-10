@@ -9,6 +9,7 @@ import 'package:flutter/rendering.dart';
 import 'package:hive/hive.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
+import 'package:ytsmovies/src/api/favourites.dart';
 
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/utils/index.dart';

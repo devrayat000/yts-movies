@@ -1,4 +1,6 @@
-part of app_pages;
+import 'package:flutter/material.dart';
+import 'package:ytsmovies/src/api/favourites.dart';
+import 'package:ytsmovies/src/widgets/movies_list.dart';
 
 class FavouritesPage extends StatelessWidget {
   static const routeName = '/favourites-movies';
@@ -6,18 +8,17 @@ class FavouritesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center();
-    // return MamuMovieListpage<FavouriteApiCubit>(
-    //   label: 'favourite',
-    //   handler: context.read<ApiProvider>().favouriteMovies,
-    //   appBar: AppBar(
-    //     title: Text(
-    //       'Favourite Movies',
-    //       style: Theme.of(context).appBarTheme.titleTextStyle,
-    //     ),
-    //   ),
-    //   actions: [],
-    // );
+    return MoviesList(
+      label: 'favourite',
+      handler: FavouritesService.instance.getFavoutiteMovies,
+      appBar: AppBar(
+        title: Text(
+          'Favourite Movies',
+          style: Theme.of(context).appBarTheme.titleTextStyle,
+        ),
+      ),
+      actions: const [],
+    );
   }
 }
 
