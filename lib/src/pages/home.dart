@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ytsmovies/src/api/movies.dart';
-import 'package:ytsmovies/src/bloc/filter/index.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
 import 'package:provider/provider.dart';
@@ -120,7 +119,7 @@ class HomePageState extends State<HomePage> {
         },
         enableFeedback: false,
         child: AspectRatio(
-          aspectRatio: 2 / 3,
+          aspectRatio: 0.67,
           child: Stack(
             alignment: AlignmentDirectional.bottomCenter,
             children: [
@@ -141,7 +140,7 @@ class HomePageState extends State<HomePage> {
                 margin: const EdgeInsets.only(bottom: 1.5, left: 4, right: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.4),
+                  color: Colors.black.withValues(alpha: 0.4),
                 ),
                 child: Text(
                   movie.title,

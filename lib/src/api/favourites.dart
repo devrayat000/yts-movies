@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:ytsmovies/src/models/index.dart';
@@ -18,7 +20,7 @@ class FavouritesService {
         statusMessage: "",
         data: MovieListData(
           movieCount: box.length,
-          limit: box.length,
+          limit: box.length == 0 ? 1 : box.length,
           pageNumber: 1,
           movies: box.values.toList(),
         ),

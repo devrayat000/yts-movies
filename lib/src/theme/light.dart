@@ -29,8 +29,7 @@ extension LightTheme on AppTheme {
       scaffoldBackgroundColor: Colors.grey[100],
       colorScheme: colorScheme.copyWith(
         onSurface: Colors.black,
-        surface: Colors.black87,
-        background: Colors.grey[100],
+        surface: Colors.grey[100],
       ),
       buttonTheme: const ButtonThemeData(
         buttonColor: Colors.black87,

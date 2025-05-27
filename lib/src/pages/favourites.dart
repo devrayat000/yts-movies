@@ -4,7 +4,7 @@ import 'package:ytsmovies/src/widgets/movies_list.dart';
 
 class FavouritesPage extends StatelessWidget {
   static const routeName = '/favourites-movies';
-  const FavouritesPage({Key? key}) : super(key: key);
+  const FavouritesPage({super.key});
 
   @override
   Widget build(BuildContext context) {

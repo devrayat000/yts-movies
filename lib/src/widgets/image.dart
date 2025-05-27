@@ -14,7 +14,7 @@ class MovieImage extends StatelessWidget {
   late final Key _key;
 
   MovieImage({
-    Key? key,
+    super.key,
     required this.src,
     this.padding = EdgeInsets.zero,
     this.margin = EdgeInsets.zero,
@@ -23,8 +23,7 @@ class MovieImage extends StatelessWidget {
     this.label,
     this.id,
     this.height,
-  })  : _key = ValueKey(id),
-        super(key: key) {
+  }) : _key = ValueKey(id) {
     _decoration = decoration ??
         BoxDecoration(
           borderRadius: BorderRadius.circular(4.0),
@@ -42,6 +41,7 @@ class MovieImage extends StatelessWidget {
       transitionOnUserGestures: true,
       child: _container(
         child: CachedNetworkImage(
+          // src,
           imageUrl: src,
           cacheKey: id,
           fit: BoxFit.cover,
@@ -71,75 +71,24 @@ class MovieImage extends StatelessWidget {
         ),
       ),
     );
-    // return Image.network(
-    //   this.src,
-    //   key: _key,
-    //   cacheHeight: 300,
-    //   cacheWidth: 200,
-    //   fit: BoxFit.cover,
-    //   semanticLabel: label,
-    //   height: height,
-    //   frameBuilder: (
-    //     ctx,
-    //     child,
-    //     frame,
-    //     wasSynchronouslyLoaded,
-    //   ) {
-    //     return Hero(
-    //       key: _key,
-    //       tag: 'movie-$id',
-    //       transitionOnUserGestures: true,
-    //       child: _container(
-    //         child: child,
-    //       ),
-    //     );
-    //   },
-    //   errorBuilder: (c, error, _) {
-    //     debugPrint('An error occurred loading "$src"');
-    //     debugPrint(error);
-    //     return const Center(
-    //       child: Icon(
-    //         Icons.image,
-    //         size: 48,
-    //       ),
-    //     );
-    //   },
-    //   loadingBuilder: (
-    //     context,
-    //     child,
-    //     loadingProgress,
-    //   ) {
-    //     if (loadingProgress == null) {
-    //       return child;
-    //     }
-    //     final progress = loadingProgress.cumulativeBytesLoaded /
-    //         loadingProgress.expectedTotalBytes!;
-
-    //     return _container(
-    //       child: Center(
-    //         child: CircularProgressIndicator(
-    //           value:
-    //               loadingProgress.expectedTotalBytes != null ? progress : null,
-    //           color: _colorTween(progress),
-    //         ),
-    //       ),
-    //     );
-    //   },
-    // );
   }
 
   Widget _container({
     required Widget child,
   }) {
     return Container(
-      child: AspectRatio(
-        aspectRatio: 2 / 3,
-        child: child,
-      ),
+      width: 136,
       padding: padding,
       margin: margin,
       alignment: alignment,
       decoration: _decoration,
+      child: AspectRatio(
+        aspectRatio: 0.67,
+        child: ClipRRect(
+          borderRadius: BorderRadiusGeometry.circular(12.0),
+          child: child,
+        ),
+      ),
     );
   }
 }

@@ -19,8 +19,7 @@ extension DarkTheme on AppTheme {
       scaffoldBackgroundColor: Colors.blueGrey[800],
       colorScheme: colorScheme.copyWith(
         onSurface: Colors.white,
-        surface: Colors.white70,
-        background: Colors.blueGrey[900],
+        surface: Colors.blueGrey[900],
       ),
       buttonTheme: const ButtonThemeData(
         buttonColor: Colors.black87,

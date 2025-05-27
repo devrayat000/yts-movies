@@ -152,7 +152,7 @@ class FilterDrawer extends StatelessWidget {
         icon: Icon(icon, color: Colors.white),
         label: Text(label, style: const TextStyle(color: Colors.white)),
         style: ElevatedButton.styleFrom(
-          primary: color,
+          backgroundColor: color,
           animationDuration: const Duration(milliseconds: 300),
         ),
       );

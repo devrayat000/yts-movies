@@ -15,10 +15,10 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 2.0.0+3
+version: 2.1.0+3
 
 environment:
-  sdk: ">=2.19.4 <3.0.0"
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -29,33 +29,33 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   path_provider: ^2.0.14
-  infinite_scroll_pagination: ^3.2.0
-  youtube_player_flutter: ^8.1.2
+  infinite_scroll_pagination: ^4.1.0
+  youtube_player_flutter: ^9.1.1
   cached_network_image: ^3.2.3
-  flutter_bloc: ^8.1.2
-  hydrated_bloc: ^9.1.0
-  freezed_annotation: ^2.2.0
+  flutter_bloc: ^9.1.1
+  hydrated_bloc: ^10.0.0
   equatable: ^2.0.5
-  go_router: ^7.0.0
-  retrofit: ^4.0.1
+  go_router: ^15.1.2
   dio: ^5.1.1
-  json_annotation: ^4.8.1
-  dio_cache_interceptor: ^3.4.2
-  dio_cache_interceptor_hive_store: ^3.2.1
+  freezed_annotation: ^3.0.0
+  retrofit: ^4.4.2
+  json_annotation: ^4.9.0
+  dio_cache_interceptor: ^3.5.1
+  dio_cache_interceptor_hive_store: ^4.0.0
+  http: ^1.1.0
 
 dev_dependencies:
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.3
   flutter_native_splash: ^2.2.19
   change_app_package_name: ^1.1.0
 
-  hive_generator: ^2.0.0
-  freezed: ^2.3.3
-  json_serializable: ^6.6.2
-  build_runner: ^2.3.3
-  chopper_generator: ^6.0.0
   package_rename: ^1.2.0
-  retrofit_generator: ^6.0.0+3
-  flutter_lints: ^2.0.1
+  flutter_lints: ^5.0.0
+  hive_generator: ^2.0.1
+  freezed: ^3.0.0-0.0.dev
+  json_serializable: ^6.9.0
+  build_runner: ^2.4.15
+  retrofit_generator: ^9.2.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

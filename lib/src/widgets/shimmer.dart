@@ -65,12 +65,13 @@ class ShimmerState extends State<Shimmer>
   }
 }
 
+// TODO: Solve the issue of not being able to use ShimmerLoading
 class ShimmerLoading extends StatefulWidget {
   const ShimmerLoading({
-    Key? key,
+    super.key,
     required this.isLoading,
     required this.child,
-  }) : super(key: key);
+  });
 
   final bool isLoading;
   final Widget child;

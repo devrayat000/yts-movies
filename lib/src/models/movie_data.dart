@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:equatable/equatable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:ytsmovies/src/models/movie.dart';
@@ -39,7 +41,10 @@ class MovieListData with _$MovieListData, EquatableMixin {
   factory MovieListData.fromJson(Map<String, dynamic> json) =>
       _$MovieListDataFromJson(json);
 
-  int get lastPage => (movieCount / limit).ceil();
+  int get lastPage {
+    log('Calculating last page for $movieCount movies with limit $limit');
+    return (movieCount / limit).ceil();
+  }
 
   bool get isLastPage => pageNumber >= lastPage;
 

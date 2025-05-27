@@ -1,5 +1,8 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:developer';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
@@ -16,14 +19,14 @@ class MoviesList extends StatefulWidget {
   final WidgetBuilder? noItemBuilder;
 
   const MoviesList({
-    Key? key,
+    super.key,
     required this.actions,
     required this.handler,
     this.appBar,
     this.label = '',
     this.endDrawer,
     this.noItemBuilder,
-  }) : super(key: key);
+  });
 
   @override
   MoviesListState createState() => MoviesListState();
@@ -37,17 +40,15 @@ class MoviesListState extends State<MoviesList> {
   void initState() {
     super.initState();
     _scrollController = ScrollController(debugLabel: 'scroll-popup');
-    _pagingController = PagingController(firstPageKey: 1);
+    _pagingController = PagingController<int, Movie>(firstPageKey: 1);
     _pagingController.addPageRequestListener(_fetchPage);
-    _pagingController.addStatusListener(_pageStatusListener);
   }
 
   @override
   void didUpdateWidget(covariant MoviesList oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.handler != widget.handler) {
-      _pagingController.removePageRequestListener(oldWidget.handler);
-      _pagingController.addPageRequestListener(widget.handler);
+      _pagingController.refresh();
     }
   }
 
@@ -58,32 +59,16 @@ class MoviesListState extends State<MoviesList> {
     super.dispose();
   }
 
-  // Event listeners
-  void _pageStatusListener(PagingStatus status) {
-    if (status == PagingStatus.subsequentPageError) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Something went wrong while fetching movies.',
-          ),
-          action: SnackBarAction(
-            label: 'Retry',
-            onPressed: _pagingController.retryLastFailedRequest,
-          ),
-        ),
-      );
-    }
-  }
-
-  Future<void> _fetchPage(int pageKey) async {
+  void _fetchPage(int pageKey) async {
     try {
       final response = await widget.handler(pageKey);
       final isLastPage = response.data.isLastPage;
+      final movies = response.data.movies ?? [];
+
       if (isLastPage) {
-        _pagingController.appendLastPage(response.data.movies ?? []);
+        _pagingController.appendLastPage(movies);
       } else {
-        final nextPageKey = (response.data.pageNumber) + 1;
-        _pagingController.appendPage(response.data.movies ?? [], nextPageKey);
+        _pagingController.appendPage(movies, pageKey + 1);
       }
     } catch (error) {
       _pagingController.error = error;
@@ -101,7 +86,10 @@ class MoviesListState extends State<MoviesList> {
         child: CupertinoScrollbar(
           controller: _scrollController,
           child: RefreshIndicator(
-            onRefresh: () => Future.sync(_pagingController.refresh),
+            onRefresh: () {
+              // _pagingController.refresh();
+              return SynchronousFuture(null);
+            },
             child: CustomScrollView(
               controller: _scrollController,
               key: PageStorageKey(widget.label),
@@ -116,7 +104,6 @@ class MoviesListState extends State<MoviesList> {
                   ),
                 PagedSliverList<int, Movie>(
                   pagingController: _pagingController,
-                  shrinkWrapFirstPageIndicators: true,
                   builderDelegate: PagedChildBuilderDelegate(
                     itemBuilder: (context, item, index) {
                       return MovieCard.list(
@@ -125,7 +112,7 @@ class MoviesListState extends State<MoviesList> {
                       );
                     },
                     firstPageProgressIndicatorBuilder: (_) =>
-                        const MovieListShimmer(),
+                        MyGlobals.kCircularLoading,
                     newPageProgressIndicatorBuilder: (_) =>
                         MyGlobals.kCircularLoading,
                     firstPageErrorIndicatorBuilder: _firstPageErrorIndicator,
@@ -135,8 +122,6 @@ class MoviesListState extends State<MoviesList> {
                     noMoreItemsIndicatorBuilder: _noMoreItemsIndicator,
                     animateTransitions: true,
                   ),
-                  itemExtent: MediaQuery.of(context).size.width * 4 / 9,
-                  // gridDelegate: _gridDelegrate(1, 9 / 4),
                 ),
               ],
             ),
@@ -150,13 +135,15 @@ class MoviesListState extends State<MoviesList> {
   }
 
   Widget _newPageErrorIndicator(BuildContext context) {
-    final error = CustomException.getCustomError(_pagingController.error);
+    final error = _pagingController.error != null
+        ? CustomException.getCustomError(_pagingController.error!)
+        : 'Unknown error';
 
     return Column(
       children: [
         Text(error),
         TextButton(
-          onPressed: _pagingController.retryLastFailedRequest,
+          onPressed: () => _pagingController.retryLastFailedRequest(),
           child: const Text('Retry'),
         ),
       ],
@@ -164,13 +151,15 @@ class MoviesListState extends State<MoviesList> {
   }
 
   Widget _firstPageErrorIndicator(BuildContext context) {
-    final error = CustomException.getCustomError(_pagingController.error);
+    final error = _pagingController.error != null
+        ? CustomException.getCustomError(_pagingController.error!)
+        : 'Unknown error';
 
     return Column(
       children: [
         Text(error),
         TextButton(
-          onPressed: _pagingController.refresh,
+          onPressed: () => _pagingController.refresh(),
           child: const Text('Retry'),
         ),
       ],
@@ -178,17 +167,36 @@ class MoviesListState extends State<MoviesList> {
   }
 
   Widget _noItemsFoundIndicator(BuildContext context) => Container(
-        alignment: Alignment.topCenter,
-        child: Text(
-          'No movie found',
-          style: Theme.of(context).textTheme.headlineSmall,
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'No movie found',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color:
+                        Theme.of(context).colorScheme.onSurface.withAlpha(120),
+                  ),
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              "Your favourite movies aren't here yet.",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color:
+                        Theme.of(context).colorScheme.onSurface.withAlpha(200),
+                  ),
+            ),
+          ],
         ),
       );
 
-  Widget _noMoreItemsIndicator(BuildContext context) => Center(
-        child: Text(
-          'That\'s the last of it.',
-          style: Theme.of(context).textTheme.headlineSmall,
+  Widget _noMoreItemsIndicator(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(top: 28.0),
+        child: Center(
+          child: Text(
+            'That\'s the last of it.',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
         ),
       );
 }

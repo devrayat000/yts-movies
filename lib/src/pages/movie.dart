@@ -19,16 +19,13 @@ class MoviePage extends StatelessWidget {
 
   final Movie? _movie;
   final int id;
-  const MoviePage({Key? key, required this.id})
-      : _movie = null,
-        super(key: key);
+  const MoviePage({super.key, required this.id}) : _movie = null;
 
   MoviePage.withMovie({
-    Key? key,
+    super.key,
     required Movie item,
   })  : _movie = item,
-        id = item.id,
-        super(key: key);
+        id = item.id;
 
   @override
   Widget build(BuildContext context) {
@@ -61,10 +58,6 @@ class MoviePage extends StatelessWidget {
                 child: CircularProgressIndicator(),
               );
             }
-          default:
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
         }
       },
     );
@@ -74,9 +67,7 @@ class MoviePage extends StatelessWidget {
 class MovieDetails extends StatefulWidget {
   final Movie _movie;
 
-  const MovieDetails({Key? key, required Movie movie})
-      : _movie = movie,
-        super(key: key);
+  const MovieDetails({super.key, required Movie movie}) : _movie = movie;
 
   @override
   MovieDetailsState createState() => MovieDetailsState();
@@ -240,18 +231,18 @@ class MovieDetailsState extends State<MovieDetails> with RouteAware {
               ),
             ),
             const SizedBox(width: 14.0),
-            CurrentPosition(),
+            const CurrentPosition(),
             const SizedBox(width: 8.0),
-            ProgressBar(
+            const ProgressBar(
               isExpanded: true,
-              colors: const ProgressBarColors(
+              colors: ProgressBarColors(
                 playedColor: Colors.red,
                 handleColor: Colors.redAccent,
               ),
             ),
-            RemainingDuration(),
+            const RemainingDuration(),
             const PlaybackSpeedButton(),
-            FullScreenButton(),
+            const FullScreenButton(),
           ],
         ),
         builder: (context, player) => _Screen(
@@ -267,24 +258,13 @@ class MovieDetailsState extends State<MovieDetails> with RouteAware {
 class _Screen extends StatelessWidget {
   final Movie _movie;
   final Widget? player;
-  const _Screen({Key? key, required Movie movie, this.player})
-      : _movie = movie,
-        super(key: key);
+  const _Screen({required Movie movie, this.player}) : _movie = movie;
 
   @override
   Widget build(BuildContext context) {
     final language = allNativeNames[_movie.language] ?? 'English';
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _movie.title,
-          style: Theme.of(context).appBarTheme.titleTextStyle,
-        ),
-        titleTextStyle: Theme.of(context).appBarTheme.titleTextStyle,
-        centerTitle: true,
-        actions: [FavouriteButton(movie: _movie)],
-      ),
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: GestureDetector(
         onHorizontalDragUpdate: (details) {
           int sensitivity = 8;
@@ -292,26 +272,57 @@ class _Screen extends StatelessWidget {
             context.pop();
           }
         },
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CustomScrollView(
-            slivers: [
-              // TODO: Implement flexible image
-              // SliverAppBar(
-              //   collapsedHeight: MediaQuery.of(context).size.width,
-              //   expandedHeight: MediaQuery.of(context).size.width / 2 * 3,
-              //   flexibleSpace: FlexibleSpaceBar(),
-              // ),
-              SliverList(
+        child: CustomScrollView(
+          slivers: [
+            // TODO: Implement flexible image
+            SliverAppBar(
+              stretch: true,
+              pinned: true,
+              snap: false,
+              floating: false,
+              onStretchTrigger: () async {
+                // Triggers when stretching
+              },
+              stretchTriggerOffset: 200.0,
+              expandedHeight: 150.0,
+              flexibleSpace: FlexibleSpaceBar(
+                title: Text(
+                  _movie.title,
+                  style: Theme.of(context).appBarTheme.titleTextStyle,
+                  softWrap: true,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                centerTitle: true,
+                expandedTitleScale: 1.2,
+                // background: SafeArea(
+                //   child: Container(
+                //     // decoration: BoxDecoration(
+                //     //   image: DecorationImage(
+                //     //     image: NetworkImage(_movie.backgroundImage),
+                //     //     fit: BoxFit.cover,
+                //     //     colorFilter: const ColorFilter.mode(
+                //     //       Colors.black54,
+                //     //       BlendMode.overlay,
+                //     //     ),
+                //     //     onError: (e, s) => debugPrint(e.toString()),
+                //     //   ),
+                //     // ),
+                //     child: Text(
+                //       "${_movie.title} (${_movie.year})",
+                //       style: Theme.of(context).appBarTheme.titleTextStyle,
+                //     ),
+                //   ),
+                // ),
+              ),
+              actions: [FavouriteButton(movie: _movie)],
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.all(8.0),
+              sliver: SliverList(
                 delegate: SliverChildListDelegate.fixed([
-                  SelectableText(
-                    _movie.title,
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  _space(),
                   Text(
                     _movie.year.toString(),
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   _space(),
                   BreadCrumb.builder(
@@ -319,7 +330,7 @@ class _Screen extends StatelessWidget {
                     builder: (i) => BreadCrumbItem(
                       content: Text(
                         _movie.genres[i],
-                        style: Theme.of(context).textTheme.headlineSmall,
+                        style: Theme.of(context).textTheme.bodyLarge,
                       ),
                     ),
                     divider: const Text(
@@ -339,6 +350,7 @@ class _Screen extends StatelessWidget {
                         ),
                         onError: (e, s) => debugPrint(e.toString()),
                       ),
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -348,9 +360,6 @@ class _Screen extends StatelessWidget {
                             src: _movie.mediumCoverImage,
                             padding: const EdgeInsets.all(4),
                             id: _movie.id.toString(),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                            ),
                           ),
                         ),
                         _rowSpace(spacing: 12),
@@ -369,19 +378,26 @@ class _Screen extends StatelessWidget {
                                       const Icon(Icons.star),
                                 ),
                                 label: Text('${_movie.rating} / 10'),
-                                labelStyle:
-                                    const TextStyle(color: Colors.white),
+                                labelStyle: const TextStyle(color: Colors.grey),
                                 padding:
                                     const EdgeInsets.only(left: 16, right: 4),
                                 deleteIcon: const Icon(Icons.star),
                                 deleteIconColor: Colors.green,
                                 onDeleted: null,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadiusGeometry.circular(20.0),
+                                  side: BorderSide(color: Colors.grey),
+                                ),
                               ),
                               Wrap(
                                 alignment: WrapAlignment.spaceBetween,
                                 spacing: 2.0,
                                 children: _movie.torrents
-                                    .map((t) => DownloadButton(torrent: t))
+                                    .map((t) => DownloadButton(
+                                          torrent: t,
+                                          title: _movie.title,
+                                        ))
                                     .toList(),
                               ),
                               OutlinedButton.icon(
@@ -405,6 +421,9 @@ class _Screen extends StatelessWidget {
                                 style: OutlinedButton.styleFrom(
                                   backgroundColor:
                                       Theme.of(context).scaffoldBackgroundColor,
+                                  side: const BorderSide(color: Colors.grey),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 8.0, horizontal: 12.0),
                                 ),
                               ),
                               if (_movie.runtime != 0)
@@ -432,7 +451,10 @@ class _Screen extends StatelessWidget {
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     _space(),
-                    player!,
+                    ClipRRect(
+                      borderRadius: BorderRadiusGeometry.circular(8.0),
+                      child: player!,
+                    ),
                     _space(),
                   ],
                   Text(
@@ -449,16 +471,16 @@ class _Screen extends StatelessWidget {
                   _space(),
                 ]),
               ),
-              SliverToBoxAdapter(
-                child: Text(
-                  'Suggested movies',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
+            ),
+            SliverToBoxAdapter(
+              child: Text(
+                'Suggested movies',
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
-              SliverToBoxAdapter(child: _space()),
-              Suggestions(id: _movie.id.toString()),
-            ],
-          ),
+            ),
+            SliverToBoxAdapter(child: _space()),
+            Suggestions(id: _movie.id.toString()),
+          ],
         ),
       ),
     );
@@ -471,7 +493,7 @@ class _Screen extends StatelessWidget {
     return '$hour h $mins min';
   }
 
-  Widget _space({double spacing = 16.0}) {
+  Widget _space({double spacing = 4.0}) {
     return SizedBox(height: spacing);
   }
 

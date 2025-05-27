@@ -5,21 +5,18 @@ class MovieCard extends StatelessWidget {
   final bool _isGrid;
 
   const MovieCard({
-    Key? key,
+    super.key,
     required Movie movie,
     bool isGrid = false,
   })  : _isGrid = isGrid,
-        _movie = movie,
-        super(key: key);
+        _movie = movie;
 
-  const MovieCard.list({Key? key, required Movie movie})
+  const MovieCard.list({super.key, required Movie movie})
       : _movie = movie,
-        _isGrid = false,
-        super(key: key);
-  const MovieCard.grid({Key? key, required Movie movie})
+        _isGrid = false;
+  const MovieCard.grid({super.key, required Movie movie})
       : _movie = movie,
-        _isGrid = true,
-        super(key: key);
+        _isGrid = true;
 
   @override
   Widget build(BuildContext context) {
@@ -28,8 +25,9 @@ class MovieCard extends StatelessWidget {
       elevation: 5,
       child: InkWell(
         splashFactory: NoSplash.splashFactory,
-        child: _isGrid ? _grid : _list,
         onTap: () => _viewDetails(context),
+        borderRadius: BorderRadius.circular(12.0),
+        child: _isGrid ? _grid() : _list(),
       ),
     );
   }
@@ -46,10 +44,10 @@ class MovieCard extends StatelessWidget {
     }
   }
 
-  Widget get _list => Flex(
+  Widget _list() => Flex(
         direction: Axis.horizontal,
         children: [
-          _image,
+          _image(),
           Expanded(
             child: Container(
               margin: const EdgeInsets.all(8.0),
@@ -67,20 +65,18 @@ class MovieCard extends StatelessWidget {
                     rating: _movie.rating.toString(),
                     year: _movie.year.toString(),
                   ),
-                  Expanded(
-                    child: Flex(
-                      direction: _isGrid ? Axis.vertical : Axis.horizontal,
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: _quality_chip,
-                        ),
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: FavouriteButton(movie: _movie),
-                        ),
-                      ],
-                    ),
+                  Flex(
+                    direction: _isGrid ? Axis.vertical : Axis.horizontal,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: _quality_chip,
+                      ),
+                      Align(
+                        alignment: Alignment.bottomRight,
+                        child: FavouriteButton(movie: _movie),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -89,7 +85,7 @@ class MovieCard extends StatelessWidget {
         ],
       );
 
-  Widget get _grid => Flex(
+  Widget _grid() => Flex(
         direction: Axis.vertical,
         children: [
           Expanded(
@@ -98,7 +94,7 @@ class MovieCard extends StatelessWidget {
               direction: Axis.horizontal,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: _image),
+                Expanded(child: _image()),
                 Expanded(
                   child: Column(
                     children: [
@@ -133,17 +129,23 @@ class MovieCard extends StatelessWidget {
   Widget get _quality_chip => Wrap(
         spacing: 4.0,
         children: _movie.quality
-            .map((quality) => Chip(
-                  label: Text(quality),
-                  labelStyle: const TextStyle(
-                    fontSize: 12.0,
-                    color: Colors.white,
-                  ),
-                ))
+            .map(
+              (quality) => Chip(
+                label: Text(quality),
+                labelStyle: const TextStyle(
+                  fontSize: 12.0,
+                  color: Colors.grey,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadiusGeometry.circular(20.0),
+                  side: BorderSide(color: Colors.grey),
+                ),
+              ),
+            )
             .toList(),
       );
 
-  Widget get _image => MovieImage(
+  Widget _image() => MovieImage(
         src: _movie.mediumCoverImage,
         padding: const EdgeInsets.all(4.0),
         label: _movie.title,
@@ -156,37 +158,38 @@ class _YearRating extends StatelessWidget {
   final String rating;
   final String year;
   const _YearRating({
-    Key? key,
     required this.isGrid,
     required this.year,
     required this.rating,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Flex(
-        direction: isGrid ? Axis.vertical : Axis.horizontal,
-        mainAxisAlignment:
-            isGrid ? MainAxisAlignment.end : MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            year,
-            style: Theme.of(context).textTheme.titleLarge,
+    return Flex(
+      direction: isGrid ? Axis.vertical : Axis.horizontal,
+      mainAxisAlignment:
+          isGrid ? MainAxisAlignment.end : MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          year,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        Chip(
+          label: Text("$rating / 10"),
+          avatar: const Icon(
+            Icons.star,
+            color: Colors.green,
           ),
-          Chip(
-            label: Text("$rating / 10"),
-            avatar: const Icon(
-              Icons.star,
-              color: Colors.green,
-            ),
-            labelStyle: const TextStyle(
-              fontSize: 12.0,
-              color: Colors.white,
-            ),
+          labelStyle: const TextStyle(
+            fontSize: 12.0,
+            color: Colors.grey,
           ),
-        ],
-      ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadiusGeometry.circular(20.0),
+            side: BorderSide(color: Colors.grey),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -196,11 +199,10 @@ class _Title extends StatelessWidget {
   final String title;
   final String language;
   const _Title({
-    Key? key,
     required this.isGrid,
     required this.title,
     required this.language,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

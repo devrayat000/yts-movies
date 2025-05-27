@@ -73,7 +73,8 @@ class ImageAppbarState extends State<ImageAppbar> {
                 backgroundColor: Colors.blue,
                 leading: ClipOval(
                   child: ColoredBox(
-                    color: Colors.grey.withOpacity(isDetails ? 0.38 : 0.0),
+                    color:
+                        Colors.grey.withValues(alpha: isDetails ? 0.38 : 0.0),
                     child: const CupertinoNavigationBarBackButton(),
                   ),
                 ),
@@ -127,7 +128,7 @@ class ImageAppbarState extends State<ImageAppbar> {
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
-          color: Colors.grey[400]?.withOpacity(isDetails ? 0.38 : 0.0),
+          color: Colors.grey[400]?.withValues(alpha: isDetails ? 0.38 : 0.0),
           borderRadius: BorderRadius.circular(8.0),
         ),
         child: Column(

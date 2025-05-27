@@ -32,7 +32,7 @@ void main() {
       WidgetsFlutterBinding.ensureInitialized();
 
       FlutterError.onError = (FlutterErrorDetails details) {
-        FlutterError.dumpErrorToConsole(details);
+        FlutterError.presentError(details);
         if (kReleaseMode) exit(1);
       };
 
@@ -51,8 +51,8 @@ void main() {
 
       HydratedBloc.storage = await HydratedStorage.build(
         storageDirectory: kIsWeb
-            ? HydratedStorage.webStorageDirectory
-            : await getTemporaryDirectory(),
+            ? HydratedStorageDirectory.web
+            : HydratedStorageDirectory((await getTemporaryDirectory()).path),
       );
 
       try {
