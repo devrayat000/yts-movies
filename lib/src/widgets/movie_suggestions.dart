@@ -22,18 +22,17 @@ class SuggestionsState extends State<Suggestions> {
       future: _future,
       successBuilder: _builder,
       loadingBuilder: (_) => _loader,
+      showFullPageError: false,
       errorBuilder: (context, error) {
-        String message;
-        if (error is CustomException) {
-          message = error.message;
-        } else {
-          message = error.toString();
-        }
-        return Center(
-          child: Text(
-            message,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+        return CompactErrorWidget(
+          error: error!,
+          onRetry: () {
+            setState(() {
+              _future =
+                  context.read<MoviesClient>().getMovieSuggestions(widget.id);
+            });
+          },
+          customMessage: 'Failed to load suggestions',
         );
       },
     );

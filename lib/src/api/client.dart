@@ -4,6 +4,7 @@ import 'package:dio_cache_interceptor_hive_store/dio_cache_interceptor_hive_stor
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ytsmovies/src/api/movies.dart';
+import 'package:ytsmovies/src/api/error_interceptor.dart';
 
 Future<MoviesClient> initClient() async {
   final tempDir = await getTemporaryDirectory();
@@ -16,9 +17,9 @@ Future<MoviesClient> initClient() async {
     keyBuilder: CacheOptions.defaultCacheKeyBuilder,
     allowPostMethod: false,
   );
-
   final dio = Dio()
     ..interceptors.addAll([
+      ErrorInterceptor(),
       DioCacheInterceptor(options: cacheOptions),
       if (kDebugMode)
         LogInterceptor(

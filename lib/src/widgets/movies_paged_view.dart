@@ -119,59 +119,28 @@ class _MoviesPagedViewState extends State<MoviesPagedView> {
   }
 
   Widget _newPageErrorIndicator(BuildContext context) {
-    final error = _pagingController.error != null
-        ? CustomException.getCustomError(_pagingController.error!)
-        : 'Unknown error';
-
-    return Column(
-      children: [
-        Text(error),
-        TextButton(
-          onPressed: () => _pagingController.retryLastFailedRequest(),
-          child: const Text('Retry'),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: CompactErrorWidget(
+        error: _pagingController.error ?? 'Unknown error occurred',
+        onRetry: () => _pagingController.retryLastFailedRequest(),
+        customMessage: 'Failed to load more movies',
+      ),
     );
   }
 
   Widget _firstPageErrorIndicator(BuildContext context) {
-    final error = _pagingController.error != null
-        ? CustomException.getCustomError(_pagingController.error!)
-        : 'Unknown error';
-
-    return Column(
-      children: [
-        Text(error),
-        TextButton(
-          onPressed: () => _pagingController.refresh(),
-          child: const Text('Retry'),
-        ),
-      ],
+    return ErrorDisplayWidget(
+      error: _pagingController.error ?? 'Unknown error occurred',
+      onRetry: () => _pagingController.refresh(),
+      customMessage: 'Failed to load movies',
     );
   }
 
-  Widget _noItemsFoundIndicator(BuildContext context) => Container(
-        alignment: Alignment.center,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'No movie found',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color:
-                        Theme.of(context).colorScheme.onSurface.withAlpha(120),
-                  ),
-            ),
-            const SizedBox(height: 8.0),
-            Text(
-              "Your favourite movies aren't here yet.",
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color:
-                        Theme.of(context).colorScheme.onSurface.withAlpha(200),
-                  ),
-            ),
-          ],
-        ),
+  Widget _noItemsFoundIndicator(BuildContext context) => EmptyStateWidget(
+        title: 'No Movies Found',
+        subtitle: "Your favourite movies aren't here yet.",
+        icon: Icons.movie_outlined,
       );
 
   Widget _noMoreItemsIndicator(BuildContext context) => Padding(

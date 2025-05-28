@@ -19,6 +19,7 @@ import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/theme/index.dart';
+import 'package:ytsmovies/src/services/connectivity_service.dart';
 
 void main() {
   runZonedGuarded(
@@ -52,13 +53,15 @@ Future<void> _initializeApp() async {
 
   // Initialize HydratedBloc storage
   await _initializeHydratedStorage();
-
   try {
     // Open Hive boxes
     await Future.wait([
       Hive.openBox<Movie>(MyBoxs.favouriteBox),
       Hive.openBox<String>(MyBoxs.searchHistoryBox),
     ]);
+
+    // Initialize connectivity service
+    await ConnectivityService.instance.initialize();
 
     Timeline.finishSync();
 

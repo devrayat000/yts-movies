@@ -74,24 +74,22 @@ class DownloadButton extends StatelessWidget {
       await launchUrl(downloadUri, mode: LaunchMode.externalApplication);
     } on TorrentClientException catch (e, s) {
       log(e.toString(), error: e, stackTrace: s);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        key: key,
-        action: SnackBarAction(
-          label: 'Cancel',
-          onPressed: ScaffoldMessenger.of(context).hideCurrentSnackBar,
-        ),
-        content: const Text('No torrent client found'),
-        duration: const Duration(seconds: 3),
-        width: 320.0,
-        padding: const EdgeInsets.only(left: 16.0),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        backgroundColor: Colors.red.shade600,
-      ));
+      if (context.mounted) {
+        ErrorNotificationService.instance.showError(
+          context,
+          e,
+          customMessage: 'Unable to download torrent',
+        );
+      }
     } catch (e, s) {
       log(e.toString(), error: e, stackTrace: s);
+      if (context.mounted) {
+        ErrorNotificationService.instance.showError(
+          context,
+          e,
+          customMessage: 'Download failed',
+        );
+      }
     }
   }
 }

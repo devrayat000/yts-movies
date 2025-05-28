@@ -14,6 +14,7 @@ import 'package:ytsmovies/src/api/movies.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
+import 'package:ytsmovies/src/services/error_notification_service.dart';
 
 class MoviePage extends StatelessWidget {
   static const routeName = '/details';
@@ -27,38 +28,41 @@ class MoviePage extends StatelessWidget {
     required Movie item,
   })  : _movie = item,
         id = item.id;
-
   @override
   Widget build(BuildContext context) {
     if (_movie != null) {
       return MovieDetails(movie: _movie!);
     }
-    return FutureBuilder(
+
+    return MyFutureBuilder<MovieResponse>(
       future: context.read<MoviesClient>().getMovieByid(id.toString()),
-      builder: (context, snapshot) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.none:
-            return const Center(
-              child: Text('Could not load data!'),
+      errorBuilder: (context, error) {
+        return ErrorDisplayWidget(
+          error: error!,
+          onRetry: () {
+            // Trigger a rebuild by setting state
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => MoviePage(id: id),
+              ),
             );
-          case ConnectionState.waiting:
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          case ConnectionState.active:
-          case ConnectionState.done:
-            if (snapshot.hasError) {
-              debugPrint(snapshot.error.toString());
-              return const Center(
-                child: Text('Something went wrong!'),
+          },
+        );
+      },
+      successBuilder: (context, response) {
+        if (response?.data.movie != null) {
+          return MovieDetails(movie: response!.data.movie);
+        } else {
+          return ErrorDisplayWidget(
+            error: CustomException('Movie not found'),
+            onRetry: () {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => MoviePage(id: id),
+                ),
               );
-            } else if (snapshot.hasData) {
-              return MovieDetails(movie: snapshot.data!.data.movie);
-            } else {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
+            },
+          );
         }
       },
     );
@@ -85,34 +89,53 @@ class MovieDetailsState extends State<MovieDetails> with RouteAware {
   bool _wasPlaying = false;
 
   final _muted = ValueNotifier(false);
-
   @override
   void initState() {
-    final code = YoutubePlayer.convertUrlToId(widget._movie.trailer!);
-
-    if (code != null) {
-      _controller = YoutubePlayerController(
-        initialVideoId: code,
-        flags: const YoutubePlayerFlags(
-          mute: false,
-          autoPlay: false,
-          disableDragSeek: false,
-          loop: false,
-          isLive: false,
-          forceHD: false,
-          enableCaption: true,
-          controlsVisibleAtStart: true,
-        ),
-      )
-        ..unMute()
-        ..setVolume(volume)
-        ..addListener(_listener);
-    }
-
+    super.initState();
+    _initializeYouTubePlayer();
     videoMetaData = const YoutubeMetaData();
     playerState = PlayerState.unknown;
+  }
 
-    super.initState();
+  void _initializeYouTubePlayer() {
+    try {
+      if (widget._movie.trailer == null || widget._movie.trailer!.isEmpty) {
+        log('No trailer URL available for movie: ${widget._movie.title}');
+        return;
+      }
+
+      final code = YoutubePlayer.convertUrlToId(widget._movie.trailer!);
+
+      if (code != null) {
+        _controller = YoutubePlayerController(
+          initialVideoId: code,
+          flags: const YoutubePlayerFlags(
+            mute: false,
+            autoPlay: false,
+            disableDragSeek: false,
+            loop: false,
+            isLive: false,
+            forceHD: false,
+            enableCaption: true,
+            controlsVisibleAtStart: true,
+          ),
+        );
+
+        _controller!
+          ..unMute()
+          ..setVolume(volume)
+          ..addListener(_listener);
+      } else {
+        log('Failed to extract YouTube video ID from URL: ${widget._movie.trailer}');
+      }
+    } catch (error, stackTrace) {
+      log(
+        'Error initializing YouTube player: $error',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      // Don't show error to user for trailer issues, just log it
+    }
   }
 
   @override
@@ -449,14 +472,37 @@ class _Screen extends StatelessWidget {
                                       final subTitleUri = Uri.parse(
                                           'https://yifysubtitles.org/movie-imdb/${_movie.imdbCode}');
                                       if (await canLaunchUrl(subTitleUri)) {
-                                        launchUrl(subTitleUri);
+                                        await launchUrl(subTitleUri);
+                                      } else {
+                                        if (context.mounted) {
+                                          context.showError(
+                                            CustomException(
+                                                'Cannot open subtitles link'),
+                                            customMessage:
+                                                'Unable to open subtitles page',
+                                          );
+                                        }
                                       }
                                     } on PlatformException catch (e, s) {
-                                      debugPrint(e.message);
-                                      debugPrint(s.toString());
+                                      log('Platform error opening subtitles: ${e.message}',
+                                          error: e, stackTrace: s);
+                                      if (context.mounted) {
+                                        context.showError(
+                                          e,
+                                          customMessage:
+                                              'Failed to open subtitles',
+                                        );
+                                      }
                                     } catch (e, s) {
-                                      debugPrint(e.toString());
-                                      debugPrint(s.toString());
+                                      log('Error opening subtitles: $e',
+                                          error: e, stackTrace: s);
+                                      if (context.mounted) {
+                                        context.showError(
+                                          e,
+                                          customMessage:
+                                              'Failed to open subtitles',
+                                        );
+                                      }
                                     }
                                   },
                                   splashColor: Colors.white.withOpacity(0.1),

@@ -6,6 +6,7 @@ import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/router.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/widgets.dart';
+import 'package:ytsmovies/src/widgets/connectivity_widgets.dart';
 
 class YTSApp extends StatelessWidget {
   const YTSApp({super.key});
@@ -19,7 +20,10 @@ class YTSApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           routerConfig: router,
           scrollBehavior: const CupertinoScrollBehavior(),
-          builder: (context, widget) => _AppShell(child: widget!),
+          builder: (context, widget) => ConnectivityBanner(
+            showWhenConnected: true,
+            child: _AppShell(child: widget!),
+          ),
         ),
       ),
     );

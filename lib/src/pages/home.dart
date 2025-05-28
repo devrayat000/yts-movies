@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,6 +8,7 @@ import 'package:ytsmovies/src/api/movies.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
+import 'package:ytsmovies/src/services/error_notification_service.dart';
 
 class HomePage extends StatefulWidget {
   static const routeName = '/';
@@ -20,14 +22,57 @@ class HomePageState extends State<HomePage> {
   late final Future<MovieListResponse> _latestMovies;
   late final Future<MovieListResponse> _hdMovies;
   late final Future<MovieListResponse> _ratedMovies;
-
   @override
   void initState() {
     super.initState();
     final repo = context.read<MoviesClient>();
-    _latestMovies = repo.getMovieList();
-    _hdMovies = repo.getMovieList(quality: Quality.$2160);
-    _ratedMovies = repo.getMovieList(minimumRating: 5);
+
+    // Initialize futures with error handling
+    _latestMovies = _initializeMoviesFuture(() => repo.getMovieList());
+    _hdMovies = _initializeMoviesFuture(
+        () => repo.getMovieList(quality: Quality.$2160));
+    _ratedMovies =
+        _initializeMoviesFuture(() => repo.getMovieList(minimumRating: 5));
+  }
+
+  /// Wrapper to handle errors and provide consistent error handling
+  Future<MovieListResponse> _initializeMoviesFuture(
+      Future<MovieListResponse> Function() futureCallback) async {
+    try {
+      return await futureCallback();
+    } catch (error, stackTrace) {
+      // Log error for debugging
+      log('Movie list fetch error: $error',
+          error: error, stackTrace: stackTrace);
+
+      // Re-throw to be handled by FutureBuilder
+      rethrow;
+    }
+  }
+
+  void _handleSearchTap() async {
+    try {
+      await showSearch(
+        context: context,
+        delegate: MovieSearchDelegate(
+          repo: context.read<MoviesClient>(),
+        ),
+      );
+    } catch (error) {
+      if (mounted) {
+        context.showError(error, customMessage: 'Failed to open search');
+      }
+    }
+  }
+
+  void _handleNavigation(String routeName) {
+    try {
+      context.pushNamed(routeName);
+    } catch (error) {
+      if (mounted) {
+        context.showError(error, customMessage: 'Navigation failed');
+      }
+    }
   }
 
   @override
@@ -43,14 +88,7 @@ class HomePageState extends State<HomePage> {
             child: ListView(
               children: [
                 InkWell(
-                  onTap: () async {
-                    await showSearch(
-                      context: context,
-                      delegate: MovieSearchDelegate(
-                        repo: context.read<MoviesClient>(),
-                      ),
-                    );
-                  },
+                  onTap: _handleSearchTap,
                   splashFactory: NoSplash.splashFactory,
                   child: const SearchTile(),
                 ),
@@ -63,9 +101,7 @@ class HomePageState extends State<HomePage> {
                   itemBuilder: (context, movie, i) {
                     return _image(movie);
                   },
-                  onAction: () {
-                    context.pushNamed("latest");
-                  },
+                  onAction: () => _handleNavigation("latest"),
                 ),
                 _space,
                 IntroItem(
@@ -76,22 +112,18 @@ class HomePageState extends State<HomePage> {
                   itemBuilder: (context, movie, i) {
                     return _image(movie);
                   },
-                  onAction: () {
-                    context.pushNamed("4k");
-                  },
+                  onAction: () => _handleNavigation("hd"),
                 ),
                 _space,
                 IntroItem(
                   key: const PageStorageKey('rated-movies-intro'),
-                  title: const Text('Highly Rated Movies'),
+                  title: const Text('Top Rated Movies'),
                   titleTextStyle: Theme.of(context).textTheme.headlineSmall,
                   future: _ratedMovies,
                   itemBuilder: (context, movie, i) {
                     return _image(movie);
                   },
-                  onAction: () {
-                    context.pushNamed("rated");
-                  },
+                  onAction: () => _handleNavigation("rated"),
                 ),
               ],
             ),

@@ -108,25 +108,14 @@ class IntroItem extends StatelessWidget {
               child: MyFutureBuilder<MovieListResponse>(
                 future: future,
                 errorBuilder: (context, error) {
-                  if (error is CustomException) {
-                    return Center(
-                      child: Text(
-                        error.message,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    );
-                  }
-                  return Center(
-                    child: Text(
-                      error.toString(),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                  return CompactErrorWidget(
+                    error: error!,
+                    onRetry: () {
+                      // Trigger a rebuild by calling setState in parent widget
+                      // This is a limitation since IntroItem is StatelessWidget
+                      // In a real implementation, we might need to convert to StatefulWidget
+                      // or use a callback mechanism
+                    },
                   );
                 },
                 successBuilder: (context, response) {

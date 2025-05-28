@@ -102,9 +102,9 @@ class MovieAdapter extends TypeAdapter<_$_Movie> {
 // **************************************************************************
 
 _$_Movie _$$_MovieFromJson(Map<String, dynamic> json) => _$_Movie(
-      id: json['id'] as int,
+      id: (json['id'] as num).toInt(),
       title: json['title'] as String,
-      year: json['year'] as int?,
+      year: (json['year'] as num?)?.toInt(),
       backgroundImage: json['background_image'] as String,
       url: json['url'] as String,
       imdbCode: json['imdb_code'] as String,
@@ -113,7 +113,7 @@ _$_Movie _$$_MovieFromJson(Map<String, dynamic> json) => _$_Movie(
       descriptionFull: json['description_full'] as String,
       descriptionIntro: json['description_intro'] as String?,
       synopsis: json['synopsis'] as String?,
-      runtime: json['runtime'] as int,
+      runtime: (json['runtime'] as num).toInt(),
       genres:
           (json['genres'] as List<dynamic>).map((e) => e as String).toList(),
       torrents: (json['torrents'] as List<dynamic>)

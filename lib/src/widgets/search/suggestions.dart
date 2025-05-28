@@ -12,11 +12,11 @@ class SearchSuggestions extends StatelessWidget {
     required this.history,
     required this.onShowHistory,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return MyFutureBuilder<List<Movie>>(
       future: future,
+      showFullPageError: false,
       idleBuilder: (context) {
         if (history == null || history!.isEmpty) {
           return _text(context, 'Search for movies..🤗');
@@ -37,19 +37,20 @@ class SearchSuggestions extends StatelessWidget {
         );
       },
       errorBuilder: (context, error) {
-        if (error is CustomException) {
-          return _text(context, error.message);
-        }
-        return _text(context, error.toString());
+        return CompactErrorWidget(
+          error: error,
+          customMessage: 'Failed to load search suggestions',
+        );
       },
       successBuilder: (context, data) {
         debugPrint(data.toString());
         debugPrint('success');
         if (data == null || data.isEmpty) {
-          if (data is List<String>) {
-            _text(context, 'Search for movies..🤗');
-          }
-          return _text(context, 'Nothing found 😥!');
+          return EmptyStateWidget(
+            title: 'No Results Found',
+            subtitle: 'Try searching for a different movie',
+            icon: Icons.search_off,
+          );
         }
         debugPrint('success list');
         return ListView.separated(

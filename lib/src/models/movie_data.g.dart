@@ -23,9 +23,9 @@ Map<String, dynamic> _$$_MovieListResponseToJson(
 
 _$_MovieListData _$$_MovieListDataFromJson(Map<String, dynamic> json) =>
     _$_MovieListData(
-      movieCount: json['movie_count'] as int,
-      limit: json['limit'] as int,
-      pageNumber: json['page_number'] as int,
+      movieCount: (json['movie_count'] as num).toInt(),
+      limit: (json['limit'] as num).toInt(),
+      pageNumber: (json['page_number'] as num).toInt(),
       movies: (json['movies'] as List<dynamic>?)
               ?.map((e) => Movie.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -59,7 +59,7 @@ Map<String, dynamic> _$$_MovieSuggestionResponseToJson(
 _$_MovieSuggestionData _$$_MovieSuggestionDataFromJson(
         Map<String, dynamic> json) =>
     _$_MovieSuggestionData(
-      movieCount: json['movie_count'] as int,
+      movieCount: (json['movie_count'] as num).toInt(),
       movies: (json['movies'] as List<dynamic>?)
               ?.map((e) => Movie.fromJson(e as Map<String, dynamic>))
               .toList() ??
