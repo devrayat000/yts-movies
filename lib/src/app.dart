@@ -1,5 +1,3 @@
-// flutter pub global run devtools --appSizeBase=C:\Users\rayat\.flutter-devtools\apk-code-size-analysis_02.json
-
 import 'package:flutter/cupertino.dart' show CupertinoScrollBehavior;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,7 +8,7 @@ import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/widgets.dart';
 
 class YTSApp extends StatelessWidget {
-  const YTSApp({Key? key}) : super(key: key);
+  const YTSApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,25 +20,34 @@ class YTSApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           routerConfig: router,
           scrollBehavior: const CupertinoScrollBehavior(),
-          // restorationScopeId: 'com.movies.yts',
-          builder: (BuildContext context, Widget? widget) {
-            Widget error = const Text('...Unexpected error occurred...');
-            if (widget is Scaffold || widget is Navigator) {
-              error = Scaffold(body: Center(child: error));
-            }
-            ErrorWidget.builder = (FlutterErrorDetails errorDetails) => error;
-
-            return _Screen(child: widget!);
-          },
+          builder: (context, widget) => _AppShell(child: widget!),
         ),
       ),
     );
   }
 }
 
-class _Screen extends StatelessWidget {
+class _AppShell extends StatelessWidget {
+  const _AppShell({required this.child});
+
   final Widget child;
-  const _Screen({Key? key, required this.child}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    Widget errorWidget = const Text('Unexpected error occurred');
+    if (child is Scaffold || child is Navigator) {
+      errorWidget = Scaffold(body: Center(child: errorWidget));
+    }
+    ErrorWidget.builder = (_) => errorWidget;
+
+    return _ThemeProvider(child: child);
+  }
+}
+
+class _ThemeProvider extends StatelessWidget {
+  const _ThemeProvider({required this.child});
+
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
@@ -48,17 +55,12 @@ class _Screen extends StatelessWidget {
     context.read<ThemeCubit>().sync(brightness);
 
     return BlocBuilder<ThemeCubit, ThemeData>(
-      builder: (context, theme) {
-        return AnimatedTheme(
-          data: theme,
-          curve: Curves.easeOutCirc,
-          child: child,
-        );
-      },
-      buildWhen: (prev, current) => prev != current,
+      builder: (context, theme) => AnimatedTheme(
+        data: theme,
+        curve: Curves.easeOutCirc,
+        child: child,
+      ),
+      buildWhen: (previous, current) => previous != current,
     );
   }
 }
-// TODO: change to go_router
-//  keytool -genkey -v -keystore c:\Users\rayat\yts-movies-keystore.jks -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
-

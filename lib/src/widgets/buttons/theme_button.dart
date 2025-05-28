@@ -1,7 +1,7 @@
 part of app_widgets.button;
 
 class ThemeToggleButton extends StatefulWidget {
-  const ThemeToggleButton({Key? key}) : super(key: key);
+  const ThemeToggleButton({super.key});
 
   @override
   _ThemeToggleButtonState createState() => _ThemeToggleButtonState();

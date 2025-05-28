@@ -2,9 +2,8 @@ part of app_widgets;
 
 class TorrentTab extends StatelessWidget {
   final List<Torrent> _torrents;
-  const TorrentTab({Key? key, required List<Torrent> torrents})
-      : _torrents = torrents,
-        super(key: key);
+  const TorrentTab({super.key, required List<Torrent> torrents})
+      : _torrents = torrents;
 
   @override
   Widget build(BuildContext context) {

@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:ytsmovies/src/models/index.dart';
@@ -9,18 +7,24 @@ class FavouritesService {
   FavouritesService._();
   static final instance = FavouritesService._();
 
-  Future<MovieListResponse> getFavoutiteMovies(int page) {
+  Box<Movie> get _favouriteBox {
     if (!Hive.isBoxOpen(MyBoxs.favouriteBox)) {
       throw const CustomException("Favourites box is not open");
     }
-    final box = Hive.box<Movie>(MyBoxs.favouriteBox);
+    return Hive.box<Movie>(MyBoxs.favouriteBox);
+  }
+
+  Future<MovieListResponse> getFavouriteMovies(int page) {
+    final box = _favouriteBox;
+    final count = box.length;
+
     return SynchronousFuture(
       MovieListResponse(
-        status: "",
-        statusMessage: "",
+        status: "ok",
+        statusMessage: "Query was successful",
         data: MovieListData(
-          movieCount: box.length,
-          limit: box.length == 0 ? 1 : box.length,
+          movieCount: count,
+          limit: count == 0 ? 1 : count,
           pageNumber: 1,
           movies: box.values.toList(),
         ),
@@ -29,24 +33,19 @@ class FavouritesService {
   }
 
   Future<bool> toggleAddOrRemoveFavourite(Movie movie) async {
-    if (!Hive.isBoxOpen(MyBoxs.favouriteBox)) {
-      throw const CustomException("Favourites box is not open");
-    }
-    final favBox = Hive.box<Movie>(MyBoxs.favouriteBox);
+    final favBox = _favouriteBox;
     final isLiked = favBox.containsKey(movie.id);
+
     if (isLiked) {
       await favBox.delete(movie.id);
     } else {
       await favBox.put(movie.id, movie);
     }
+
     return !isLiked;
   }
 
   Future<bool> isFavourite(int id) {
-    if (!Hive.isBoxOpen(MyBoxs.favouriteBox)) {
-      throw const CustomException("Favourites box is not open");
-    }
-    final favBox = Hive.box<Movie>(MyBoxs.favouriteBox);
-    return SynchronousFuture(favBox.containsKey(id));
+    return SynchronousFuture(_favouriteBox.containsKey(id));
   }
 }

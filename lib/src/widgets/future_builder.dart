@@ -7,16 +7,15 @@ class MyFutureBuilder<T> extends StatelessWidget {
   final Widget Function(BuildContext, T?) successBuilder;
   final WidgetBuilder? loadingBuilder;
   final WidgetBuilder? idleBuilder;
-
   const MyFutureBuilder({
-    Key? key,
+    super.key,
     this.future,
     this.initialData,
     this.loadingBuilder,
     this.idleBuilder,
     required this.errorBuilder,
     required this.successBuilder,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -41,9 +40,6 @@ class MyFutureBuilder<T> extends StatelessWidget {
               return loadingBuilder?.call(context) ??
                   _defaultLoadingBuilder(context);
             }
-          default:
-            return loadingBuilder?.call(context) ??
-                _defaultLoadingBuilder(context);
         }
       },
     );

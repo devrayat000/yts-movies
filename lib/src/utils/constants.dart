@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
-// import 'package:http/http.dart';
-
 import 'package:ytsmovies/src/utils/enums.dart';
-// import 'package:ytsmovies/utils/exceptions.dart';
 
 typedef Resolver = Future<Response> Function(int);
 

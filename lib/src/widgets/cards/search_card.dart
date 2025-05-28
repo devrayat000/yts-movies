@@ -12,7 +12,6 @@ class SearchTile extends StatelessWidget {
         style: TextStyle(
           color: Theme.of(context).inputDecorationTheme.hintStyle?.color,
         ),
-        // enabled: false,
         keyboardType: TextInputType.url,
         decoration: InputDecoration(
           hintText: 'Search movies',

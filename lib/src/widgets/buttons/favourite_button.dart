@@ -4,11 +4,10 @@ class FavouriteButton extends StatefulWidget {
   final bool? isFavourite;
   final Movie _movie;
   const FavouriteButton({
-    Key? key,
+    super.key,
     required Movie movie,
     this.isFavourite = false,
-  })  : _movie = movie,
-        super(key: key);
+  }) : _movie = movie;
 
   @override
   FavouriteButtonState createState() => FavouriteButtonState();

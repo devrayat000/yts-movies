@@ -31,7 +31,6 @@ class MovieList extends StatelessWidget {
         animateTransitions: true,
       ),
       itemExtent: MediaQuery.of(context).size.width * 4 / 9,
-      // gridDelegate: _gridDelegrate(1, 9 / 4),
     );
   }
 

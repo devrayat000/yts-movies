@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:ytsmovies/src/api/movies.dart';
 import 'package:ytsmovies/src/models/index.dart';
-import 'package:ytsmovies/src/widgets/index.dart';
-import 'package:provider/provider.dart';
 import 'package:ytsmovies/src/utils/index.dart';
-
-// import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ytsmovies/src/widgets/index.dart';
 
 class HomePage extends StatefulWidget {
   static const routeName = '/';
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   HomePageState createState() => HomePageState();
@@ -45,17 +43,12 @@ class HomePageState extends State<HomePage> {
               children: [
                 InkWell(
                   onTap: () async {
-                    // try {
                     await showSearch(
                       context: context,
                       delegate: MovieSearchDelegate(
                         repo: context.read<MoviesClient>(),
                       ),
                     );
-                    // } catch (e, s) {
-                    //   debugPrint(e);
-                    //   debugPrint(s);
-                    // }
                   },
                   splashFactory: NoSplash.splashFactory,
                   child: const SearchTile(),

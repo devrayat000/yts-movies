@@ -6,7 +6,7 @@ import 'package:ytsmovies/src/widgets/movies_list.dart';
 
 class LatestMoviesPage extends StatelessWidget {
   static const routeName = '/latest-movies';
-  const LatestMoviesPage({Key? key}) : super(key: key);
+  const LatestMoviesPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +26,7 @@ class LatestMoviesPage extends StatelessWidget {
 
 class HD4KMoviesPage extends StatelessWidget {
   static const routeName = '/hd4k-movies';
-  const HD4KMoviesPage({Key? key}) : super(key: key);
+  const HD4KMoviesPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +49,7 @@ class HD4KMoviesPage extends StatelessWidget {
 
 class RatedMoviesPage extends StatelessWidget {
   static const routeName = '/rated-movies';
-  const RatedMoviesPage({Key? key}) : super(key: key);
+  const RatedMoviesPage({super.key});
 
   @override
   Widget build(BuildContext context) {

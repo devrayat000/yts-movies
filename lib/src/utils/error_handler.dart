@@ -17,7 +17,7 @@ Exception errorParser(Object? error, StackTrace stackTrace) {
   } else if (error is TimeoutException) {
     message = 'The request timed out!';
   } else if (error is PlatformException) {
-    message = error.message ?? 'Unknown platfor exception!';
+    message = error.message ?? 'Unknown platform exception!';
     if (error.stacktrace != null) {
       stackTrace = StackTrace.fromString(error.stacktrace!);
     }

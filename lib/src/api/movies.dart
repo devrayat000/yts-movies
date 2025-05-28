@@ -1,4 +1,4 @@
-import "dart:async";
+import 'dart:async';
 import 'package:dio/dio.dart' hide Headers;
 import 'package:flutter/foundation.dart';
 import 'package:retrofit/retrofit.dart';
@@ -12,7 +12,6 @@ part 'movies.g.dart';
   parser: Parser.FlutterCompute,
 )
 abstract class MoviesClient {
-  // A helper method that helps instantiating the service. You can omit this method and use the generated class directly instead.
   factory MoviesClient(Dio dio, {String baseUrl}) = _MoviesClient;
 
   @GET('/list_movies.json')

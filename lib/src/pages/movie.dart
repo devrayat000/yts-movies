@@ -184,7 +184,6 @@ class MovieDetailsState extends State<MovieDetails> with RouteAware {
             handleColor: Colors.redAccent,
           ),
           onReady: () {
-            // _trailerController.addListener(listener);
             _isPlayerReady = true;
           },
           topActions: <Widget>[
@@ -294,25 +293,6 @@ class _Screen extends StatelessWidget {
                 ),
                 centerTitle: true,
                 expandedTitleScale: 1.2,
-                // background: SafeArea(
-                //   child: Container(
-                //     // decoration: BoxDecoration(
-                //     //   image: DecorationImage(
-                //     //     image: NetworkImage(_movie.backgroundImage),
-                //     //     fit: BoxFit.cover,
-                //     //     colorFilter: const ColorFilter.mode(
-                //     //       Colors.black54,
-                //     //       BlendMode.overlay,
-                //     //     ),
-                //     //     onError: (e, s) => debugPrint(e.toString()),
-                //     //   ),
-                //     // ),
-                //     child: Text(
-                //       "${_movie.title} (${_movie.year})",
-                //       style: Theme.of(context).appBarTheme.titleTextStyle,
-                //     ),
-                //   ),
-                // ),
               ),
               actions: [FavouriteButton(movie: _movie)],
             ),

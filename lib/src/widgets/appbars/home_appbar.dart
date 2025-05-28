@@ -1,5 +1,4 @@
 part of app_widgets;
-// import '../../pages/favourites.dart';
 
 class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
   const HomeAppbar({Key? key})

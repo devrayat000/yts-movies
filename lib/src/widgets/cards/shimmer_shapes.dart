@@ -1,25 +1,23 @@
 part of app_widgets.card;
 
 class ShimmerShape extends StatelessWidget {
-  late final _ShimmerShapes _shape;
+  final _ShimmerShapes _shape;
 
   final double? height;
   final int? count;
 
-  ShimmerShape.image({Key? key})
+  const ShimmerShape.image({super.key})
       : _shape = _ShimmerShapes.IMAGE,
         height = null,
-        count = null,
-        super(key: key);
+        count = null;
 
-  ShimmerShape.title({Key? key, required this.height})
+  const ShimmerShape.title({super.key, required this.height})
       : _shape = _ShimmerShapes.TITLE,
-        count = null,
-        super(key: key);
+        count = null;
 
-  ShimmerShape.desc({Key? key, required this.height, required this.count})
-      : _shape = _ShimmerShapes.DESC,
-        super(key: key);
+  const ShimmerShape.desc(
+      {super.key, required this.height, required this.count})
+      : _shape = _ShimmerShapes.DESC;
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +28,6 @@ class ShimmerShape extends StatelessWidget {
         return _title(context);
       case _ShimmerShapes.DESC:
         return Column(children: _desc(context));
-      default:
-        return _image(context);
     }
   }
 
@@ -43,26 +39,24 @@ class ShimmerShape extends StatelessWidget {
         ),
       );
 
-  Widget _title(BuildContext context) => Container(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Container(
-              width: double.infinity,
+  Widget _title(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Container(
+            width: double.infinity,
+            height: height,
+            decoration: _decoration(context),
+          ),
+          SizedBox(height: height),
+          FractionallySizedBox(
+            widthFactor: 0.7,
+            child: Container(
               height: height,
               decoration: _decoration(context),
             ),
-            SizedBox(height: height),
-            FractionallySizedBox(
-              widthFactor: 0.7,
-              child: Container(
-                height: height,
-                decoration: _decoration(context),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       );
 
   List<Widget> _desc(BuildContext context) => [

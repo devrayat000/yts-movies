@@ -32,11 +32,8 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
   CancelToken? _cancelToken;
 
   List<String> get _history => _box.values.toSet().toList().reversed.toList();
-
   @override
   set query(String value) {
-    debugPrint(super.query);
-    debugPrint(value);
     if (value != super.query) {
       super.query = value;
     }
@@ -44,7 +41,6 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   @override
   void showSuggestions(BuildContext context) {
-    debugPrint('showing suggestions');
     super.showSuggestions(context);
   }
 
@@ -81,14 +77,11 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   @override
   ThemeData appBarTheme(BuildContext context) => Theme.of(context);
-
   @override
   Future<void> showResults(BuildContext context) async {
-    // _controller.appendPage(_cachedMovies.toList(), 2);
     try {
       _controller.removePageRequestListener(_pagehandler);
       _params = context.read<Filter>().values;
-      debugPrint(_params.toString());
       _controller.addPageRequestListener(_pagehandler);
       super.showResults(context);
       await _setHistory();
@@ -117,7 +110,6 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
       onFiltered: () async {
         try {
           _params = context.read<Filter>().values;
-          debugPrint(_params.toString());
           _controller.refresh();
           await showResults(context);
         } catch (e, s) {
@@ -141,7 +133,6 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
         } catch (e, s) {
           log(e.toString(), error: e, stackTrace: s);
         }
-        // Dio().get("path", )
       },
       onTap: () => _setHistory(),
     );

@@ -41,7 +41,6 @@ class MovieImage extends StatelessWidget {
       transitionOnUserGestures: true,
       child: _container(
         child: CachedNetworkImage(
-          // src,
           imageUrl: src,
           cacheKey: id,
           fit: BoxFit.cover,

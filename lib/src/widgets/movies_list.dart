@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -86,10 +84,7 @@ class MoviesListState extends State<MoviesList> {
         child: CupertinoScrollbar(
           controller: _scrollController,
           child: RefreshIndicator(
-            onRefresh: () {
-              // _pagingController.refresh();
-              return SynchronousFuture(null);
-            },
+            onRefresh: () => SynchronousFuture(null),
             child: CustomScrollView(
               controller: _scrollController,
               key: PageStorageKey(widget.label),

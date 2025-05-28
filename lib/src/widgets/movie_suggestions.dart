@@ -63,7 +63,4 @@ class SuggestionsState extends State<Suggestions> {
           child: CircularProgressIndicator(),
         ),
       );
-
-  // Future<List<Movie>> get _suggestionsFuture =>
-  //     context.read<MovieRepository>().movieSuggestions(widget.id);
 }
