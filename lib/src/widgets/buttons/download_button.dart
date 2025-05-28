@@ -9,22 +9,60 @@ class DownloadButton extends StatelessWidget {
     required this.title,
     required m.Torrent torrent,
   }) : _torrent = torrent;
-
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-        textStyle: const TextStyle(fontSize: 12),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadiusGeometry.circular(12.0),
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.primary,
+            theme.colorScheme.secondary,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        side: const BorderSide(color: Colors.grey),
+        borderRadius: BorderRadius.circular(12.0),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      icon: const Icon(Icons.download, size: 12),
-      onPressed: () => _download(context),
-      label: Text('${_torrent.quality}.${_torrent.type?.toUpperCase()}'),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12.0),
+          onTap: () => _download(context),
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.download_rounded,
+                  size: 16,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${_torrent.quality} ${_torrent.type?.toUpperCase()}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -37,7 +75,6 @@ class DownloadButton extends StatelessWidget {
       await launchUrl(downloadUri, mode: LaunchMode.externalApplication);
     } on TorrentClientException catch (e, s) {
       log(e.toString(), error: e, stackTrace: s);
-
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         key: key,
         action: SnackBarAction(
@@ -50,8 +87,9 @@ class DownloadButton extends StatelessWidget {
         padding: const EdgeInsets.only(left: 16.0),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4.0),
+          borderRadius: BorderRadius.circular(12.0),
         ),
+        backgroundColor: Colors.red.shade600,
       ));
     } catch (e, s) {
       log(e.toString(), error: e, stackTrace: s);

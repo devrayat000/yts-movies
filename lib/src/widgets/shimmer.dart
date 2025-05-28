@@ -23,13 +23,16 @@ class ShimmerState extends State<Shimmer>
   late AnimationController _shimmerController;
 
   Listenable get shimmerChanges => _shimmerController;
-
   @override
   void initState() {
     super.initState();
 
     _shimmerController = AnimationController.unbounded(vsync: this)
-      ..repeat(min: -0.5, max: 1.5, period: const Duration(milliseconds: 1000));
+      ..repeat(
+        min: -0.5,
+        max: 1.5,
+        period: const Duration(milliseconds: 1200),
+      );
   }
 
   @override

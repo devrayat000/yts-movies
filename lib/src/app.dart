@@ -9,7 +9,6 @@ import 'package:ytsmovies/src/widgets.dart';
 
 class YTSApp extends StatelessWidget {
   const YTSApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Unfocus(

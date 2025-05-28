@@ -17,17 +17,28 @@ class MovieCard extends StatelessWidget {
   const MovieCard.grid({super.key, required Movie movie})
       : _movie = movie,
         _isGrid = true;
-
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Theme.of(context).cardColor,
-      elevation: 5,
-      child: InkWell(
-        splashFactory: NoSplash.splashFactory,
-        onTap: () => _viewDetails(context),
-        borderRadius: BorderRadius.circular(12.0),
-        child: _isGrid ? _grid() : _list(),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16.0),
+        child: InkWell(
+          splashFactory: InkRipple.splashFactory,
+          onTap: () => _viewDetails(context),
+          borderRadius: BorderRadius.circular(16.0),
+          child: _isGrid ? _grid(context) : _list(context),
+        ),
       ),
     );
   }
@@ -44,10 +55,10 @@ class MovieCard extends StatelessWidget {
     }
   }
 
-  Widget _list() => Flex(
+  Widget _list(BuildContext context) => Flex(
         direction: Axis.horizontal,
         children: [
-          _image(),
+          _image(context),
           Expanded(
             child: Container(
               margin: const EdgeInsets.all(8.0),
@@ -84,73 +95,65 @@ class MovieCard extends StatelessWidget {
           ),
         ],
       );
-
-  Widget _grid() => Flex(
-        direction: Axis.vertical,
-        children: [
-          Expanded(
-            flex: 3,
-            child: Flex(
-              direction: Axis.horizontal,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: _image()),
-                Expanded(
-                  child: Column(
-                    children: [
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: FavouriteButton(movie: _movie),
-                      ),
-                      _YearRating(
-                        isGrid: _isGrid,
-                        rating: _movie.rating.toString(),
-                        year: _movie.year.toString(),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: _Title(
-              isGrid: _isGrid,
-              language: _movie.language,
-              title: _movie.title,
-            ),
-          ),
-          Expanded(flex: 1, child: _quality_chip),
-        ],
+  Widget _grid(BuildContext context) => MoviePoster(
+        movie: _movie,
+        showFavoriteButton: true,
+        margin: EdgeInsets.zero,
+        onTap: () => _viewDetails(context),
       );
-
   // ignore: non_constant_identifier_names
   Widget get _quality_chip => Wrap(
-        spacing: 4.0,
+        spacing: 6.0,
+        runSpacing: 4.0,
         children: _movie.quality
             .map(
-              (quality) => Chip(
-                label: Text(quality),
-                labelStyle: const TextStyle(
-                  fontSize: 12.0,
-                  color: Colors.grey,
+              (quality) => Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.deepPurple.withOpacity(0.8),
+                      Colors.indigo.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.deepPurple.withOpacity(0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadiusGeometry.circular(20.0),
-                  side: BorderSide(color: Colors.grey),
+                child: Text(
+                  quality,
+                  style: const TextStyle(
+                    fontSize: 11.0,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             )
             .toList(),
       );
-
-  Widget _image() => MovieImage(
-        src: _movie.mediumCoverImage,
-        padding: const EdgeInsets.all(4.0),
-        label: _movie.title,
-        id: _movie.id.toString(),
-      );
+  Widget _image(BuildContext context) => _isGrid
+      ? _gridImage(context)
+      : MovieImage(
+          src: _movie.mediumCoverImage,
+          padding: const EdgeInsets.all(4.0),
+          label: _movie.title,
+          id: _movie.id.toString(),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16.0),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+              width: 1.0,
+            ),
+          ),
+        );
+  Widget _gridImage(BuildContext context) => MoviePoster(movie: _movie);
 }
 
 class _YearRating extends StatelessWidget {
@@ -162,31 +165,67 @@ class _YearRating extends StatelessWidget {
     required this.year,
     required this.rating,
   });
-
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Flex(
       direction: isGrid ? Axis.vertical : Axis.horizontal,
       mainAxisAlignment:
           isGrid ? MainAxisAlignment.end : MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          year,
-          style: Theme.of(context).textTheme.titleMedium,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.blueGrey[700]?.withOpacity(0.7)
+                : Colors.grey[200]?.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            year,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+          ),
         ),
-        Chip(
-          label: Text("$rating / 10"),
-          avatar: const Icon(
-            Icons.star,
-            color: Colors.green,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.amber.withOpacity(0.8),
+                Colors.orange.withOpacity(0.8),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.amber.withOpacity(0.3),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          labelStyle: const TextStyle(
-            fontSize: 12.0,
-            color: Colors.grey,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadiusGeometry.circular(20.0),
-            side: BorderSide(color: Colors.grey),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.star_rounded,
+                color: Colors.white,
+                size: 14,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                rating,
+                style: const TextStyle(
+                  fontSize: 11.0,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -203,31 +242,40 @@ class _Title extends StatelessWidget {
     required this.title,
     required this.language,
   });
-
   @override
   Widget build(BuildContext context) {
     final theme = isGrid
         ? Theme.of(context).textTheme.titleLarge
         : Theme.of(context).textTheme.headlineSmall;
-    return Text.rich(
-      TextSpan(
-        // ignore: unnecessary_null_comparison
-        text: language != 'en' && language != '' && language != null
-            ? '[${language.toUpperCase()}] '
-            : '',
-        style: theme?.copyWith(
-          color: Colors.blueGrey[400],
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Text.rich(
+        TextSpan(
+          // ignore: unnecessary_null_comparison
+          text: language != 'en' && language != '' && language != null
+              ? '[${language.toUpperCase()}] '
+              : '',
+          style: theme?.copyWith(
+            color: Colors.deepPurple.withOpacity(0.7),
+            fontSize: isGrid ? 11 : 13,
+            fontWeight: FontWeight.w500,
+          ),
+          children: [
+            TextSpan(
+              text: title,
+              style: theme?.copyWith(
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
+                height: 1.2,
+              ),
+            )
+          ],
         ),
-        children: [
-          TextSpan(
-            text: title,
-            style: theme,
-          )
-        ],
+        textAlign: isGrid ? TextAlign.center : TextAlign.start,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
       ),
-      textAlign: isGrid ? TextAlign.center : TextAlign.start,
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
     );
   }
 }

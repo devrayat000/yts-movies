@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -101,55 +102,18 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget get _space => const SizedBox(height: 8);
-
-  Widget _image(Movie movie) => InkWell(
-        onTap: () {
-          context.pushNamed(
-            "details",
-            pathParameters: {"id": movie.id.toString()},
-            extra: movie,
-          );
-        },
-        enableFeedback: false,
-        child: AspectRatio(
-          aspectRatio: 0.67,
-          child: Stack(
-            alignment: AlignmentDirectional.bottomCenter,
-            children: [
-              MovieImage(
-                src: movie.mediumCoverImage,
-                id: movie.id.toString(),
-                label: movie.imdbCode,
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white, width: 1.5),
-                  borderRadius: BorderRadius.circular(4.0),
-                ),
-              ),
-              Container(
-                height: 30,
-                width: double.infinity,
-                alignment: Alignment.center,
-                margin: const EdgeInsets.only(bottom: 1.5, left: 4, right: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.4),
-                ),
-                child: Text(
-                  movie.title,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    shadows: [
-                      Shadow(
-                        blurRadius: 4.0,
-                        color: Colors.grey.shade900,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+  Widget _image(Movie movie) {
+    return MoviePoster(
+      movie: movie,
+      showFavoriteButton: false,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        context.pushNamed(
+          "details",
+          pathParameters: {"id": movie.id.toString()},
+          extra: movie,
+        );
+      },
+    );
+  }
 }

@@ -8,24 +8,45 @@ class ShowMoreButton extends StatelessWidget {
     required this.onPressed,
     this.radius = 30,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 100,
       alignment: Alignment.center,
-      child: SizedBox(
+      child: Container(
         width: radius * 2,
+        height: radius * 2,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.deepPurple.withOpacity(0.8),
+              Colors.indigo.withOpacity(0.8),
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.deepPurple.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: Material(
-          elevation: 4,
-          color: Colors.grey,
-          type: MaterialType.circle,
-          child: IconButton(
-            onPressed: onPressed,
-            icon: const Icon(Icons.arrow_forward),
-            splashRadius: 24,
-            iconSize: 32,
-            enableFeedback: false,
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            onTap: onPressed,
+            customBorder: const CircleBorder(),
+            child: const Center(
+              child: Icon(
+                Icons.arrow_forward_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
           ),
         ),
       ),

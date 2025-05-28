@@ -8,80 +8,140 @@ extension LightTheme on AppTheme {
     final input = defaultLight.inputDecorationTheme;
     final fab = defaultLight.floatingActionButtonTheme;
     final chip = defaultLight.chipTheme;
-    const colorScheme = ColorScheme.light();
+    const colorScheme = ColorScheme.light(
+      primary: Color(0xFF6366F1), // Modern indigo
+      primaryContainer: Color(0xFFE0E7FF),
+      secondary: Color(0xFF8B5CF6), // Purple accent
+      secondaryContainer: Color(0xFFF3E8FF),
+      surface: Color(0xFFFAFAFA),
+      surfaceContainerHighest: Color(0xFFF5F5F5),
+      onSurface: Color(0xFF1F2937),
+      error: Color(0xFFEF4444),
+      onError: Colors.white,
+    );
 
     return defaultLight.copyWith(
-      canvasColor: Colors.grey[50],
-      cardColor: Colors.teal[100],
+      useMaterial3: true,
+      canvasColor: const Color(0xFFFAFAFA),
+      cardColor: Colors.white.withOpacity(0.9),
       appBarTheme: appbar.copyWith(
-        backgroundColor: Colors.cyan[100],
-        iconTheme: const IconThemeData(color: Colors.black87),
-        titleTextStyle: TextStyle(
-          color: Colors.grey.shade900,
+        backgroundColor: Colors.white.withOpacity(0.95),
+        surfaceTintColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Color(0xFF374151)),
+        titleTextStyle: const TextStyle(
+          color: Color(0xFF1F2937),
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.15,
         ),
       ),
       chipTheme: chip.copyWith(
-        backgroundColor: Colors.blueGrey[800],
+        backgroundColor: colorScheme.primaryContainer,
         labelStyle: chip.labelStyle?.copyWith(
-          color: Colors.white,
+          color: colorScheme.primary,
+          fontWeight: FontWeight.w600,
         ),
+        side: BorderSide(color: colorScheme.primary.withOpacity(0.2)),
       ),
-      scaffoldBackgroundColor: Colors.grey[100],
-      colorScheme: colorScheme.copyWith(
-        onSurface: Colors.black,
-        surface: Colors.grey[100],
-      ),
+      scaffoldBackgroundColor: const Color(0xFFFAFAFA),
+      colorScheme: colorScheme,
       buttonTheme: const ButtonThemeData(
-        buttonColor: Colors.black87,
+        buttonColor: Color(0xFF6366F1),
         colorScheme: colorScheme,
       ),
       textTheme: TextTheme(
         displayLarge: text.displayLarge?.copyWith(
-          color: Colors.grey.shade900,
+          color: const Color(0xFF1F2937),
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.5,
         ),
         displayMedium: text.displayMedium?.copyWith(
-          color: Colors.grey.shade900,
+          color: const Color(0xFF1F2937),
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.25,
         ),
         displaySmall: text.displaySmall?.copyWith(
-          color: Colors.grey.shade900,
+          color: const Color(0xFF1F2937),
+          fontWeight: FontWeight.w600,
         ),
         headlineMedium: text.headlineMedium?.copyWith(
-          color: Colors.grey.shade900,
+          color: const Color(0xFF374151),
+          fontWeight: FontWeight.w600,
         ),
         headlineSmall: text.headlineSmall?.copyWith(
-          color: Colors.black,
+          color: const Color(0xFF374151),
+          fontWeight: FontWeight.w600,
         ),
         titleLarge: text.titleLarge?.copyWith(
-          color: Colors.black,
-          fontWeight: FontWeight.normal,
+          color: const Color(0xFF1F2937),
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.15,
         ),
         titleMedium: text.titleMedium?.copyWith(
-          color: Colors.black,
-          fontWeight: FontWeight.normal,
+          color: const Color(0xFF374151),
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.15,
         ),
         titleSmall: text.titleSmall?.copyWith(
-          color: Colors.black,
-          fontWeight: FontWeight.normal,
+          color: const Color(0xFF6B7280),
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.1,
+        ),
+        bodyLarge: text.bodyLarge?.copyWith(
+          color: const Color(0xFF374151),
+          letterSpacing: 0.5,
+        ),
+        bodyMedium: text.bodyMedium?.copyWith(
+          color: const Color(0xFF6B7280),
+          letterSpacing: 0.25,
         ),
       ),
       inputDecorationTheme: input.copyWith(
         hintStyle: input.hintStyle?.copyWith(
-          color: Colors.black87,
+          color: const Color(0xFF9CA3AF),
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0.4,
         ),
-        border: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(
-            Radius.circular(999.0),
+        border: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(
+            Radius.circular(16.0),
           ),
-          borderSide: BorderSide.none,
-          // gapPadding: 10.0,
+          borderSide: BorderSide(
+            color: const Color(0xFF6366F1).withOpacity(0.2),
+            width: 1.5,
+          ),
         ),
-        fillColor: Colors.grey[100],
+        enabledBorder: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(
+            Radius.circular(16.0),
+          ),
+          borderSide: BorderSide(
+            color: const Color(0xFFE5E7EB),
+            width: 1.5,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(
+            Radius.circular(16.0),
+          ),
+          borderSide: const BorderSide(
+            color: Color(0xFF6366F1),
+            width: 2,
+          ),
+        ),
+        fillColor: Colors.white,
         filled: true,
-        contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+        contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       ),
       floatingActionButtonTheme: fab.copyWith(
-        backgroundColor: Colors.cyanAccent[700],
-        foregroundColor: Colors.grey[50],
+        backgroundColor: const Color(0xFF6366F1),
+        foregroundColor: Colors.white,
+        elevation: 8,
+        focusElevation: 12,
+        hoverElevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
     );
   }

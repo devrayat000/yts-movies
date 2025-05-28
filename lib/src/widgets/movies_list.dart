@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
@@ -97,11 +99,18 @@ class MoviesListState extends State<MoviesList> {
                     floating: true,
                     snap: true,
                   ),
-                PagedSliverList<int, Movie>(
+                PagedSliverGrid<int, Movie>(
                   pagingController: _pagingController,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio:
+                        0.67, // Slightly taller for better movie poster display
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
                   builderDelegate: PagedChildBuilderDelegate(
                     itemBuilder: (context, item, index) {
-                      return MovieCard.list(
+                      return MovieCard.grid(
                         key: ValueKey('movie-${item.id}'),
                         movie: item,
                       );

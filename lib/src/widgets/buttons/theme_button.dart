@@ -29,31 +29,79 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: () {
-        if (_controller.status == AnimationStatus.dismissed) {
-          _controller.forward();
-        } else if (_controller.status == AnimationStatus.completed) {
-          _controller.reverse();
-        }
-        context.read<ThemeCubit>().toggle();
-      },
-      enableFeedback: false,
-      icon: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          final range = cos(_controller.value * pi).abs();
-          final scale = (range * 0.7) + 0.3;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-          return Transform.scale(
-            scale: scale,
-            child: Icon(
-              _controller.value > 0.5
-                  ? Icons.light_mode_rounded
-                  : Icons.dark_mode,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: isDark
+              ? [
+                  const Color(0xFF374151).withOpacity(0.8),
+                  const Color(0xFF1F2937).withOpacity(0.8),
+                ]
+              : [
+                  Colors.white.withOpacity(0.9),
+                  Colors.grey[100]!.withOpacity(0.9),
+                ],
+        ),
+        border: Border.all(
+          color: isDark
+              ? Colors.grey[600]!.withOpacity(0.3)
+              : Colors.grey[300]!.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.grey.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: () {
+            if (_controller.status == AnimationStatus.dismissed) {
+              _controller.forward();
+            } else if (_controller.status == AnimationStatus.completed) {
+              _controller.reverse();
+            }
+            context.read<ThemeCubit>().toggle();
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                final range = cos(_controller.value * pi).abs();
+                final scale = (range * 0.3) + 0.85;
+                final rotation = _controller.value * pi;
+
+                return Transform.scale(
+                  scale: scale,
+                  child: Transform.rotate(
+                    angle: rotation,
+                    child: Icon(
+                      _controller.value > 0.5
+                          ? Icons.light_mode_rounded
+                          : Icons.dark_mode_rounded,
+                      color: _controller.value > 0.5
+                          ? Colors.amber[600]
+                          : (isDark ? Colors.indigo[300] : Colors.indigo[600]),
+                      size: 20,
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }

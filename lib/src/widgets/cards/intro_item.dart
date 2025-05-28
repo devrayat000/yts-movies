@@ -15,58 +15,132 @@ class IntroItem extends StatelessWidget {
     required this.future,
     this.titleTextStyle,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InkWell(
-          onTap: onAction,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                DefaultTextStyle(
-                  style: const TextStyle(fontSize: 24).merge(titleTextStyle),
-                  child: title,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  Colors.blueGrey[800]!.withOpacity(0.3),
+                  Colors.blueGrey[900]!.withOpacity(0.4),
+                ]
+              : [
+                  Colors.white.withOpacity(0.7),
+                  Colors.grey[50]!.withOpacity(0.8),
+                ],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onAction,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.deepPurple.withOpacity(0.1),
+                      Colors.indigo.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
                 ),
-                const Icon(Icons.arrow_forward_ios),
-              ],
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    DefaultTextStyle(
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                        color: Theme.of(context).textTheme.headlineSmall?.color,
+                      ).merge(titleTextStyle),
+                      child: title,
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.deepPurple.withOpacity(0.8),
+                            Colors.indigo.withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-        SizedBox(
-          height: 200,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(4.0),
-            ),
-            child: MyFutureBuilder<MovieListResponse>(
-              future: future,
-              errorBuilder: (context, error) {
-                if (error is CustomException) {
+          SizedBox(
+            height: 200,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
+                ),
+              ),
+              child: MyFutureBuilder<MovieListResponse>(
+                future: future,
+                errorBuilder: (context, error) {
+                  if (error is CustomException) {
+                    return Center(
+                      child: Text(
+                        error.message,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    );
+                  }
                   return Center(
-                    child: Text(error.message),
+                    child: Text(
+                      error.toString(),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   );
-                }
-                return Center(
-                  child: Text(error.toString()),
-                );
-              },
-              successBuilder: (context, response) {
-                return ItemBuilder(
-                  builder: itemBuilder,
-                  onAction: onAction,
-                  items: response!.data.movies!,
-                );
-              },
+                },
+                successBuilder: (context, response) {
+                  return ItemBuilder(
+                    builder: itemBuilder,
+                    onAction: onAction,
+                    items: response!.data.movies!,
+                  );
+                },
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -76,11 +150,11 @@ class ItemBuilder extends StatelessWidget {
   final List<Movie> items;
   final Widget Function(BuildContext, Movie, int) builder;
   const ItemBuilder({
-    Key? key,
+    super.key,
     required this.onAction,
     required this.items,
     required this.builder,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -89,11 +163,16 @@ class ItemBuilder extends StatelessWidget {
         key: key,
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.only(bottom: 8.0),
+            padding:
+                const EdgeInsets.only(bottom: 10.0, left: 12.0, right: 12.0),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, i) {
-                  return builder(context, items[i], i);
+                  return Padding(
+                    padding: EdgeInsetsGeometry.only(
+                        right: i == items.length - 1 ? 0.0 : 6.0),
+                    child: builder(context, items[i], i),
+                  );
                 },
                 childCount: items.length,
               ),

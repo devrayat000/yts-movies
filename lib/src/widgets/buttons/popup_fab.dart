@@ -47,18 +47,24 @@ class PopupFloatingActionButtonState extends State<PopupFloatingActionButton>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return AnimatedBuilder(
       animation: _fabScaleController,
       child: AnimatedBuilder(
         animation: _animationController,
-        child: const Icon(Icons.arrow_upward),
+        child: Icon(
+          Icons.keyboard_arrow_up_rounded,
+          color: Colors.white,
+          size: 28,
+        ),
         builder: (context, child) {
           final val = _animationController.value;
           final angle = val * 2 * pi;
           return val == 0
               ? const SizedBox.shrink()
               : Transform.translate(
-                  offset: Offset(0, sin(angle) * 5.0),
+                  offset: Offset(0, sin(angle) * 3.0),
                   child: child!,
                 );
         },
@@ -69,21 +75,49 @@ class PopupFloatingActionButtonState extends State<PopupFloatingActionButton>
             ? const SizedBox.shrink()
             : Transform.scale(
                 scale: val,
-                child: FloatingActionButton(
-                  tooltip: 'Scroll To Top',
-                  child: child!,
-                  backgroundColor: const Color.fromRGBO(120, 120, 120, 1),
-                  onPressed: () async {
-                    try {
-                      await widget.scrollController.animateTo(
-                        0,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOutBack,
-                      );
-                    } catch (e, s) {
-                      log(e.toString(), error: e, stackTrace: s);
-                    }
-                  },
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.secondary,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(16.0),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16.0),
+                      onTap: () async {
+                        try {
+                          await widget.scrollController.animateTo(
+                            0,
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.easeInOutCubic,
+                          );
+                        } catch (e, s) {
+                          log(e.toString(), error: e, stackTrace: s);
+                        }
+                      },
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        alignment: Alignment.center,
+                        child: child!,
+                      ),
+                    ),
+                  ),
                 ),
               );
       },

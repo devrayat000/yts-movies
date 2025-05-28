@@ -3,20 +3,62 @@ part of app_widgets;
 class _FilterItem extends StatelessWidget {
   final Widget title;
   final Widget action;
+  final IconData? icon;
+
   const _FilterItem({
     required this.title,
     required this.action,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+      padding: const EdgeInsets.all(20.0),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[850] : Colors.white,
+        borderRadius: BorderRadius.circular(16.0),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(
+          color: isDark ? Colors.grey[700]! : Colors.grey[200]!,
+          width: 1,
+        ),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(flex: 2, child: title),
+          if (icon != null) ...[
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: Theme.of(context).primaryColor,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+          ],
+          Expanded(
+            flex: 2,
+            child: DefaultTextStyle(
+              style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+              child: title,
+            ),
+          ),
           const SizedBox(width: 16),
           Expanded(flex: 3, child: action),
         ],
@@ -44,11 +86,19 @@ class FilterBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final filter = context.read<Filter>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
       ),
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -56,68 +106,113 @@ class FilterBottomSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle
+          // Modern drag handle
           Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 8),
-            width: 40,
-            height: 4,
+            margin: const EdgeInsets.only(top: 16, bottom: 8),
+            width: 48,
+            height: 5,
             decoration: BoxDecoration(
-              color: Colors.grey[400],
-              borderRadius: BorderRadius.circular(2),
+              color: isDark ? Colors.grey[600] : Colors.grey[300],
+              borderRadius: BorderRadius.circular(3),
             ),
           ),
 
-          // Title
-          Padding(
+          // Enhanced title section
+          Container(
             padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Filter Movies',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.tune_rounded,
+                    color: Theme.of(context).primaryColor,
+                    size: 24,
+                  ),
                 ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Filter Movies',
+                        style:
+                            Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 22,
+                                ),
+                      ),
+                      Text(
+                        'Customize your movie search',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.grey[800] : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: isDark ? Colors.grey[300] : Colors.grey[700],
+                    ),
+                    splashRadius: 20,
+                  ),
                 ),
               ],
             ),
           ),
 
-          const Divider(),
+          // Stylish divider
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
 
-          // Filters content
+          // Filters content with modern styling
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.only(bottom: 24, top: 16),
               child: Column(
                 children: [
                   _FilterItem(
                     title: const Text('Rating'),
+                    icon: Icons.star_rounded,
                     action: _provider<RatingCubit, double>(
                       bloc: filter.rating,
-                      builder: (_, rating, __) => Column(
-                        children: [
-                          Text('${rating.round()}+'),
-                          CupertinoSlider(
-                            value: rating,
-                            onChanged: filter.rating.changeHandler,
-                            divisions: 9,
-                            max: 9,
-                          ),
-                        ],
-                      ),
+                      builder: (_, rating, __) =>
+                          _modernRatingSlider(context, rating, filter),
                     ),
                   ),
                   _FilterItem(
                     title: const Text('Quality'),
-                    action: _dropdown<QualityCubit>(
+                    icon: Icons.high_quality_rounded,
+                    action: _modernDropdown<QualityCubit>(
+                      context: context,
                       bloc: filter.quality,
-                      hint: const Text('Any Quality'),
+                      hint: 'Any Quality',
                       items: QualityCubit.quality
                           .map((e) => DropdownMenuItem<String>(
                                 value: e,
@@ -128,8 +223,11 @@ class FilterBottomSheet extends StatelessWidget {
                   ),
                   _FilterItem(
                     title: const Text('Genre'),
-                    action: _dropdown<GenreCubit>(
+                    icon: Icons.category_rounded,
+                    action: _modernDropdown<GenreCubit>(
+                      context: context,
                       bloc: filter.genre,
+                      hint: 'All Genres',
                       items: list.genres
                           .map((e) => DropdownMenuItem<String>(
                                 value: e.value,
@@ -140,8 +238,11 @@ class FilterBottomSheet extends StatelessWidget {
                   ),
                   _FilterItem(
                     title: const Text('Sort By'),
-                    action: _dropdown<SortCubit>(
+                    icon: Icons.sort_rounded,
+                    action: _modernDropdown<SortCubit>(
+                      context: context,
                       bloc: filter.sort,
+                      hint: 'Default',
                       items: list.sorts
                           .map((e) => DropdownMenuItem<String>(
                                 value: e.value,
@@ -152,45 +253,45 @@ class FilterBottomSheet extends StatelessWidget {
                   ),
                   _FilterItem(
                     title: const Text('Descending'),
+                    icon: Icons.swap_vert_rounded,
                     action: _provider<OrderCubit, bool>(
                       bloc: filter.order,
-                      builder: (_, order, __) => CupertinoSwitch(
-                        value: order,
-                        onChanged: filter.order.changeHandler,
-                      ),
+                      builder: (_, order, __) =>
+                          _modernSwitch(context, order, filter),
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
 
-                  // Action buttons
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  // Modern action buttons
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child: Row(
                       children: [
                         Expanded(
-                          child: _actionButton(
+                          child: _modernActionButton(
                             context,
                             onPressed: () {
                               filter.reset();
+                              HapticFeedback.lightImpact();
                             },
                             label: 'Reset',
-                            icon: Icons.refresh,
-                            color: Colors.grey[600],
+                            icon: Icons.refresh_rounded,
                             isPrimary: false,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 16),
                         Expanded(
-                          child: _actionButton(
+                          flex: 2,
+                          child: _modernActionButton(
                             context,
                             onPressed: () {
                               onApplyFilter();
                               Navigator.of(context).pop();
+                              HapticFeedback.mediumImpact();
                             },
                             label: 'Apply Filters',
-                            icon: Icons.filter_list,
-                            color: Theme.of(context).primaryColor,
+                            icon: Icons.check_rounded,
                             isPrimary: true,
                           ),
                         ),
@@ -209,39 +310,198 @@ class FilterBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _actionButton(
+  Widget _modernRatingSlider(
+      BuildContext context, double rating, Filter filter) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Theme.of(context).primaryColor.withOpacity(0.3),
+            ),
+          ),
+          child: Text(
+            '${rating.round()}+ ⭐',
+            style: TextStyle(
+              color: Theme.of(context).primaryColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 6,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
+              activeTrackColor: Theme.of(context).primaryColor,
+              inactiveTrackColor: isDark ? Colors.grey[700] : Colors.grey[300],
+              thumbColor: Theme.of(context).primaryColor,
+              overlayColor: Theme.of(context).primaryColor.withOpacity(0.2),
+            ),
+            child: Slider(
+              value: rating,
+              onChanged: filter.rating.changeHandler,
+              divisions: 9,
+              max: 9,
+              min: 0,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _modernDropdown<T extends DropdownCubit>({
+    required BuildContext context,
+    required T bloc,
+    required String hint,
+    required List<DropdownMenuItem<String>> items,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return _provider<T, String?>(
+      bloc: bloc,
+      builder: (_, data, __) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey[800] : Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
+          ),
+        ),
+        child: DropdownButtonFormField<String>(
+          value: data,
+          items: items,
+          onChanged: bloc.changeHandler,
+          hint: Text(
+            hint,
+            style: TextStyle(
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+            ),
+          ),
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            suffixIcon: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+            ),
+          ),
+          dropdownColor: isDark ? Colors.grey[800] : Colors.white,
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+            fontSize: 14,
+          ),
+          icon: const SizedBox.shrink(),
+        ),
+      ),
+    );
+  }
+
+  Widget _modernSwitch(BuildContext context, bool value, Filter filter) {
+    return Container(
+      decoration: BoxDecoration(
+        color: value
+            ? Theme.of(context).primaryColor.withOpacity(0.1)
+            : Colors.grey.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(
+          color: value
+              ? Theme.of(context).primaryColor.withOpacity(0.3)
+              : Colors.grey.withOpacity(0.3),
+        ),
+      ),
+      child: Switch.adaptive(
+        value: value,
+        onChanged: filter.order.changeHandler,
+        activeColor: Theme.of(context).primaryColor,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+
+  Widget _modernActionButton(
     BuildContext context, {
-    required void Function()? onPressed,
+    required VoidCallback onPressed,
     required String label,
-    IconData? icon,
-    Color? color,
+    required IconData icon,
     bool isPrimary = true,
-  }) =>
-      ElevatedButton.icon(
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: isPrimary
+            ? LinearGradient(
+                colors: [
+                  Theme.of(context).primaryColor,
+                  Theme.of(context).primaryColor.withOpacity(0.8),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
+        color:
+            isPrimary ? null : (isDark ? Colors.grey[800] : Colors.grey[100]),
+        border: isPrimary
+            ? null
+            : Border.all(
+                color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
+              ),
+        boxShadow: isPrimary
+            ? [
+                BoxShadow(
+                  color: Theme.of(context).primaryColor.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: ElevatedButton.icon(
         onPressed: onPressed,
         icon: Icon(
           icon,
-          color: isPrimary ? Colors.white : Colors.grey[700],
+          color: isPrimary
+              ? Colors.white
+              : (isDark ? Colors.grey[300] : Colors.grey[700]),
+          size: 20,
         ),
         label: Text(
           label,
           style: TextStyle(
-            color: isPrimary ? Colors.white : Colors.grey[700],
-            fontWeight: isPrimary ? FontWeight.bold : FontWeight.normal,
+            color: isPrimary
+                ? Colors.white
+                : (isDark ? Colors.grey[300] : Colors.grey[700]),
+            fontWeight: isPrimary ? FontWeight.w600 : FontWeight.w500,
+            fontSize: 16,
           ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          elevation: isPrimary ? 2 : 0,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: isPrimary
-                ? BorderSide.none
-                : BorderSide(color: Colors.grey[400]!),
+            borderRadius: BorderRadius.circular(16),
           ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         ),
-      );
+      ),
+    );
+  }
 
   Widget _provider<T extends BlocBase<S>, S>({
     required T bloc,
@@ -252,32 +512,6 @@ class FilterBottomSheet extends StatelessWidget {
       bloc: bloc,
       buildWhen: (state, oldState) => state != oldState,
       builder: (context, state) => builder(context, state, child),
-    );
-  }
-
-  Widget _dropdown<T extends DropdownCubit>({
-    required T bloc,
-    Widget? hint,
-    required List<DropdownMenuItem<String>> items,
-  }) {
-    return _provider<T, String?>(
-      bloc: bloc,
-      child: hint,
-      builder: (_, data, hintChild) => DropdownButtonFormField<String>(
-        isDense: true,
-        menuMaxHeight: 360,
-        value: data,
-        items: items,
-        onChanged: bloc.changeHandler,
-        hint: hintChild,
-        elevation: 4,
-        decoration: const InputDecoration(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(4)),
-          ),
-          isDense: true,
-        ),
-      ),
     );
   }
 }
