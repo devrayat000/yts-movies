@@ -29,12 +29,10 @@ class SuggestionsState extends State<Suggestions> {
         } else {
           message = error.toString();
         }
-        return SliverToBoxAdapter(
-          child: Center(
-            child: Text(
-              message,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+        return Center(
+          child: Text(
+            message,
+            style: Theme.of(context).textTheme.titleLarge,
           ),
         );
       },
@@ -42,25 +40,21 @@ class SuggestionsState extends State<Suggestions> {
   }
 
   Widget _builder(BuildContext context, MovieSuggestionResponse? response) {
-    return SliverGrid(
-      delegate: SliverChildBuilderDelegate(
-        (_, i) => MovieCard.grid(
-          movie: response.data.movies![i],
-        ),
-        childCount: response!.data.movies!.length,
+    return GridView.builder(
+      itemBuilder: (context, index) => MovieCard.grid(
+        movie: response.data.movies![index],
       ),
+      itemCount: response!.data.movies!.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 17 / 20,
+        childAspectRatio: 0.67,
         crossAxisSpacing: 4,
         mainAxisSpacing: 4,
       ),
     );
   }
 
-  Widget get _loader => const SliverToBoxAdapter(
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
+  Widget get _loader => Center(
+        child: CircularProgressIndicator(),
       );
 }

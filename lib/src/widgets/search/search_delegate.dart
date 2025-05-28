@@ -25,7 +25,7 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
   final MoviesClient repo;
   MovieSearchDelegate({required this.repo});
 
-  final _controller = PagingController<int, Movie>(firstPageKey: 1);
+  // final _controller = PagingController<int, Movie>(firstPageKey: 1);
   Box<String> get _box => Hive.box<String>(MyBoxs.searchHistoryBox);
 
   Map<String, dynamic> _params = {};
@@ -37,11 +37,6 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
     if (value != super.query) {
       super.query = value;
     }
-  }
-
-  @override
-  void showSuggestions(BuildContext context) {
-    super.showSuggestions(context);
   }
 
   @override
@@ -77,45 +72,35 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   @override
   ThemeData appBarTheme(BuildContext context) => Theme.of(context);
+
   @override
   Future<void> showResults(BuildContext context) async {
     try {
-      _controller.removePageRequestListener(_pagehandler);
+      log("Showing search results for query: $query");
       _params = context.read<Filter>().values;
-      _controller.addPageRequestListener(_pagehandler);
       super.showResults(context);
       await _setHistory();
     } catch (e, s) {
+      log("Error showing results: $e", error: e, stackTrace: s);
       log(e.toString(), error: e, stackTrace: s);
-    }
-  }
-
-  void _pagehandler(int pageKey) async {
-    try {
-      final data = await _moviesFuture(pageKey);
-      if (data.isLastPage) {
-        _controller.appendLastPage(data.movies!.toList());
-      } else {
-        _controller.appendPage(data.movies!.toList(), ++pageKey);
-      }
-    } catch (e) {
-      _controller.error = e;
     }
   }
 
   @override
   Widget buildResults(BuildContext context) {
-    return SearchResultPage(
-      controller: _controller,
-      onFiltered: () async {
-        try {
-          _params = context.read<Filter>().values;
-          _controller.refresh();
-          await showResults(context);
-        } catch (e, s) {
-          log(e.toString(), error: e, stackTrace: s);
-        }
-      },
+    log("Building search results for query: $query");
+    return MoviesPagedView(
+      handler: (page) => repo.getMovieList(
+        page: page,
+        queryTerm: query,
+        queries: _params,
+      ),
+      noItemBuilder: (context) => Center(
+        child: Text(
+          'No results found for "$query"',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+      ),
     );
   }
 

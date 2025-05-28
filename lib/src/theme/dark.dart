@@ -97,28 +97,19 @@ extension DarkTheme on AppTheme {
           borderRadius: const BorderRadius.all(
             Radius.circular(16.0),
           ),
-          borderSide: BorderSide(
-            color: const Color(0xFF818CF8).withOpacity(0.3),
-            width: 1.5,
-          ),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: const BorderRadius.all(
             Radius.circular(16.0),
           ),
-          borderSide: BorderSide(
-            color: const Color(0xFF374151),
-            width: 1.5,
-          ),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: const BorderRadius.all(
             Radius.circular(16.0),
           ),
-          borderSide: const BorderSide(
-            color: Color(0xFF818CF8),
-            width: 2,
-          ),
+          borderSide: BorderSide.none,
         ),
         fillColor: const Color(0xFF1F2937),
         filled: true,

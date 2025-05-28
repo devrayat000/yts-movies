@@ -13,7 +13,7 @@ class DownloadButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -23,43 +23,42 @@ class DownloadButton extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            color: theme.colorScheme.primary.withOpacity(0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+            spreadRadius: 1,
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12.0),
-          onTap: () => _download(context),
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.download_rounded,
-                  size: 16,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16.0),
+        onTap: () => _download(context),
+        splashColor: Colors.white.withOpacity(0.1),
+        highlightColor: Colors.white.withOpacity(0.05),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.download_rounded,
+                size: 14,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${_torrent.quality} ${_torrent.type?.toUpperCase()}',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
                   color: Colors.white,
+                  letterSpacing: 0.5,
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  '${_torrent.quality} ${_torrent.type?.toUpperCase()}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

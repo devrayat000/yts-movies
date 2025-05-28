@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -262,6 +263,7 @@ class _Screen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final language = allNativeNames[_movie.language] ?? 'English';
+    final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: GestureDetector(
@@ -300,9 +302,18 @@ class _Screen extends StatelessWidget {
               padding: const EdgeInsets.all(8.0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate.fixed([
-                  Text(
-                    _movie.year.toString(),
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _movie.year.toString(),
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      Text(
+                        language,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
                   ),
                   _space(),
                   BreadCrumb.builder(
@@ -322,7 +333,10 @@ class _Screen extends StatelessWidget {
                   DecoratedBox(
                     decoration: BoxDecoration(
                       image: DecorationImage(
-                        image: NetworkImage(_movie.backgroundImage),
+                        image: CachedNetworkImageProvider(
+                          _movie.backgroundImage,
+                          cacheKey: _movie.backgroundImage,
+                        ),
                         fit: BoxFit.cover,
                         colorFilter: const ColorFilter.mode(
                           Colors.black54,
@@ -338,7 +352,6 @@ class _Screen extends StatelessWidget {
                         Expanded(
                           child: MovieImage(
                             src: _movie.mediumCoverImage,
-                            padding: const EdgeInsets.all(4),
                             id: _movie.id.toString(),
                           ),
                         ),
@@ -348,74 +361,164 @@ class _Screen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(language),
                               if (_movie.mpaRating != null)
-                                Text(_movie.mpaRating!),
-                              Chip(
-                                avatar: Image.asset(
-                                  'images/logo-imdb.png',
-                                  errorBuilder: (_, __, ___) =>
-                                      const Icon(Icons.star),
-                                ),
-                                label: Text('${_movie.rating} / 10'),
-                                labelStyle: const TextStyle(color: Colors.grey),
-                                padding:
-                                    const EdgeInsets.only(left: 16, right: 4),
-                                deleteIcon: const Icon(Icons.star),
-                                deleteIconColor: Colors.green,
-                                onDeleted: null,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadiusGeometry.circular(20.0),
-                                  side: BorderSide(color: Colors.grey),
-                                ),
-                              ),
-                              Wrap(
-                                alignment: WrapAlignment.spaceBetween,
-                                spacing: 2.0,
-                                children: _movie.torrents
-                                    .map((t) => DownloadButton(
-                                          torrent: t,
-                                          title: _movie.title,
-                                        ))
-                                    .toList(),
-                              ),
-                              OutlinedButton.icon(
-                                onPressed: () async {
-                                  try {
-                                    final subTitleUri = Uri.parse(
-                                        'https://yifysubtitles.org/movie-imdb/${_movie.imdbCode}');
-                                    if (await canLaunchUrl(subTitleUri)) {
-                                      launchUrl(subTitleUri);
-                                    }
-                                  } on PlatformException catch (e, s) {
-                                    debugPrint(e.message);
-                                    debugPrint(s.toString());
-                                  } catch (e, s) {
-                                    debugPrint(e.toString());
-                                    debugPrint(s.toString());
-                                  }
-                                },
-                                icon: const Icon(Icons.subtitles),
-                                label: const Text('Subtitles'),
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor:
-                                      Theme.of(context).scaffoldBackgroundColor,
-                                  side: const BorderSide(color: Colors.grey),
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 8.0, horizontal: 12.0),
-                                ),
-                              ),
-                              if (_movie.runtime != 0)
-                                TextButton.icon(
-                                  onPressed: null,
-                                  icon: const Icon(Icons.alarm),
-                                  label: Text(
-                                    _runtimeFormat,
-                                    style:
-                                        Theme.of(context).textTheme.titleMedium,
+                                Text(
+                                  _movie.mpaRating!,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    shadows: [
+                                      Shadow(
+                                        offset: const Offset(1, 1),
+                                        blurRadius: 3,
+                                        color: Colors.black.withOpacity(0.7),
+                                      ),
+                                    ],
                                   ),
                                 ),
+                              Material(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceVariant,
+                                borderRadius: BorderRadius.circular(20.0),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12.0,
+                                    vertical: 6.0,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Image.asset(
+                                        'images/logo-imdb.png',
+                                        width: 20,
+                                        height: 20,
+                                        errorBuilder: (_, __, ___) =>
+                                            const Icon(Icons.star, size: 16),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '${_movie.rating} / 10',
+                                        style:
+                                            const TextStyle(color: Colors.grey),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Icon(
+                                        Icons.star,
+                                        color: Colors.green,
+                                        size: 16,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              _space(spacing: 6.0),
+                              Wrap(
+                                alignment: WrapAlignment.start,
+                                spacing: 12.0,
+                                runSpacing: 4.0,
+                                children: [
+                                  ..._movie.torrents
+                                      .map((t) => DownloadButton(
+                                            torrent: t,
+                                            title: _movie.title,
+                                          ))
+                                      .toList(),
+                                ],
+                              ),
+                              _space(spacing: 6.0),
+                              DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(16.0),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: theme.colorScheme.primary
+                                          .withOpacity(0.25),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 6),
+                                      spreadRadius: 1,
+                                    ),
+                                  ],
+                                ),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(16.0),
+                                  onTap: () async {
+                                    try {
+                                      final subTitleUri = Uri.parse(
+                                          'https://yifysubtitles.org/movie-imdb/${_movie.imdbCode}');
+                                      if (await canLaunchUrl(subTitleUri)) {
+                                        launchUrl(subTitleUri);
+                                      }
+                                    } on PlatformException catch (e, s) {
+                                      debugPrint(e.message);
+                                      debugPrint(s.toString());
+                                    } catch (e, s) {
+                                      debugPrint(e.toString());
+                                      debugPrint(s.toString());
+                                    }
+                                  },
+                                  splashColor: Colors.white.withOpacity(0.1),
+                                  highlightColor:
+                                      Colors.white.withOpacity(0.05),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 8.0, horizontal: 12.0),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.subtitles,
+                                          size: 14,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Subtitles',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              if (_movie.runtime != 0) ...[
+                                _space(spacing: 6.0),
+                                Material(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceVariant,
+                                  borderRadius: BorderRadius.circular(20.0),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12.0,
+                                      vertical: 6.0,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.alarm,
+                                          size: 16,
+                                          color: Colors.grey,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _runtimeFormat,
+                                          style: const TextStyle(
+                                              color: Colors.grey),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ]
                             ],
                           ),
                         ),
@@ -432,7 +535,7 @@ class _Screen extends StatelessWidget {
                     ),
                     _space(),
                     ClipRRect(
-                      borderRadius: BorderRadiusGeometry.circular(8.0),
+                      borderRadius: BorderRadiusGeometry.circular(16.0),
                       child: player!,
                     ),
                     _space(),
@@ -449,17 +552,15 @@ class _Screen extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   _space(),
+                  Text(
+                    'Suggested movies',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  _space(),
+                  Suggestions(id: _movie.id.toString()),
                 ]),
               ),
             ),
-            SliverToBoxAdapter(
-              child: Text(
-                'Suggested movies',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-            ),
-            SliverToBoxAdapter(child: _space()),
-            Suggestions(id: _movie.id.toString()),
           ],
         ),
       ),

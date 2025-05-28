@@ -17,7 +17,7 @@ class FavouritesPage extends StatelessWidget {
           style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
       ),
-      actions: const [],
+      // actions: const [],
     );
   }
 }

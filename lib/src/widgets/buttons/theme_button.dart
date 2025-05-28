@@ -30,7 +30,6 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
@@ -44,12 +43,6 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
                   Colors.white.withOpacity(0.9),
                   Colors.grey[100]!.withOpacity(0.9),
                 ],
-        ),
-        border: Border.all(
-          color: isDark
-              ? Colors.grey[600]!.withOpacity(0.3)
-              : Colors.grey[300]!.withOpacity(0.5),
-          width: 1,
         ),
         boxShadow: [
           BoxShadow(

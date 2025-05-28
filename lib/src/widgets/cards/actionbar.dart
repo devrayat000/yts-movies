@@ -79,10 +79,6 @@ class ActionBar extends StatelessWidget {
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.2),
-          width: 1.0,
-        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12.0),

@@ -4,10 +4,10 @@ class SearchResults extends StatelessWidget {
   final PagingController<int, Movie> controller;
   final VoidCallback? onToggleFilter;
   SearchResults({
-    Key? key,
+    super.key,
     required this.controller,
     required this.onToggleFilter,
-  }) : super(key: key);
+  });
 
   final _scrollController = ScrollController();
 
@@ -19,25 +19,15 @@ class SearchResults extends StatelessWidget {
         controller: _scrollController,
         child: RefreshIndicator(
           onRefresh: () async => controller.refresh(),
-          child: CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              SliverActionBar(
-                floating: true,
-                snap: true,
-                actions: [
-                  IconButton(
-                    onPressed: () {
-                      onToggleFilter?.call();
-                    },
-                    icon: const Icon(Icons.filter_alt_outlined),
-                    splashRadius: 20,
-                  ),
-                ],
-              ),
-              MovieList(controller: controller),
-            ],
-          ),
+          child: CustomScrollView(),
+          // child: MoviesList(controller: controller),
+          // IconButton(
+          //   onPressed: () {
+          //     onToggleFilter?.call();
+          //   },
+          //   icon: const Icon(Icons.filter_alt_outlined),
+          //   splashRadius: 20,
+          // ),
         ),
       ),
     );

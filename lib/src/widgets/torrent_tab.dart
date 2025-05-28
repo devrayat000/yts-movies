@@ -11,17 +11,10 @@ class TorrentTab extends StatelessWidget {
     return DefaultTabController(
       length: _torrents.length,
       child: Container(
-        height: 240,
-        constraints: const BoxConstraints(maxHeight: 250),
+        height: 212,
+        constraints: const BoxConstraints(maxHeight: 300),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              theme.colorScheme.surface,
-              theme.colorScheme.surface.withOpacity(0.95),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16.0),
           boxShadow: [
             BoxShadow(
@@ -30,53 +23,35 @@ class TorrentTab extends StatelessWidget {
               offset: const Offset(0, 4),
             ),
           ],
-          border: Border.all(
-            color: theme.colorScheme.outline.withOpacity(0.2),
-            width: 1.0,
-          ),
         ),
         child: Column(
           children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    theme.colorScheme.primary.withOpacity(0.1),
-                    theme.colorScheme.secondary.withOpacity(0.1),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16.0),
-                  topRight: Radius.circular(16.0),
-                ),
+            TabBar(
+              isScrollable: true,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+              indicator: BoxDecoration(
+                color: theme.colorScheme.primary,
+                borderRadius: BorderRadius.circular(16.0),
               ),
-              child: TabBar(
-                isScrollable: true,
-                indicator: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary,
-                      theme.colorScheme.secondary,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                labelStyle: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                ),
-                unselectedLabelStyle: TextStyle(
-                  fontWeight: FontWeight.w500,
-                ),
-                labelColor: Colors.white,
-                unselectedLabelColor:
-                    theme.colorScheme.onSurface.withOpacity(0.7),
-                tabs: _tabs,
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+                fontSize: 13,
               ),
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+              ),
+              labelColor: Colors.white,
+              unselectedLabelColor:
+                  theme.colorScheme.onSurface.withOpacity(0.7),
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              tabs: _tabs,
+              tabAlignment: _torrents.length > 2
+                  ? TabAlignment.start
+                  : TabAlignment.center,
             ),
             Expanded(
               child: Container(
@@ -101,15 +76,10 @@ class TorrentTab extends StatelessWidget {
   List<Widget> get _tabs {
     return _torrents
         .map((e) => Tab(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Text(
-                  '${e.quality} ${e.type}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
+                  '${e.quality}${e.type != null ? ' ${e.type!.toUpperCase()}' : ''}',
                 ),
               ),
             ))
@@ -121,34 +91,31 @@ class TorrentTab extends StatelessWidget {
 
     return _torrents
         .map(
-          (torrent) => Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _modernInfoCard(
-                  context,
-                  icon: Icons.folder_rounded,
-                  title: 'File Size',
-                  value: torrent.size,
-                  color: theme.colorScheme.primary,
-                ),
-                _modernInfoCard(
-                  context,
-                  icon: Icons.high_quality_rounded,
-                  title: 'Quality',
-                  value: torrent.quality,
-                  color: theme.colorScheme.secondary,
-                ),
-                _modernInfoCard(
-                  context,
-                  icon: Icons.share_rounded,
-                  title: 'Peers / Seeds',
-                  value: '${torrent.peers} / ${torrent.seeds}',
-                  color: Colors.green.shade600,
-                ),
-              ],
-            ),
+          (torrent) => Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _modernInfoCard(
+                context,
+                icon: Icons.folder_rounded,
+                title: 'File Size',
+                value: torrent.size,
+                color: theme.colorScheme.primary,
+              ),
+              _modernInfoCard(
+                context,
+                icon: Icons.high_quality_rounded,
+                title: 'Quality',
+                value: torrent.quality,
+                color: theme.colorScheme.secondary,
+              ),
+              _modernInfoCard(
+                context,
+                icon: Icons.share_rounded,
+                title: 'Peers / Seeds',
+                value: '${torrent.peers} / ${torrent.seeds}',
+                color: Colors.green.shade600,
+              ),
+            ],
           ),
         )
         .toList();
@@ -165,62 +132,49 @@ class TorrentTab extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            color.withOpacity(0.1),
-            color.withOpacity(0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(
           color: color.withOpacity(0.2),
-          width: 1.0,
+          width: 1,
         ),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [color, color.withOpacity(0.8)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(6.0),
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 16,
+                ),
               ),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 20,
-            ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-              ],
+          Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface,
+              fontSize: 13,
             ),
           ),
         ],

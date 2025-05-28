@@ -14,7 +14,6 @@ class _FilterItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
       padding: const EdgeInsets.all(20.0),
@@ -28,10 +27,6 @@ class _FilterItem extends StatelessWidget {
             offset: const Offset(0, 2),
           ),
         ],
-        border: Border.all(
-          color: isDark ? Colors.grey[700]! : Colors.grey[200]!,
-          width: 1,
-        ),
       ),
       child: Row(
         children: [
@@ -322,9 +317,6 @@ class FilterBottomSheet extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).primaryColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Theme.of(context).primaryColor.withOpacity(0.3),
-            ),
           ),
           child: Text(
             '${rating.round()}+ ⭐',
@@ -368,16 +360,12 @@ class FilterBottomSheet extends StatelessWidget {
     required List<DropdownMenuItem<String>> items,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return _provider<T, String?>(
       bloc: bloc,
       builder: (_, data, __) => Container(
         decoration: BoxDecoration(
           color: isDark ? Colors.grey[800] : Colors.grey[50],
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
-          ),
         ),
         child: DropdownButtonFormField<String>(
           value: data,
@@ -416,11 +404,6 @@ class FilterBottomSheet extends StatelessWidget {
             ? Theme.of(context).primaryColor.withOpacity(0.1)
             : Colors.grey.withOpacity(0.1),
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(
-          color: value
-              ? Theme.of(context).primaryColor.withOpacity(0.3)
-              : Colors.grey.withOpacity(0.3),
-        ),
       ),
       child: Switch.adaptive(
         value: value,
@@ -456,11 +439,6 @@ class FilterBottomSheet extends StatelessWidget {
             : null,
         color:
             isPrimary ? null : (isDark ? Colors.grey[800] : Colors.grey[100]),
-        border: isPrimary
-            ? null
-            : Border.all(
-                color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
-              ),
         boxShadow: isPrimary
             ? [
                 BoxShadow(

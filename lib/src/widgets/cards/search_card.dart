@@ -31,12 +31,6 @@ class SearchTile extends StatelessWidget {
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(
-          color: isDark
-              ? Colors.grey[700]!.withOpacity(0.3)
-              : Colors.grey[300]!.withOpacity(0.5),
-          width: 1,
-        ),
       ),
       child: TextField(
         style: TextStyle(

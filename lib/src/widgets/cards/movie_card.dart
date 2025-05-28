@@ -24,9 +24,9 @@ class MovieCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -142,16 +142,7 @@ class MovieCard extends StatelessWidget {
       ? _gridImage(context)
       : MovieImage(
           src: _movie.mediumCoverImage,
-          padding: const EdgeInsets.all(4.0),
-          label: _movie.title,
           id: _movie.id.toString(),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16.0),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-              width: 1.0,
-            ),
-          ),
         );
   Widget _gridImage(BuildContext context) => MoviePoster(movie: _movie);
 }

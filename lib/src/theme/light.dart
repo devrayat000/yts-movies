@@ -41,7 +41,7 @@ extension LightTheme on AppTheme {
           color: colorScheme.primary,
           fontWeight: FontWeight.w600,
         ),
-        side: BorderSide(color: colorScheme.primary.withOpacity(0.2)),
+        side: BorderSide.none,
       ),
       scaffoldBackgroundColor: const Color(0xFFFAFAFA),
       colorScheme: colorScheme,
@@ -106,28 +106,19 @@ extension LightTheme on AppTheme {
           borderRadius: const BorderRadius.all(
             Radius.circular(16.0),
           ),
-          borderSide: BorderSide(
-            color: const Color(0xFF6366F1).withOpacity(0.2),
-            width: 1.5,
-          ),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: const BorderRadius.all(
             Radius.circular(16.0),
           ),
-          borderSide: BorderSide(
-            color: const Color(0xFFE5E7EB),
-            width: 1.5,
-          ),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: const BorderRadius.all(
             Radius.circular(16.0),
           ),
-          borderSide: const BorderSide(
-            color: Color(0xFF6366F1),
-            width: 2,
-          ),
+          borderSide: BorderSide.none,
         ),
         fillColor: Colors.white,
         filled: true,

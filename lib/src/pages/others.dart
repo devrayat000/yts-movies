@@ -19,7 +19,6 @@ class LatestMoviesPage extends StatelessWidget {
           style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
       ),
-      actions: [],
     );
   }
 }
@@ -36,7 +35,6 @@ class HD4KMoviesPage extends StatelessWidget {
             page: page,
             quality: Quality.$2160,
           ),
-      actions: [],
       appBar: AppBar(
         title: Text(
           '4K Movies',
@@ -59,7 +57,6 @@ class RatedMoviesPage extends StatelessWidget {
             page: page,
             minimumRating: 5,
           ),
-      actions: [],
       appBar: AppBar(
         title: Text(
           'Highly Rated Movies',

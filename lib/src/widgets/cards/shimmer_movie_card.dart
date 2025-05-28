@@ -1,7 +1,10 @@
 part of app_widgets.card;
 
 class MovieListShimmer extends StatelessWidget {
-  const MovieListShimmer({super.key});
+  final int? count;
+
+  const MovieListShimmer({super.key, this.count});
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -15,7 +18,7 @@ class MovieListShimmer extends StatelessWidget {
           mainAxisSpacing: 8,
         ),
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: 6,
+        itemCount: count ?? 6,
         shrinkWrap: true,
         itemBuilder: (context, i) {
           return const ShimmerMovieCard.grid();

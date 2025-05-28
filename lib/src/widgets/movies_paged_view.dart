@@ -1,0 +1,186 @@
+part of app_widgets;
+
+class MoviesPagedView extends StatefulWidget {
+  final ApiHandler<MovieListResponse> handler;
+  final PagingController<int, Movie>? pagingController;
+  final ScrollController? scrollController;
+  final WidgetBuilder? noItemBuilder;
+  final String? label;
+
+  const MoviesPagedView({
+    super.key,
+    required this.handler,
+    this.pagingController,
+    this.scrollController,
+    this.noItemBuilder,
+    this.label,
+  });
+
+  @override
+  State<MoviesPagedView> createState() => _MoviesPagedViewState();
+}
+
+class _MoviesPagedViewState extends State<MoviesPagedView> {
+  late final PagingController<int, Movie> _pagingController;
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    log("Initializing MoviesPagedView with label: ${widget.label ?? 'No label'}");
+    _scrollController =
+        widget.scrollController ?? ScrollController(debugLabel: 'scroll-popup');
+    _pagingController = widget.pagingController ??
+        PagingController<int, Movie>(firstPageKey: 1);
+    _pagingController.addPageRequestListener(_fetchPage);
+  }
+
+  @override
+  void didUpdateWidget(covariant MoviesPagedView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.handler != widget.handler) {
+      _pagingController.refresh();
+    }
+  }
+
+  @override
+  void dispose() {
+    _pagingController.dispose();
+    if (widget.scrollController == null) {
+      _scrollController.dispose();
+    }
+    super.dispose();
+  }
+
+  void _fetchPage(int pageKey) async {
+    try {
+      final response = await widget.handler(pageKey);
+      final isLastPage = response.data.isLastPage;
+      final movies = response.data.movies ?? [];
+
+      if (isLastPage) {
+        _pagingController.appendLastPage(movies);
+      } else {
+        _pagingController.appendPage(movies, pageKey + 1);
+      }
+    } catch (error) {
+      _pagingController.error = error;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: double.infinity,
+      margin: const EdgeInsets.all(8.0),
+      child: CupertinoScrollbar(
+        controller: _scrollController,
+        child: RefreshIndicator(
+          onRefresh: () => SynchronousFuture(_pagingController.refresh()),
+          child: PagedGridView<int, Movie>(
+            key: PageStorageKey(widget.label),
+            pagingController: _pagingController,
+            scrollController: _scrollController,
+            shrinkWrap: true,
+            physics: const BouncingScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio:
+                  0.67, // Slightly taller for better movie poster display
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+            ),
+            showNewPageProgressIndicatorAsGridChild: false,
+            showNoMoreItemsIndicatorAsGridChild: false,
+            builderDelegate: PagedChildBuilderDelegate(
+              itemBuilder: (context, item, index) {
+                return MovieCard.grid(
+                  key: ValueKey('movie-${item.id}'),
+                  movie: item,
+                );
+              },
+              firstPageProgressIndicatorBuilder: (_) =>
+                  const MovieListShimmer(),
+              newPageProgressIndicatorBuilder: (_) => Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: const MovieListShimmer(count: 2),
+              ),
+              firstPageErrorIndicatorBuilder: _firstPageErrorIndicator,
+              newPageErrorIndicatorBuilder: _newPageErrorIndicator,
+              noItemsFoundIndicatorBuilder:
+                  widget.noItemBuilder ?? _noItemsFoundIndicator,
+              noMoreItemsIndicatorBuilder: _noMoreItemsIndicator,
+              animateTransitions: true,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _newPageErrorIndicator(BuildContext context) {
+    final error = _pagingController.error != null
+        ? CustomException.getCustomError(_pagingController.error!)
+        : 'Unknown error';
+
+    return Column(
+      children: [
+        Text(error),
+        TextButton(
+          onPressed: () => _pagingController.retryLastFailedRequest(),
+          child: const Text('Retry'),
+        ),
+      ],
+    );
+  }
+
+  Widget _firstPageErrorIndicator(BuildContext context) {
+    final error = _pagingController.error != null
+        ? CustomException.getCustomError(_pagingController.error!)
+        : 'Unknown error';
+
+    return Column(
+      children: [
+        Text(error),
+        TextButton(
+          onPressed: () => _pagingController.refresh(),
+          child: const Text('Retry'),
+        ),
+      ],
+    );
+  }
+
+  Widget _noItemsFoundIndicator(BuildContext context) => Container(
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'No movie found',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color:
+                        Theme.of(context).colorScheme.onSurface.withAlpha(120),
+                  ),
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              "Your favourite movies aren't here yet.",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color:
+                        Theme.of(context).colorScheme.onSurface.withAlpha(200),
+                  ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _noMoreItemsIndicator(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(top: 28.0),
+        child: Center(
+          child: Text(
+            'That\'s the last of it.',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        ),
+      );
+}

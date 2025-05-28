@@ -57,7 +57,6 @@ class FavouriteButtonState extends State<FavouriteButton>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
@@ -66,10 +65,6 @@ class FavouriteButtonState extends State<FavouriteButton>
             Colors.pink.withOpacity(0.1),
             Colors.pinkAccent.withOpacity(0.1),
           ],
-        ),
-        border: Border.all(
-          color: Colors.pink.withOpacity(0.2),
-          width: 1,
         ),
         boxShadow: [
           BoxShadow(
