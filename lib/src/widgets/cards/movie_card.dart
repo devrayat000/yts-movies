@@ -33,12 +33,7 @@ class MovieCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16.0),
-        child: InkWell(
-          splashFactory: InkRipple.splashFactory,
-          onTap: () => _viewDetails(context),
-          borderRadius: BorderRadius.circular(16.0),
-          child: _isGrid ? _grid(context) : _list(context),
-        ),
+        child: _isGrid ? _grid(context) : _list(context),
       ),
     );
   }

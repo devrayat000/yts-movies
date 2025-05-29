@@ -30,6 +30,7 @@ class MoviePoster extends StatelessWidget {
           );
         }
       },
+      splashFactory: InkRipple.splashFactory,
       borderRadius: BorderRadius.circular(16.0),
       child: MovieImage(
         id: movie.id.toString(),

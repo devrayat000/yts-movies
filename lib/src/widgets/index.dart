@@ -14,15 +14,16 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ytsmovies/src/api/movies.dart';
 
-import 'package:ytsmovies/src/widgets/buttons/index.dart';
 import 'package:ytsmovies/src/widgets/cards/index.dart';
 import 'package:ytsmovies/src/widgets/error_widgets.dart';
 import 'package:ytsmovies/src/widgets/connectivity_widgets.dart';
 import 'package:ytsmovies/src/services/connectivity_service.dart';
 import 'package:ytsmovies/src/bloc/filter/index.dart';
+import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/lists.dart' as list;
 import 'package:ytsmovies/src/widgets/movies_list.dart';
+import 'package:ytsmovies/src/widgets/search/search_delegate.dart';
 
 export 'package:ytsmovies/src/widgets/buttons/index.dart';
 export 'package:ytsmovies/src/widgets/cards/index.dart';

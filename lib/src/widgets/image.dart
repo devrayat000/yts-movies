@@ -27,13 +27,14 @@ class _MovieImageState extends State<MovieImage> {
   void initState() {
     super.initState();
     _source = widget.src;
+    log('Hero Tag: movie-$_source');
   }
 
   @override
   Widget build(BuildContext context) {
     return Hero(
       key: widget._key,
-      tag: 'movie-${widget.id}',
+      tag: 'movie-$_source',
       transitionOnUserGestures: true,
       child: DecoratedBox(
         decoration: BoxDecoration(

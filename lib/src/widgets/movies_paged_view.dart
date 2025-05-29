@@ -45,11 +45,21 @@ class _MoviesPagedViewState extends State<MoviesPagedView> {
 
   @override
   void dispose() {
-    _pagingController.dispose();
-    if (widget.scrollController == null) {
-      _scrollController.dispose();
+    try {
+      _pagingController.dispose();
+      if (widget.scrollController == null) {
+        _scrollController.dispose();
+      }
+    } catch (e) {
+      log(
+        "Disposal error: $e",
+        name: "MoviesPagedView",
+        error: e,
+        stackTrace: StackTrace.current,
+      );
+    } finally {
+      super.dispose();
     }
-    super.dispose();
   }
 
   void _fetchPage(int pageKey) async {

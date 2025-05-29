@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 /// Custom splash screen for app initialization
@@ -68,7 +69,7 @@ class InitializationSplashScreen extends StatelessWidget {
             return Transform.scale(
               scale: 0.8 + (0.2 * value),
               child: Opacity(
-                opacity: value,
+                opacity: clampDouble(value, 0, 1),
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   child: Image.asset(

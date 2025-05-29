@@ -50,21 +50,6 @@ class HomePageState extends State<HomePage> {
     }
   }
 
-  void _handleSearchTap() async {
-    try {
-      await showSearch(
-        context: context,
-        delegate: MovieSearchDelegate(
-          repo: context.read<MoviesClient>(),
-        ),
-      );
-    } catch (error) {
-      if (mounted) {
-        context.showError(error, customMessage: 'Failed to open search');
-      }
-    }
-  }
-
   void _handleNavigation(String routeName) {
     try {
       context.pushNamed(routeName);
@@ -88,12 +73,6 @@ class HomePageState extends State<HomePage> {
             padding: const EdgeInsets.all(12.0),
             restorationId: "home-screen-listview",
             children: [
-              InkWell(
-                onTap: _handleSearchTap,
-                splashFactory: NoSplash.splashFactory,
-                child: const SearchTile(),
-              ),
-              _space,
               IntroItem(
                 key: const PageStorageKey('latest-movies-intro'),
                 title: const Text('Latest Movies'),
