@@ -95,6 +95,13 @@ class MovieDetailsState extends State<MovieDetails> with RouteAware {
     _initializeYouTubePlayer();
     videoMetaData = const YoutubeMetaData();
     playerState = PlayerState.unknown;
+
+    // Debug logging for movie description fields
+    log('Movie Title: ${widget._movie.title}');
+    log('Synopsis: ${widget._movie.synopsis}');
+    log('Description Intro: ${widget._movie.descriptionIntro}');
+    log('Description Full: ${widget._movie.descriptionFull}');
+    log('Description Full length: ${widget._movie.descriptionFull.length}');
   }
 
   void _initializeYouTubePlayer() {
@@ -573,7 +580,7 @@ class _Screen extends StatelessWidget {
                   ),
                   _space(),
                   TorrentTab(torrents: _movie.torrents),
-                  _space(),
+                  _space(spacing: 12.0),
                   if (player != null) ...[
                     Text(
                       'Trailer',
@@ -584,25 +591,24 @@ class _Screen extends StatelessWidget {
                       borderRadius: BorderRadiusGeometry.circular(16.0),
                       child: player!,
                     ),
-                    _space(),
+                    _space(spacing: 12.0),
                   ],
-                  Text(
-                    'Synopsis',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  _space(),
-                  SelectableText(
-                    _movie.synopsis ??
-                        _movie.descriptionIntro ??
-                        _movie.descriptionFull,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  _space(),
+                  if (_getMovieDescription != null) ...[
+                    Text(
+                      'Synopsis',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    _space(),
+                    SelectableText(
+                      _getMovieDescription!,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    _space(spacing: 12.0),
+                  ],
                   Text(
                     'Suggested movies',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  _space(),
                   Suggestions(id: _movie.id.toString()),
                 ]),
               ),
@@ -626,5 +632,30 @@ class _Screen extends StatelessWidget {
 
   Widget _rowSpace({double spacing = 16.0}) {
     return SizedBox(width: spacing);
+  }
+
+  String? get _getMovieDescription {
+    log(_movie.toString());
+    // Check synopsis first
+    if (_movie.synopsis != null && _movie.synopsis!.trim().isNotEmpty) {
+      log('Using synopsis: ${_movie.synopsis}');
+      return _movie.synopsis!;
+    }
+
+    // Check description intro
+    if (_movie.descriptionIntro != null &&
+        _movie.descriptionIntro!.trim().isNotEmpty) {
+      log('Using description intro: ${_movie.descriptionIntro}');
+      return _movie.descriptionIntro!;
+    }
+
+    // Check description full
+    if (_movie.descriptionFull.trim().isNotEmpty) {
+      log('Using description full: ${_movie.descriptionFull}');
+      return _movie.descriptionFull;
+    }
+
+    log('No description available for movie: ${_movie.title}');
+    return null;
   }
 }

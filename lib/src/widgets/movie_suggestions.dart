@@ -39,11 +39,23 @@ class SuggestionsState extends State<Suggestions> {
   }
 
   Widget _builder(BuildContext context, MovieSuggestionResponse? response) {
+    if (response?.data.movies == null || response!.data.movies!.isEmpty) {
+      return const SizedBox(
+        height: 100,
+        child: Center(
+          child: Text('No suggested movies available'),
+        ),
+      );
+    }
+
     return GridView.builder(
+      shrinkWrap: true,
+      padding: const EdgeInsets.only(top: 12.0),
+      physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (context, index) => MovieCard.grid(
         movie: response.data.movies![index],
       ),
-      itemCount: response!.data.movies!.length,
+      itemCount: response.data.movies!.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         childAspectRatio: 0.67,
