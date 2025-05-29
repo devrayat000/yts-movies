@@ -89,8 +89,7 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
           ),
           tooltip: 'Toggle theme',
           iconSize: 24,
-        ),
-        // Favourites action
+        ), // Favourites action
         IconButton(
           onPressed: () async {
             try {
@@ -104,6 +103,21 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
             color: Colors.pinkAccent,
           ),
           tooltip: 'Favourites',
+          iconSize: 24,
+        ),
+        // App info action
+        IconButton(
+          onPressed: () async {
+            try {
+              await context.pushNamed("app-info");
+            } catch (e, s) {
+              log(e.toString(), error: e, stackTrace: s);
+            }
+          },
+          icon: const Icon(
+            Icons.info_outline,
+          ),
+          tooltip: 'App Info',
           iconSize: 24,
         ),
         const SizedBox(width: 8),

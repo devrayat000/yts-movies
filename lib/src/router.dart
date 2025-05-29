@@ -5,6 +5,7 @@ import 'package:ytsmovies/src/pages/home.dart';
 import 'package:ytsmovies/src/pages/movie.dart';
 import 'package:ytsmovies/src/pages/others.dart';
 import 'package:ytsmovies/src/pages/favourites.dart';
+import 'package:ytsmovies/src/pages/app_info.dart';
 
 final router = GoRouter(
   initialLocation: "/",
@@ -32,6 +33,11 @@ final router = GoRouter(
           path: 'favourites',
           name: "favourites",
           builder: (context, state) => const FavouritesPage(),
+        ),
+        GoRoute(
+          path: 'app-info',
+          name: "app-info",
+          builder: (context, state) => const AppInfoPage(),
         ),
         GoRoute(
           path: 'movie/:id',

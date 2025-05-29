@@ -42,8 +42,8 @@ dependencies:
   json_annotation: ^4.9.0
   dio_cache_interceptor: ^3.5.1 
   dio_cache_interceptor_hive_store: ^4.0.0
-  http: ^1.1.0
   connectivity_plus: ^6.0.5
+  package_info_plus: ^8.0.2
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.3
