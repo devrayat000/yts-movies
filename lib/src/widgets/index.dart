@@ -28,6 +28,9 @@ export 'package:ytsmovies/src/widgets/cards/index.dart';
 export 'package:ytsmovies/src/widgets/error_widgets.dart';
 export 'package:ytsmovies/src/widgets/connectivity_widgets.dart';
 export 'package:ytsmovies/src/widgets/search/search_delegate.dart';
+export 'package:ytsmovies/src/widgets/splash/dynamic_splash_screen.dart';
+export 'package:ytsmovies/src/widgets/splash/splash_wrapper.dart';
+export 'package:ytsmovies/src/widgets/splash/splash_wrapper.dart';
 
 part './unfocus.dart';
 part './torrent_tab.dart';

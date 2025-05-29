@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ytsmovies/src/models/index.dart';
 
-import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
 import 'package:provider/provider.dart';
 

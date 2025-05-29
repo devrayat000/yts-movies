@@ -31,7 +31,7 @@ abstract class MoviesClient {
   });
 
   @GET('/movie_details.json')
-  @Headers({'Cache-Control': 'max-age=864000'})
+  @CacheControl(maxAge: 864000) // 10 days
   Future<MovieResponse> getMovieByid(
     @Query('movie_id') String id, {
     @Query('with_image') bool? image,
