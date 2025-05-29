@@ -78,55 +78,55 @@ class HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      restorationId: "home-screen-scaffold",
       appBar: const HomeAppbar(),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: ScrollConfiguration(
-          behavior: const MaterialScrollBehavior(),
-          child: HeroMode(
-            enabled: false,
-            child: ListView(
-              children: [
-                InkWell(
-                  onTap: _handleSearchTap,
-                  splashFactory: NoSplash.splashFactory,
-                  child: const SearchTile(),
-                ),
-                _space,
-                IntroItem(
-                  key: const PageStorageKey('latest-movies-intro'),
-                  title: const Text('Latest Movies'),
-                  titleTextStyle: Theme.of(context).textTheme.headlineSmall,
-                  future: _latestMovies,
-                  itemBuilder: (context, movie, i) {
-                    return _image(movie);
-                  },
-                  onAction: () => _handleNavigation("latest"),
-                ),
-                _space,
-                IntroItem(
-                  key: const PageStorageKey('4k-movies-intro'),
-                  title: const Text('4K Movies'),
-                  titleTextStyle: Theme.of(context).textTheme.headlineSmall,
-                  future: _hdMovies,
-                  itemBuilder: (context, movie, i) {
-                    return _image(movie);
-                  },
-                  onAction: () => _handleNavigation("4k"),
-                ),
-                _space,
-                IntroItem(
-                  key: const PageStorageKey('rated-movies-intro'),
-                  title: const Text('Top Rated Movies'),
-                  titleTextStyle: Theme.of(context).textTheme.headlineSmall,
-                  future: _ratedMovies,
-                  itemBuilder: (context, movie, i) {
-                    return _image(movie);
-                  },
-                  onAction: () => _handleNavigation("rated"),
-                ),
-              ],
-            ),
+      body: ScrollConfiguration(
+        behavior: const MaterialScrollBehavior(),
+        child: HeroMode(
+          enabled: true,
+          child: ListView(
+            padding: const EdgeInsets.all(12.0),
+            restorationId: "home-screen-listview",
+            children: [
+              InkWell(
+                onTap: _handleSearchTap,
+                splashFactory: NoSplash.splashFactory,
+                child: const SearchTile(),
+              ),
+              _space,
+              IntroItem(
+                key: const PageStorageKey('latest-movies-intro'),
+                title: const Text('Latest Movies'),
+                titleTextStyle: Theme.of(context).textTheme.headlineSmall,
+                future: _latestMovies,
+                itemBuilder: (context, movie, i) {
+                  return _image(movie);
+                },
+                onAction: () => _handleNavigation("latest"),
+              ),
+              _space,
+              IntroItem(
+                key: const PageStorageKey('4k-movies-intro'),
+                title: const Text('4K Movies'),
+                titleTextStyle: Theme.of(context).textTheme.headlineSmall,
+                future: _hdMovies,
+                itemBuilder: (context, movie, i) {
+                  return _image(movie);
+                },
+                onAction: () => _handleNavigation("4k"),
+              ),
+              _space,
+              IntroItem(
+                key: const PageStorageKey('rated-movies-intro'),
+                title: const Text('Top Rated Movies'),
+                titleTextStyle: Theme.of(context).textTheme.headlineSmall,
+                future: _ratedMovies,
+                itemBuilder: (context, movie, i) {
+                  return _image(movie);
+                },
+                onAction: () => _handleNavigation("rated"),
+              ),
+            ],
           ),
         ),
       ),

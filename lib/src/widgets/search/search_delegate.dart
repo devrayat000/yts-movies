@@ -3,6 +3,7 @@ library app_widget.search;
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -40,38 +41,106 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
   }
 
   @override
-  List<Widget> buildActions(BuildContext context) {
-    return [
-      IconButton(
-        onPressed: () {
-          if (query.trim().isNotEmpty) {
-            query = '';
-            showSuggestions(context);
-          }
-        },
-        icon: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: query.trim().isEmpty ? null : const Icon(Icons.clear),
-          transitionBuilder: (child, animation) => ScaleTransition(
-            scale: animation,
-            child: child,
+  ThemeData appBarTheme(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.copyWith(
+      appBarTheme: AppBarTheme(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: IconThemeData(color: theme.textTheme.bodyLarge?.color),
+        titleTextStyle: theme.textTheme.titleLarge,
+        toolbarHeight: 56, // Standard YouTube search bar height
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        hintStyle: theme.textTheme.bodyLarge?.copyWith(
+          color: Colors.grey[600],
+          fontSize: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16.0),
+          borderSide: BorderSide(
+            width: 0.0,
           ),
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16.0),
+          borderSide: BorderSide(
+            width: 0.0,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16.0),
+          borderSide: BorderSide(
+            width: 0.0,
+          ),
+        ),
+        // YouTube-style thin search input with proper vertical padding
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 4, // Reduced vertical padding for thinner appearance
+        ),
+        isDense: true, // Makes the field more compact
+        fillColor: theme.inputDecorationTheme.fillColor,
+        filled: true,
       ),
+    );
+  }
+
+  @override
+  String get searchFieldLabel => 'Search movies...';
+
+  @override
+  TextStyle get searchFieldStyle => const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        height: 1.2, // Tighter line height for thinner appearance
+      );
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      // Clear button (YouTube style)
+      if (query.isNotEmpty)
+        IconButton(
+          onPressed: () {
+            query = '';
+            showSuggestions(context);
+          },
+          icon: const Icon(Icons.clear),
+          tooltip: 'Clear',
+        ),
+
+      // Filter button (YouTube style)
+      IconButton(
+        onPressed: () {
+          FilterBottomSheet.show(
+            context,
+            onApplyFilter: () {
+              _params = context.read<Filter>().values;
+              if (query.trim().isNotEmpty) {
+                showResults(context);
+              }
+            },
+          );
+        },
+        icon: const Icon(Icons.tune),
+        tooltip: 'Filter',
+      ),
+
+      const SizedBox(width: 8),
     ];
   }
 
   @override
   Widget buildLeading(BuildContext context) {
-    return BackButton(
-      onPressed: () {
-        close(context, null);
-      },
+    return IconButton(
+      onPressed: () => close(context, null),
+      icon: const Icon(Icons.arrow_back),
+      tooltip: 'Back',
     );
   }
-
-  @override
-  ThemeData appBarTheme(BuildContext context) => Theme.of(context);
 
   @override
   Future<void> showResults(BuildContext context) async {
@@ -90,11 +159,14 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
   Widget buildResults(BuildContext context) {
     log("Building search results for query: $query");
     return MoviesPagedView(
-      handler: (page) => repo.getMovieList(
-        page: page,
-        queryTerm: query,
-        queries: _params,
-      ),
+      handler: (page) async {
+        final response = await repo.getMovieList(
+          page: page,
+          queryTerm: query,
+          queries: _params,
+        );
+        return response;
+      },
       noItemBuilder: (context) => Center(
         child: Text(
           'No results found for "$query"',
@@ -123,7 +195,7 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
     );
   }
 
-  Future<MovieListData> _moviesFuture(int page) async {
+  Future<MovieListResponse> _moviesFuture(int page) async {
     try {
       _cancelToken = CancelToken();
       final movieData = await repo.getMovieList(
@@ -132,7 +204,7 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
         queries: _params,
         token: _cancelToken,
       );
-      return movieData.data;
+      return movieData;
     } catch (e, s) {
       return errorHandler(e, s);
     }
@@ -140,7 +212,7 @@ class MovieSearchDelegate extends SearchDelegate<Movie?> {
 
   Future<List<Movie>> get _firstMovies {
     return _moviesFuture(1).then<List<Movie>>((parsedMovies) {
-      return parsedMovies.movies!.take(10).toList();
+      return parsedMovies.data.movies!.take(10).toList();
     }).catchError((e) => throw e);
   }
 

@@ -15,15 +15,15 @@ class _FilterItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
-      padding: const EdgeInsets.all(20.0),
+      margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 6.0),
+      padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: isDark ? Colors.grey[850] : Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(12.0),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
+            color: isDark ? Colors.black26 : Colors.grey.withOpacity(0.08),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -32,29 +32,29 @@ class _FilterItem extends StatelessWidget {
         children: [
           if (icon != null) ...[
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: Theme.of(context).primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
               ),
               child: Icon(
                 icon,
                 color: Theme.of(context).primaryColor,
-                size: 20,
+                size: 18,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
           ],
           Expanded(
             flex: 2,
             child: DefaultTextStyle(
-              style: Theme.of(context).textTheme.titleMedium!.copyWith(
+              style: Theme.of(context).textTheme.titleSmall!.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
               child: title,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(flex: 3, child: action),
         ],
       ),
@@ -110,27 +110,25 @@ class FilterBottomSheet extends StatelessWidget {
               color: isDark ? Colors.grey[600] : Colors.grey[300],
               borderRadius: BorderRadius.circular(3),
             ),
-          ),
-
-          // Enhanced title section
+          ), // Enhanced title section
           Container(
             padding:
-                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: Theme.of(context).primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     Icons.tune_rounded,
                     color: Theme.of(context).primaryColor,
-                    size: 24,
+                    size: 22,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,14 +138,14 @@ class FilterBottomSheet extends StatelessWidget {
                         style:
                             Theme.of(context).textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 22,
+                                  fontSize: 20,
                                 ),
                       ),
                       Text(
                         'Customize your movie search',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: Colors.grey[600],
-                              fontSize: 14,
+                              fontSize: 13,
                             ),
                       ),
                     ],
@@ -184,12 +182,10 @@ class FilterBottomSheet extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-
-          // Filters content with modern styling
+          ), // Filters content with modern styling
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 24, top: 16),
+              padding: const EdgeInsets.only(bottom: 20, top: 12),
               child: Column(
                 children: [
                   _FilterItem(
@@ -256,7 +252,7 @@ class FilterBottomSheet extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // Modern action buttons
                   Container(
