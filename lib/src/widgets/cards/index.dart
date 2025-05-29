@@ -16,4 +16,5 @@ part './movie_card.dart';
 part './movie_poster.dart';
 part './search_card.dart';
 part './shimmer_movie_card.dart';
+part './shimmer_intro_item.dart';
 part './shimmer_shapes.dart';

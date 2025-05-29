@@ -2,7 +2,7 @@ part of app_widgets;
 
 class Suggestions extends StatefulWidget {
   final String id;
-  const Suggestions({Key? key, required this.id}) : super(key: key);
+  const Suggestions({super.key, required this.id});
 
   @override
   SuggestionsState createState() => SuggestionsState();
@@ -21,7 +21,7 @@ class SuggestionsState extends State<Suggestions> {
     return MyFutureBuilder<MovieSuggestionResponse>(
       future: _future,
       successBuilder: _builder,
-      loadingBuilder: (_) => _loader,
+      loadingBuilder: (_) => const MovieListShimmer(count: 4),
       showFullPageError: false,
       errorBuilder: (context, error) {
         return CompactErrorWidget(
@@ -52,8 +52,4 @@ class SuggestionsState extends State<Suggestions> {
       ),
     );
   }
-
-  Widget get _loader => Center(
-        child: CircularProgressIndicator(),
-      );
 }

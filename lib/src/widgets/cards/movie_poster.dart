@@ -34,6 +34,10 @@ class MoviePoster extends StatelessWidget {
       child: MovieImage(
         id: movie.id.toString(),
         src: movie.mediumCoverImage,
+        srcSet: [
+          movie.smallCoverImage,
+          if (movie.largeCoverImage != null) movie.largeCoverImage!,
+        ],
         child: Stack(
           children: [
             // Gradient overlay for better text readability

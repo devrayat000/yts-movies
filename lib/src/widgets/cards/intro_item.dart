@@ -8,13 +8,13 @@ class IntroItem extends StatelessWidget {
   final Future<MovieListResponse> future;
 
   const IntroItem({
-    Key? key,
+    super.key,
     required this.onAction,
     required this.itemBuilder,
     required this.title,
     required this.future,
     this.titleTextStyle,
-  }) : super(key: key);
+  });
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -107,6 +107,9 @@ class IntroItem extends StatelessWidget {
               ),
               child: MyFutureBuilder<MovieListResponse>(
                 future: future,
+                loadingBuilder: (context) {
+                  return const ShimmerIntroItem();
+                },
                 errorBuilder: (context, error) {
                   return CompactErrorWidget(
                     error: error!,

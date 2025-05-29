@@ -2,6 +2,7 @@ library app_widgets;
 
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -29,7 +30,6 @@ export 'package:ytsmovies/src/widgets/error_widgets.dart';
 export 'package:ytsmovies/src/widgets/connectivity_widgets.dart';
 export 'package:ytsmovies/src/widgets/search/search_delegate.dart';
 export 'package:ytsmovies/src/widgets/splash/dynamic_splash_screen.dart';
-export 'package:ytsmovies/src/widgets/splash/splash_wrapper.dart';
 export 'package:ytsmovies/src/widgets/splash/splash_wrapper.dart';
 
 part './unfocus.dart';

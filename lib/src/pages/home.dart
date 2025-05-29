@@ -112,7 +112,7 @@ class HomePageState extends State<HomePage> {
                   itemBuilder: (context, movie, i) {
                     return _image(movie);
                   },
-                  onAction: () => _handleNavigation("hd"),
+                  onAction: () => _handleNavigation("4k"),
                 ),
                 _space,
                 IntroItem(
