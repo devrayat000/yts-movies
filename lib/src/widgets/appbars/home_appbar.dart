@@ -7,15 +7,9 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   final Size preferredSize;
-
   void _handleSearchTap(BuildContext context) async {
     try {
-      await showSearch(
-        context: context,
-        delegate: MovieSearchDelegate(
-          repo: context.read<MoviesClient>(),
-        ),
-      );
+      await context.pushNamed("search");
     } catch (error) {
       if (context.mounted) {
         // Use ScaffoldMessenger for showing errors in appbar context

@@ -29,7 +29,10 @@ export 'package:ytsmovies/src/widgets/buttons/index.dart';
 export 'package:ytsmovies/src/widgets/cards/index.dart';
 export 'package:ytsmovies/src/widgets/error_widgets.dart';
 export 'package:ytsmovies/src/widgets/connectivity_widgets.dart';
-export 'package:ytsmovies/src/widgets/search/search_delegate.dart';
+export 'package:ytsmovies/src/widgets/search/search_delegate.dart'
+    hide SearchSuggestions;
+export 'package:ytsmovies/src/widgets/search/search_suggestions.dart';
+export 'package:ytsmovies/src/widgets/search/search_results.dart';
 export 'package:ytsmovies/src/widgets/splash/splash_wrapper.dart';
 
 part './unfocus.dart';

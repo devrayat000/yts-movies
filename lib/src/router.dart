@@ -6,6 +6,7 @@ import 'package:ytsmovies/src/pages/movie.dart';
 import 'package:ytsmovies/src/pages/others.dart';
 import 'package:ytsmovies/src/pages/favourites.dart';
 import 'package:ytsmovies/src/pages/app_info.dart';
+import 'package:ytsmovies/src/pages/search.dart';
 
 final router = GoRouter(
   initialLocation: "/",
@@ -14,6 +15,14 @@ final router = GoRouter(
       path: '/',
       builder: (context, state) => const HomePage(),
       routes: [
+        GoRoute(
+          path: 'search',
+          name: "search",
+          builder: (context, state) {
+            final query = state.uri.queryParameters['q'];
+            return SearchPage(initialQuery: query);
+          },
+        ),
         GoRoute(
           path: 'latest',
           name: "latest",
