@@ -50,7 +50,7 @@ class DownloadButton extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                '${_torrent.quality} ${_torrent.type?.toUpperCase()}',
+                _downloadLabel,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -63,6 +63,14 @@ class DownloadButton extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String get _downloadLabel {
+    var label = _torrent.quality;
+    if (_torrent.type != null) {
+      label += ' ${_torrent.type!.toUpperCase()}';
+    }
+    return label;
   }
 
   void _download(BuildContext context) async {
