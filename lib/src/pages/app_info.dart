@@ -2,32 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-class AppInfoPage extends StatefulWidget {
+class AppInfoPage extends StatelessWidget {
   const AppInfoPage({super.key});
 
-  @override
-  State<AppInfoPage> createState() => _AppInfoPageState();
-}
-
-class _AppInfoPageState extends State<AppInfoPage> {
-  PackageInfo? packageInfo;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPackageInfo();
-  }
-
-  Future<void> _loadPackageInfo() async {
+  Future<PackageInfo?> _loadPackageInfo() async {
     try {
-      final info = await PackageInfo.fromPlatform();
-      if (mounted) {
-        setState(() {
-          packageInfo = info;
-        });
-      }
+      return await PackageInfo.fromPlatform();
     } catch (e) {
       // Handle error silently
+      return null;
     }
   }
 
@@ -65,80 +48,8 @@ class _AppInfoPageState extends State<AppInfoPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // App Logo and Title Section
-            Container(
-              padding: const EdgeInsets.all(24.0),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? [Colors.blueGrey[800]!, Colors.blueGrey[900]!]
-                      : [Colors.blue[50]!, Colors.blue[100]!],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  // App Logo
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Image.asset(
-                      'images/logo-YTS.png',
-                      height: 64,
-                      width: 64,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // App Name
-                  Text(
-                    packageInfo?.appName ?? 'YTS Movies',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Version Info
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Version ${packageInfo?.version ?? '2.1.0'} (${packageInfo?.buildNumber ?? '3'})',
-                      style: TextStyle(
-                        color: theme.primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            // App Logo and Title Section with async data
+            _buildAppHeaderSection(context),
 
             const SizedBox(height: 24),
 
@@ -159,7 +70,10 @@ class _AppInfoPageState extends State<AppInfoPage> {
               icon: Icons.code,
               title: 'Developer',
               content: 'Developed with ❤️ using Flutter',
-              trailing: const Icon(Icons.flutter_dash, color: Colors.blue),
+              trailing: Icon(
+                Icons.flutter_dash,
+                color: isDark ? const Color(0xFF818CF8) : theme.primaryColor,
+              ),
             ),
 
             const SizedBox(height: 16),
@@ -172,35 +86,21 @@ class _AppInfoPageState extends State<AppInfoPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildFeatureItem('🎬', 'Browse latest movies'),
-                  _buildFeatureItem('🔍', 'Advanced search and filtering'),
-                  _buildFeatureItem('❤️', 'Save favorites'),
-                  _buildFeatureItem('🎨', 'Beautiful modern UI'),
-                  _buildFeatureItem('🌙', 'Dark and Light themes'),
-                  _buildFeatureItem('📱', 'Responsive design'),
+                  _buildFeatureItem(context, '🎬', 'Browse latest movies'),
+                  _buildFeatureItem(
+                      context, '🔍', 'Advanced search and filtering'),
+                  _buildFeatureItem(context, '❤️', 'Save favorites'),
+                  _buildFeatureItem(context, '🎨', 'Beautiful modern UI'),
+                  _buildFeatureItem(context, '🌙', 'Dark and Light themes'),
+                  _buildFeatureItem(context, '📱', 'Responsive design'),
                 ],
               ),
             ),
 
             const SizedBox(height: 16),
 
-            // Technical Information
-            _buildInfoCard(
-              context,
-              icon: Icons.build,
-              title: 'Technical Info',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildTechItem('Package Name',
-                      packageInfo?.packageName ?? 'com.example.ytsmovies'),
-                  _buildTechItem(
-                      'Build Number', packageInfo?.buildNumber ?? '3'),
-                  _buildTechItem('Framework', 'Flutter'),
-                  _buildTechItem('Platform', Theme.of(context).platform.name),
-                ],
-              ),
-            ),
+            // Technical Information with async data
+            _buildTechnicalInfoSection(context),
 
             const SizedBox(height: 16),
 
@@ -244,7 +144,7 @@ class _AppInfoPageState extends State<AppInfoPage> {
             Text(
               '© ${DateTime.now().year} YTS Movies App',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.grey[600],
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
               ),
             ),
 
@@ -253,12 +153,129 @@ class _AppInfoPageState extends State<AppInfoPage> {
             Text(
               'Made with Flutter 💙',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.grey[600],
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
                 fontStyle: FontStyle.italic,
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAppHeaderSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(24.0),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? [Colors.blueGrey[800]!, Colors.blueGrey[900]!]
+              : [Colors.blue[50]!, Colors.blue[100]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // App Logo
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Image.asset(
+              'images/logo-YTS.png',
+              height: 64,
+              width: 64,
+              fit: BoxFit.contain,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // App Name with FutureBuilder
+          FutureBuilder<PackageInfo?>(
+            future: _loadPackageInfo(),
+            builder: (context, snapshot) {
+              return Text(
+                snapshot.data?.appName ?? 'YTS Movies',
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          // Version Info with FutureBuilder
+          FutureBuilder<PackageInfo?>(
+            future: _loadPackageInfo(),
+            builder: (context, snapshot) {
+              final packageInfo = snapshot.data;
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Version ${packageInfo?.version ?? '2.1.0'} (${packageInfo?.buildNumber ?? '3'})',
+                  style: TextStyle(
+                    color:
+                        isDark ? const Color(0xFF818CF8) : theme.primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTechnicalInfoSection(BuildContext context) {
+    return _buildInfoCard(
+      context,
+      icon: Icons.build,
+      title: 'Technical Info',
+      child: FutureBuilder<PackageInfo?>(
+        future: _loadPackageInfo(),
+        builder: (context, snapshot) {
+          final packageInfo = snapshot.data;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTechItem(context, 'Package Name',
+                  packageInfo?.packageName ?? 'com.example.ytsmovies'),
+              _buildTechItem(
+                  context, 'Build Number', packageInfo?.buildNumber ?? '3'),
+              _buildTechItem(context, 'Framework', 'Flutter'),
+              _buildTechItem(
+                  context, 'Platform', Theme.of(context).platform.name),
+            ],
+          );
+        },
       ),
     );
   }
@@ -296,12 +313,14 @@ class _AppInfoPageState extends State<AppInfoPage> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.1),
+                  color: isDark
+                      ? const Color(0xFF818CF8).withOpacity(0.2)
+                      : theme.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   icon,
-                  color: theme.primaryColor,
+                  color: isDark ? const Color(0xFF818CF8) : theme.primaryColor,
                   size: 20,
                 ),
               ),
@@ -311,6 +330,7 @@ class _AppInfoPageState extends State<AppInfoPage> {
                   title,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
               ),
@@ -323,7 +343,7 @@ class _AppInfoPageState extends State<AppInfoPage> {
               Text(
                 content,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
+                  color: isDark ? Colors.grey[300] : Colors.grey[600],
                   height: 1.5,
                 ),
               ),
@@ -334,7 +354,7 @@ class _AppInfoPageState extends State<AppInfoPage> {
     );
   }
 
-  Widget _buildFeatureItem(String emoji, String feature) {
+  Widget _buildFeatureItem(BuildContext context, String emoji, String feature) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -345,7 +365,9 @@ class _AppInfoPageState extends State<AppInfoPage> {
             child: Text(
               feature,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[300]
+                        : Colors.grey[600],
                   ),
             ),
           ),
@@ -354,7 +376,7 @@ class _AppInfoPageState extends State<AppInfoPage> {
     );
   }
 
-  Widget _buildTechItem(String label, String value) {
+  Widget _buildTechItem(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -366,6 +388,9 @@ class _AppInfoPageState extends State<AppInfoPage> {
               '$label:',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w500,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[200]
+                        : Colors.black87,
                   ),
             ),
           ),
@@ -373,7 +398,9 @@ class _AppInfoPageState extends State<AppInfoPage> {
             child: Text(
               value,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[300]
+                        : Colors.grey[600],
                   ),
             ),
           ),
