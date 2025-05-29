@@ -10,7 +10,6 @@ import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:ytsmovies/src/api/movies.dart';
 
 import 'package:ytsmovies/src/widgets/index.dart';
@@ -19,7 +18,6 @@ import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/models/index.dart';
 
 part 'suggestions.dart';
-part 'results.dart';
 part 'animation.dart';
 
 class MovieSearchDelegate extends SearchDelegate<Movie?> {
