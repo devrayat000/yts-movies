@@ -1,4 +1,4 @@
-part of app_widgets.card;
+part of 'index.dart';
 
 class MoviePoster extends StatelessWidget {
   final Movie movie;
@@ -52,7 +52,7 @@ class MoviePoster extends StatelessWidget {
                     colors: [
                       Colors.transparent,
                       Colors.transparent,
-                      Colors.black.withOpacity(0.7),
+                      Colors.black.withAlpha((0.7 * 255).toInt()),
                     ],
                     stops: const [0.0, 0.5, 1.0],
                   ),
@@ -107,8 +107,10 @@ class MoviePoster extends StatelessWidget {
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  theme.colorScheme.primary.withOpacity(0.8),
-                                  theme.colorScheme.secondary.withOpacity(0.8),
+                                  theme.colorScheme.primary
+                                      .withAlpha((0.8 * 255).toInt()),
+                                  theme.colorScheme.secondary
+                                      .withAlpha((0.8 * 255).toInt()),
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(6),
@@ -174,7 +176,7 @@ class MoviePoster extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withAlpha((0.3 * 255).toInt()),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -198,7 +200,7 @@ class MoviePoster extends StatelessWidget {
                 left: 8,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
+                    color: Colors.black.withAlpha((0.6 * 255).toInt()),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: FavouriteButton(movie: movie),

@@ -6,23 +6,22 @@ part of 'movie_data.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$_MovieListResponse _$$_MovieListResponseFromJson(Map<String, dynamic> json) =>
-    _$_MovieListResponse(
+_MovieListResponse _$MovieListResponseFromJson(Map<String, dynamic> json) =>
+    _MovieListResponse(
       status: json['status'] as String,
       statusMessage: json['status_message'] as String,
       data: MovieListData.fromJson(json['data'] as Map<String, dynamic>),
     );
 
-Map<String, dynamic> _$$_MovieListResponseToJson(
-        _$_MovieListResponse instance) =>
+Map<String, dynamic> _$MovieListResponseToJson(_MovieListResponse instance) =>
     <String, dynamic>{
       'status': instance.status,
       'status_message': instance.statusMessage,
       'data': instance.data.toJson(),
     };
 
-_$_MovieListData _$$_MovieListDataFromJson(Map<String, dynamic> json) =>
-    _$_MovieListData(
+_MovieListData _$MovieListDataFromJson(Map<String, dynamic> json) =>
+    _MovieListData(
       movieCount: (json['movie_count'] as num).toInt(),
       limit: (json['limit'] as num).toInt(),
       pageNumber: (json['page_number'] as num).toInt(),
@@ -32,7 +31,7 @@ _$_MovieListData _$$_MovieListDataFromJson(Map<String, dynamic> json) =>
           const [],
     );
 
-Map<String, dynamic> _$$_MovieListDataToJson(_$_MovieListData instance) =>
+Map<String, dynamic> _$MovieListDataToJson(_MovieListData instance) =>
     <String, dynamic>{
       'movie_count': instance.movieCount,
       'limit': instance.limit,
@@ -40,25 +39,24 @@ Map<String, dynamic> _$$_MovieListDataToJson(_$_MovieListData instance) =>
       'movies': instance.movies?.map((e) => e.toJson()).toList(),
     };
 
-_$_MovieSuggestionResponse _$$_MovieSuggestionResponseFromJson(
+_MovieSuggestionResponse _$MovieSuggestionResponseFromJson(
         Map<String, dynamic> json) =>
-    _$_MovieSuggestionResponse(
+    _MovieSuggestionResponse(
       status: json['status'] as String,
       statusMessage: json['status_message'] as String,
       data: MovieSuggestionData.fromJson(json['data'] as Map<String, dynamic>),
     );
 
-Map<String, dynamic> _$$_MovieSuggestionResponseToJson(
-        _$_MovieSuggestionResponse instance) =>
+Map<String, dynamic> _$MovieSuggestionResponseToJson(
+        _MovieSuggestionResponse instance) =>
     <String, dynamic>{
       'status': instance.status,
       'status_message': instance.statusMessage,
       'data': instance.data.toJson(),
     };
 
-_$_MovieSuggestionData _$$_MovieSuggestionDataFromJson(
-        Map<String, dynamic> json) =>
-    _$_MovieSuggestionData(
+_MovieSuggestionData _$MovieSuggestionDataFromJson(Map<String, dynamic> json) =>
+    _MovieSuggestionData(
       movieCount: (json['movie_count'] as num).toInt(),
       movies: (json['movies'] as List<dynamic>?)
               ?.map((e) => Movie.fromJson(e as Map<String, dynamic>))
@@ -66,32 +64,32 @@ _$_MovieSuggestionData _$$_MovieSuggestionDataFromJson(
           const [],
     );
 
-Map<String, dynamic> _$$_MovieSuggestionDataToJson(
-        _$_MovieSuggestionData instance) =>
+Map<String, dynamic> _$MovieSuggestionDataToJson(
+        _MovieSuggestionData instance) =>
     <String, dynamic>{
       'movie_count': instance.movieCount,
       'movies': instance.movies?.map((e) => e.toJson()).toList(),
     };
 
-_$_MovieResponse _$$_MovieResponseFromJson(Map<String, dynamic> json) =>
-    _$_MovieResponse(
+_MovieResponse _$MovieResponseFromJson(Map<String, dynamic> json) =>
+    _MovieResponse(
       status: json['status'] as String,
       statusMessage: json['status_message'] as String,
       data: MovieData.fromJson(json['data'] as Map<String, dynamic>),
     );
 
-Map<String, dynamic> _$$_MovieResponseToJson(_$_MovieResponse instance) =>
+Map<String, dynamic> _$MovieResponseToJson(_MovieResponse instance) =>
     <String, dynamic>{
       'status': instance.status,
       'status_message': instance.statusMessage,
       'data': instance.data.toJson(),
     };
 
-_$_MovieData _$$_MovieDataFromJson(Map<String, dynamic> json) => _$_MovieData(
+_MovieData _$MovieDataFromJson(Map<String, dynamic> json) => _MovieData(
       movie: Movie.fromJson(json['movie'] as Map<String, dynamic>),
     );
 
-Map<String, dynamic> _$$_MovieDataToJson(_$_MovieData instance) =>
+Map<String, dynamic> _$MovieDataToJson(_MovieData instance) =>
     <String, dynamic>{
       'movie': instance.movie.toJson(),
     };

@@ -1,4 +1,4 @@
-part of app_widgets.card;
+part of 'index.dart';
 
 /// Shimmer loading widget specifically for IntroItem horizontal lists
 class ShimmerIntroItem extends StatelessWidget {
@@ -44,7 +44,7 @@ class ShimmerIntroItem extends StatelessWidget {
   Widget _buildShimmerMovieItem(BuildContext context, ThemeData theme) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16.0),
       ),
       child: AspectRatio(

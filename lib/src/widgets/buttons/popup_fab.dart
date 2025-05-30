@@ -1,13 +1,13 @@
-part of app_widgets.button;
+part of 'index.dart';
 
 class PopupFloatingActionButton extends StatefulWidget {
   final FutureOr<void> Function()? onScrollToTop;
   final ScrollController scrollController;
   const PopupFloatingActionButton({
-    Key? key,
+    super.key,
     required this.scrollController,
     this.onScrollToTop,
-  }) : super(key: key);
+  });
 
   @override
   PopupFloatingActionButtonState createState() =>
@@ -88,7 +88,8 @@ class PopupFloatingActionButtonState extends State<PopupFloatingActionButton>
                     borderRadius: BorderRadius.circular(16.0),
                     boxShadow: [
                       BoxShadow(
-                        color: theme.colorScheme.primary.withOpacity(0.4),
+                        color: theme.colorScheme.primary
+                            .withAlpha((0.4 * 255).toInt()),
                         blurRadius: 12,
                         offset: const Offset(0, 6),
                       ),
@@ -126,16 +127,16 @@ class PopupFloatingActionButtonState extends State<PopupFloatingActionButton>
 
   void _popupFabScrollListener() {
     final controller = widget.scrollController;
-    final _dir = widget.scrollController.position.userScrollDirection;
+    final dir = widget.scrollController.position.userScrollDirection;
 
     if (controller.offset >= 600) {
-      if (_dir == ScrollDirection.reverse) {
+      if (dir == ScrollDirection.reverse) {
         if (_fabScaleController.status == AnimationStatus.completed) {
           _fabScaleController.reverse();
-          _animationController..stop();
+          _animationController.stop();
         }
       }
-      if (_dir == ScrollDirection.forward) {
+      if (dir == ScrollDirection.forward) {
         if (_fabScaleController.status == AnimationStatus.dismissed) {
           _fabScaleController.forward();
           _animationController.repeat();
@@ -144,7 +145,7 @@ class PopupFloatingActionButtonState extends State<PopupFloatingActionButton>
     } else {
       if (_fabScaleController.status == AnimationStatus.completed) {
         _fabScaleController.reverse();
-        _animationController..stop();
+        _animationController.stop();
       }
     }
   }

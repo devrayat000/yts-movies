@@ -1,4 +1,4 @@
-part of app_widgets;
+part of 'index.dart';
 
 class MovieImage extends StatefulWidget {
   final String src;

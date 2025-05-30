@@ -140,7 +140,8 @@ class InitializationSplashScreen extends StatelessWidget {
                   currentStep,
                   key: ValueKey(currentStep),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.7),
+                        color: colorScheme.onSurface
+                            .withAlpha((0.7 * 255).toInt()),
                         letterSpacing: 0.3,
                       ),
                   textAlign: TextAlign.center,
@@ -187,7 +188,7 @@ class InitializationSplashScreen extends StatelessWidget {
           child: Text(
             errorMessage ?? 'An unexpected error occurred',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.7),
+                  color: colorScheme.onSurface.withAlpha((0.7 * 255).toInt()),
                 ),
             textAlign: TextAlign.center,
           ),

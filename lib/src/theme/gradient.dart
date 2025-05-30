@@ -1,4 +1,4 @@
-part of app_theme;
+part of 'index.dart';
 
 extension Gradient on AppTheme {
   LinearGradient get lightGradient => const LinearGradient(

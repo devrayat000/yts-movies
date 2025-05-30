@@ -1,4 +1,4 @@
-part of app_widgets;
+part of 'index.dart';
 
 class MoviesPagedView extends StatefulWidget {
   final ApiHandler<MovieListResponse> handler;

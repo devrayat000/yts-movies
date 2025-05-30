@@ -1,4 +1,4 @@
-part of app_widgets.card;
+part of 'index.dart';
 
 class MovieCard extends StatelessWidget {
   final Movie _movie;
@@ -24,7 +24,7 @@ class MovieCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withAlpha((0.08 * 255).toInt()),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -108,14 +108,14 @@ class MovieCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Colors.deepPurple.withOpacity(0.8),
-                      Colors.indigo.withOpacity(0.8),
+                      Colors.deepPurple.withAlpha((0.8 * 255).toInt()),
+                      Colors.indigo.withAlpha((0.8 * 255).toInt()),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.deepPurple.withOpacity(0.3),
+                      color: Colors.deepPurple.withAlpha((0.3 * 255).toInt()),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -164,8 +164,8 @@ class _YearRating extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: isDark
-                ? Colors.blueGrey[700]?.withOpacity(0.7)
-                : Colors.grey[200]?.withOpacity(0.7),
+                ? Colors.blueGrey[700]?.withAlpha((0.7 * 255).toInt())
+                : Colors.grey[200]?.withAlpha((0.7 * 255).toInt()),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
@@ -181,14 +181,14 @@ class _YearRating extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.amber.withOpacity(0.8),
-                Colors.orange.withOpacity(0.8),
+                Colors.amber.withAlpha((0.8 * 255).toInt()),
+                Colors.orange.withAlpha((0.8 * 255).toInt()),
               ],
             ),
             borderRadius: BorderRadius.circular(15),
             boxShadow: [
               BoxShadow(
-                color: Colors.amber.withOpacity(0.3),
+                color: Colors.amber.withAlpha((0.3 * 255).toInt()),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -243,7 +243,7 @@ class _Title extends StatelessWidget {
               ? '[${language.toUpperCase()}] '
               : '',
           style: theme?.copyWith(
-            color: Colors.deepPurple.withOpacity(0.7),
+            color: Colors.deepPurple.withAlpha((0.7 * 255).toInt()),
             fontSize: isGrid ? 11 : 13,
             fontWeight: FontWeight.w500,
           ),

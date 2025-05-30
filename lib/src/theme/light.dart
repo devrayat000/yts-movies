@@ -1,4 +1,4 @@
-part of app_theme;
+part of 'index.dart';
 
 extension LightTheme on AppTheme {
   ThemeData get light {
@@ -21,11 +21,10 @@ extension LightTheme on AppTheme {
     );
 
     return defaultLight.copyWith(
-      useMaterial3: true,
       canvasColor: const Color(0xFFFAFAFA),
-      cardColor: Colors.white.withOpacity(0.9),
+      cardColor: Colors.white.withAlpha((0.9 * 255).toInt()),
       appBarTheme: appbar.copyWith(
-        backgroundColor: Colors.white.withOpacity(0.95),
+        backgroundColor: Colors.white.withAlpha((0.95 * 255).toInt()),
         surfaceTintColor: Colors.transparent,
         iconTheme: const IconThemeData(color: Color(0xFF374151)),
         titleTextStyle: const TextStyle(

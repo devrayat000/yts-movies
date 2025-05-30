@@ -1,5 +1,3 @@
-library app_widgets;
-
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
@@ -23,14 +21,11 @@ import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/lists.dart' as list;
 import 'package:ytsmovies/src/widgets/movies_list.dart';
-import 'package:ytsmovies/src/widgets/search/search_delegate.dart';
 
 export 'package:ytsmovies/src/widgets/buttons/index.dart';
 export 'package:ytsmovies/src/widgets/cards/index.dart';
 export 'package:ytsmovies/src/widgets/error_widgets.dart';
 export 'package:ytsmovies/src/widgets/connectivity_widgets.dart';
-export 'package:ytsmovies/src/widgets/search/search_delegate.dart'
-    hide SearchSuggestions;
 export 'package:ytsmovies/src/widgets/search/search_suggestions.dart';
 export 'package:ytsmovies/src/widgets/search/search_results.dart';
 export 'package:ytsmovies/src/widgets/splash/splash_wrapper.dart';

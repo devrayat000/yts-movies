@@ -34,7 +34,7 @@ class ErrorDisplayWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withAlpha((0.1 * 255).toInt()),
               borderRadius: BorderRadius.circular(50),
             ),
             child: Icon(
@@ -56,7 +56,7 @@ class ErrorDisplayWidget extends StatelessWidget {
           Text(
             _getErrorSubtitle(error),
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withAlpha((0.7 * 255).toInt()),
             ),
             textAlign: TextAlign.center,
           ),
@@ -89,7 +89,7 @@ class ErrorDisplayWidget extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant,
+                    color: theme.colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -282,7 +282,8 @@ class LoadingStateWidget extends StatelessWidget {
             Text(
               message!,
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.8),
+                color:
+                    theme.colorScheme.onSurface.withAlpha((0.8 * 255).toInt()),
               ),
               textAlign: TextAlign.center,
             ),
@@ -322,7 +323,8 @@ class EmptyStateWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+              color: theme.colorScheme.surfaceContainerHighest
+                  .withAlpha((0.5 * 255).toInt()),
               borderRadius: BorderRadius.circular(50),
             ),
             child: Icon(
@@ -345,7 +347,8 @@ class EmptyStateWidget extends StatelessWidget {
             Text(
               subtitle!,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color:
+                    theme.colorScheme.onSurface.withAlpha((0.7 * 255).toInt()),
               ),
               textAlign: TextAlign.center,
             ),

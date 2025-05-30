@@ -1,4 +1,4 @@
-part of app_widgets;
+part of '../index.dart';
 
 class FilterBottomSheet extends StatefulWidget {
   final void Function() onApplyFilter;
@@ -83,14 +83,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
                   end: Alignment.bottomCenter,
                   colors: [
                     colorScheme.surface,
-                    colorScheme.surface.withOpacity(0.95),
+                    colorScheme.surface.withAlpha((0.95 * 255).toInt()),
                   ],
                 ),
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(28)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
+                    color: Colors.black.withAlpha((0.15 * 255).toInt()),
                     blurRadius: 20,
                     offset: const Offset(0, -5),
                   ),
@@ -112,7 +112,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
                       width: 48,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: colorScheme.onSurface.withOpacity(0.3),
+                        color: colorScheme.onSurface
+                            .withAlpha((0.3 * 255).toInt()),
                         borderRadius: BorderRadius.circular(3),
                       ),
                     ),
@@ -127,13 +128,15 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
                               gradient: LinearGradient(
                                 colors: [
                                   colorScheme.primary,
-                                  colorScheme.primary.withOpacity(0.8),
+                                  colorScheme.primary
+                                      .withAlpha((0.8 * 255).toInt()),
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: colorScheme.primary.withOpacity(0.3),
+                                  color: colorScheme.primary
+                                      .withAlpha((0.3 * 255).toInt()),
                                   blurRadius: 8,
                                   offset: const Offset(0, 4),
                                 ),
@@ -169,7 +172,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
                                       .bodyMedium
                                       ?.copyWith(
                                         color: colorScheme.onSurface
-                                            .withOpacity(0.6),
+                                            .withAlpha((0.6 * 255).toInt()),
                                         fontSize: 14,
                                       ),
                                 ),
@@ -336,9 +339,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
               ),
               overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
               activeTrackColor: colorScheme.primary,
-              inactiveTrackColor: colorScheme.outline.withOpacity(0.2),
+              inactiveTrackColor:
+                  colorScheme.outline.withAlpha((0.2 * 255).toInt()),
               thumbColor: colorScheme.primary,
-              overlayColor: colorScheme.primary.withOpacity(0.15),
+              overlayColor: colorScheme.primary.withAlpha((0.15 * 255).toInt()),
             ),
             child: Slider(
               value: rating,
@@ -353,7 +357,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.1),
+            color: colorScheme.primary.withAlpha((0.1 * 255).toInt()),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
@@ -387,7 +391,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
           hint: Text(
             hint,
             style: TextStyle(
-              color: colorScheme.onSurface.withOpacity(0.6),
+              color: colorScheme.onSurface.withAlpha((0.6 * 255).toInt()),
               fontSize: 13,
             ),
           ),
@@ -405,7 +409,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
           ),
           icon: Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: colorScheme.onSurface.withOpacity(0.6),
+            color: colorScheme.onSurface.withAlpha((0.6 * 255).toInt()),
             size: 18,
           ),
           borderRadius: BorderRadius.circular(16),
@@ -425,7 +429,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
         Text(
           value ? 'Desc' : 'Asc',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.7),
+                color: colorScheme.onSurface.withAlpha((0.7 * 255).toInt()),
                 fontSize: 12,
               ),
         ),
@@ -459,22 +463,25 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
             ? LinearGradient(
                 colors: [
                   colorScheme.primary,
-                  colorScheme.primary.withOpacity(0.8),
+                  colorScheme.primary.withAlpha((0.8 * 255).toInt()),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               )
             : null,
-        color: isPrimary ? null : colorScheme.surfaceVariant.withOpacity(0.5),
+        color: isPrimary
+            ? null
+            : colorScheme.surfaceContainerHighest
+                .withAlpha((0.5 * 255).toInt()),
         border: !isPrimary
             ? Border.all(
-                color: colorScheme.outline.withOpacity(0.2),
+                color: colorScheme.outline.withAlpha((0.2 * 255).toInt()),
               )
             : null,
         boxShadow: isPrimary
             ? [
                 BoxShadow(
-                  color: colorScheme.primary.withOpacity(0.3),
+                  color: colorScheme.primary.withAlpha((0.3 * 255).toInt()),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                   spreadRadius: 0,
@@ -542,7 +549,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.1),
+                    color: iconColor.withAlpha((0.1 * 255).toInt()),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(
@@ -567,7 +574,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
                       Text(
                         subtitle,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurface.withOpacity(0.6),
+                              color: colorScheme.onSurface
+                                  .withAlpha((0.6 * 255).toInt()),
                               fontSize: 11,
                             ),
                       ),

@@ -1,4 +1,4 @@
-part of app_widgets.button;
+part of 'index.dart';
 
 class FavouriteButton extends StatefulWidget {
   final bool? isFavourite;
@@ -62,13 +62,13 @@ class FavouriteButtonState extends State<FavouriteButton>
         borderRadius: BorderRadius.circular(12),
         gradient: LinearGradient(
           colors: [
-            Colors.pink.withOpacity(0.1),
-            Colors.pinkAccent.withOpacity(0.1),
+            Colors.pink.withAlpha((0.1 * 255).toInt()),
+            Colors.pinkAccent.withAlpha((0.1 * 255).toInt()),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.pink.withOpacity(0.1),
+            color: Colors.pink.withAlpha((0.1 * 255).toInt()),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),

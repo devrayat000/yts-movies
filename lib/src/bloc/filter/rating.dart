@@ -1,4 +1,4 @@
-part of app_bloc.filter;
+part of 'index.dart';
 
 class RatingEvent {
   final double value;

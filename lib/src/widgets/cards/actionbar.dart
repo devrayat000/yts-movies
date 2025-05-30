@@ -1,4 +1,4 @@
-part of app_widgets.card;
+part of 'index.dart';
 
 class SliverActionBar extends StatelessWidget {
   final bool floating;
@@ -6,11 +6,11 @@ class SliverActionBar extends StatelessWidget {
   final List<Widget>? actions;
 
   const SliverActionBar({
-    Key? key,
+    super.key,
     this.floating = false,
     this.snap = false,
     this.actions,
-  }) : super(key: key);
+  });
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -25,7 +25,7 @@ class SliverActionBar extends StatelessWidget {
       forceElevated: true,
       backgroundColor: theme.colorScheme.surface,
       surfaceTintColor: theme.colorScheme.surfaceTint,
-      shadowColor: Colors.black.withOpacity(0.1),
+      shadowColor: Colors.black.withAlpha((0.1 * 255).toInt()),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.0),
       ),
@@ -34,7 +34,7 @@ class SliverActionBar extends StatelessWidget {
           gradient: LinearGradient(
             colors: [
               theme.colorScheme.surface,
-              theme.colorScheme.surface.withOpacity(0.95),
+              theme.colorScheme.surface.withAlpha((0.95 * 255).toInt()),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -51,10 +51,10 @@ class ActionBar extends StatelessWidget {
   final double spacing;
 
   const ActionBar({
-    Key? key,
+    super.key,
     this.actions,
     this.spacing = 0.0,
-  }) : super(key: key);
+  });
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -66,7 +66,7 @@ class ActionBar extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             theme.colorScheme.surface,
-            theme.colorScheme.surface.withOpacity(0.95),
+            theme.colorScheme.surface.withAlpha((0.95 * 255).toInt()),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -74,7 +74,7 @@ class ActionBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withAlpha((0.08 * 255).toInt()),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),

@@ -4,7 +4,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'label_value.dart';
+part of 'exceptions.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -14,56 +14,46 @@ part of 'label_value.dart';
 T _$identity<T>(T value) => value;
 
 /// @nodoc
-mixin _$LabelValue<T> {
-  String get label;
-  T? get value;
+mixin _$CustomException {
+  String get message;
+  StackTrace? get stackTrace;
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is LabelValue<T> &&
-            (identical(other.label, label) || other.label == label) &&
-            const DeepCollectionEquality().equals(other.value, value));
+            other is CustomException &&
+            (identical(other.message, message) || other.message == message) &&
+            (identical(other.stackTrace, stackTrace) ||
+                other.stackTrace == stackTrace));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, label, const DeepCollectionEquality().hash(value));
-
-  @override
-  String toString() {
-    return 'LabelValue<$T>(label: $label, value: $value)';
-  }
+  int get hashCode => Object.hash(runtimeType, message, stackTrace);
 }
 
 /// @nodoc
 
-class _LabelValue<T> extends LabelValue<T> {
-  const _LabelValue(this.label, this.value) : super._();
+class _CustomException implements CustomException {
+  const _CustomException(this.message, [this.stackTrace]);
 
   @override
-  final String label;
+  final String message;
   @override
-  final T? value;
+  final StackTrace? stackTrace;
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _LabelValue<T> &&
-            (identical(other.label, label) || other.label == label) &&
-            const DeepCollectionEquality().equals(other.value, value));
+            other is _CustomException &&
+            (identical(other.message, message) || other.message == message) &&
+            (identical(other.stackTrace, stackTrace) ||
+                other.stackTrace == stackTrace));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, label, const DeepCollectionEquality().hash(value));
-
-  @override
-  String toString() {
-    return 'LabelValue<$T>(label: $label, value: $value)';
-  }
+  int get hashCode => Object.hash(runtimeType, message, stackTrace);
 }
 
 // dart format on

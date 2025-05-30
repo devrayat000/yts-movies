@@ -1,6 +1,5 @@
 import 'dart:developer';
 
-import 'package:equatable/equatable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:ytsmovies/src/models/movie.dart';
 
@@ -13,8 +12,8 @@ MovieListResponse deserializeMovieListResponse(Map<String, dynamic> json) =>
 Map<String, dynamic> serializeMovieListResponse(MovieListResponse object) =>
     object.toJson();
 
-@Freezed(equal: false, toStringOverride: false)
-class MovieListResponse with _$MovieListResponse {
+@Freezed(equal: true, toStringOverride: true, copyWith: false)
+sealed class MovieListResponse with _$MovieListResponse {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory MovieListResponse({
     required String status,
@@ -26,8 +25,8 @@ class MovieListResponse with _$MovieListResponse {
       _$MovieListResponseFromJson(json);
 }
 
-@Freezed(equal: false, toStringOverride: false)
-class MovieListData with _$MovieListData, EquatableMixin {
+@Freezed(equal: true, toStringOverride: true, copyWith: false)
+sealed class MovieListData with _$MovieListData {
   const MovieListData._();
 
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -47,12 +46,6 @@ class MovieListData with _$MovieListData, EquatableMixin {
   }
 
   bool get isLastPage => pageNumber >= lastPage;
-
-  @override
-  List<Object?> get props => [movieCount, limit, pageNumber, movies];
-
-  @override
-  bool? get stringify => true;
 }
 
 // Movie Suggestion
@@ -63,8 +56,8 @@ Map<String, dynamic> serializeMovieSuggestionResponse(
         MovieSuggestionResponse object) =>
     object.toJson();
 
-@Freezed(equal: false, toStringOverride: false)
-class MovieSuggestionResponse with _$MovieSuggestionResponse {
+@Freezed(equal: true, toStringOverride: true, copyWith: false)
+sealed class MovieSuggestionResponse with _$MovieSuggestionResponse {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory MovieSuggestionResponse({
     required String status,
@@ -76,8 +69,8 @@ class MovieSuggestionResponse with _$MovieSuggestionResponse {
       _$MovieSuggestionResponseFromJson(json);
 }
 
-@Freezed(equal: false, toStringOverride: false)
-class MovieSuggestionData with _$MovieSuggestionData, EquatableMixin {
+@Freezed(equal: true, toStringOverride: true, copyWith: false)
+sealed class MovieSuggestionData with _$MovieSuggestionData {
   const MovieSuggestionData._();
 
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -88,12 +81,6 @@ class MovieSuggestionData with _$MovieSuggestionData, EquatableMixin {
 
   factory MovieSuggestionData.fromJson(Map<String, dynamic> json) =>
       _$MovieSuggestionDataFromJson(json);
-
-  @override
-  List<Object?> get props => [movieCount, movies];
-
-  @override
-  bool? get stringify => true;
 }
 
 // Single Movie
@@ -102,8 +89,8 @@ MovieResponse deserializeMovieResponse(Map<String, dynamic> json) =>
 Map<String, dynamic> serializeMovieResponse(MovieResponse object) =>
     object.toJson();
 
-@Freezed(equal: false, toStringOverride: false)
-class MovieResponse with _$MovieResponse {
+@Freezed(equal: true, toStringOverride: true, copyWith: false)
+sealed class MovieResponse with _$MovieResponse {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory MovieResponse({
     required String status,
@@ -115,8 +102,8 @@ class MovieResponse with _$MovieResponse {
       _$MovieResponseFromJson(json);
 }
 
-@Freezed(equal: false, toStringOverride: false)
-class MovieData with _$MovieData, EquatableMixin {
+@Freezed(equal: true, toStringOverride: true, copyWith: false)
+sealed class MovieData with _$MovieData {
   const MovieData._();
 
   @JsonSerializable(fieldRename: FieldRename.snake)
@@ -124,10 +111,4 @@ class MovieData with _$MovieData, EquatableMixin {
 
   factory MovieData.fromJson(Map<String, dynamic> json) =>
       _$MovieDataFromJson(json);
-
-  @override
-  List<Object?> get props => [movie];
-
-  @override
-  bool? get stringify => true;
 }
