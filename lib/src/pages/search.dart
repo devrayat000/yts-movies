@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
+import 'package:ytsmovies/src/bloc/filter/index.dart';
 import '../widgets/index.dart' hide SearchSuggestions;
 import '../widgets/search/search_suggestions.dart';
 import '../widgets/search/search_results.dart';
@@ -33,6 +35,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
   bool _showingSuggestions = false;
   String _currentQuery = '';
   String _currentInput = '';
+  Map<String, dynamic> _params = {};
   // API autocomplete state
   List<Movie> _suggestions = [];
   bool _loadingSuggestions = false;
@@ -42,6 +45,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
   // Search history
   Box<String> get _box => Hive.box<String>(MyBoxs.searchHistoryBox);
   List<String> get _history => _box.values.toSet().toList().reversed.toList();
+
   @override
   void initState() {
     super.initState();
@@ -82,6 +86,8 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     _animationController.dispose();
     _debounceTimer?.cancel();
     _cancelToken?.cancel();
+    context.read<Filter>().reset();
+    log("Disposing SearchPage and resetting filter state");
     super.dispose();
   }
 
@@ -147,6 +153,8 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
 
   void _onSearchSubmitted(String query) {
     if (query.trim().isEmpty) return;
+    _debounceTimer?.cancel();
+    _cancelToken?.cancel();
 
     final trimmedQuery = query.trim();
 
@@ -160,13 +168,14 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     _performSearch(trimmedQuery);
   }
 
-  void _performSearch(String query) async {
+  void _performSearch(String query, {Map<String, dynamic>? params}) async {
     if (query.isEmpty) return;
 
     setState(() {
       _hasSearched = true;
       _currentQuery = query;
       _showingSuggestions = false;
+      _params = params ?? {};
     });
 
     _animationController.forward();
@@ -220,11 +229,13 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
       _currentQuery = '';
       _suggestions = [];
       _loadingSuggestions = false;
+      _params = {};
     });
     _animationController.reset();
     _cancelToken?.cancel();
     _debounceTimer?.cancel();
     _focusNode.requestFocus();
+    context.read<Filter>().reset();
   }
 
   Widget _buildAutocompleteList(BuildContext context) {
@@ -365,6 +376,24 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
               )
           ],
         ),
+        actions: [
+          if (_hasSearched)
+            IconButton(
+              icon: const Icon(Icons.tune),
+              onPressed: () {
+                FilterBottomSheet.show(
+                  context,
+                  onApplyFilter: () {
+                    // Apply filter logic here
+                    final filterParams = context.read<Filter>().values;
+                    log('Applying filters: $filterParams');
+                    _performSearch(_currentQuery, params: filterParams);
+                  },
+                );
+              },
+              tooltip: 'Filter',
+            ),
+        ],
       ),
       body: Stack(
         children: [
@@ -378,7 +407,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                         opacity: _fadeAnimation,
                         child: SearchResults(
                           query: _currentQuery,
-                          params: {}, // Add any filter parameters here
+                          params: _params, // Add any filter parameters here
                         ),
                       )
                     : SearchSuggestions(

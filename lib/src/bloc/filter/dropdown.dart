@@ -7,6 +7,7 @@ abstract class DropdownCubit extends HydratedCubit<String?> {
   void changeHandler(String? newValue) => emit(newValue);
 
   void reset() {
+    log("Resetting dropdown state to default: $_default");
     emit(_default);
     clear();
   }

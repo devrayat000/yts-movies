@@ -1,6 +1,7 @@
 package_rename_config:
   android:
     app_name: YTS Movies
+    package_name: com.rayat.dev.ytsmovies
 
   ios:
     app_name: YTS Movies
