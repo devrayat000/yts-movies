@@ -57,6 +57,35 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION"
 
+      # Setup app signing
+      - name: 🔐 Setup app signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
+        run: |
+          # Create keystore from base64
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > android/upload-keystore.jks
+            echo "✅ Keystore created successfully"
+          else
+            echo "⚠️ No keystore found in secrets, using debug signing"
+          fi
+
+          # Create key.properties file
+          if [ -n "$KEY_PROPERTIES" ]; then
+            echo "$KEY_PROPERTIES" > android/key.properties
+            echo "✅ Key properties created successfully"
+          else
+            echo "⚠️ No key properties found in secrets, using debug signing"
+            # Create a default key.properties that falls back to debug
+            cat > android/key.properties << EOF
+          storePassword=android
+          keyPassword=android
+          keyAlias=androiddebugkey
+          storeFile=debug.keystore
+          EOF
+          fi
+
       # Generate any needed files (if using build_runner)
       - name: 📂 Generate files
         run: |
@@ -65,17 +94,19 @@ jobs:
           fi
 
       # Analyze code
-      - name: Analyze code
+      - name: 🔍 Analyze code
         run: flutter analyze
 
       # Run tests (optional - comment out if no tests)
-      #   - name: Run tests
-      #     run: flutter test
-      #     continue-on-error: true
+      # - name: 🧪 Run tests
+      #   run: flutter test
+      #   continue-on-error: true
 
       # Build APK
-      - name: 🏗️ Build APKs
-        run: flutter build apk --release # Upload APK as artifact
+      - name: 🏗️ Build signed APK
+        run: flutter build apk --release
+
+      # Upload APK as artifact
       - name: 📦 Upload APK
         uses: actions/upload-artifact@v4
         with:
@@ -84,21 +115,26 @@ jobs:
           retention-days: 30
 
       # Add comment to PR with download link
-      - name: Comment PR
+      - name: 💬 Comment PR
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const path = require('path');
 
             // Get APK file size
             const apkPath = 'build/app/outputs/flutter-apk/app-release.apk';
             const stats = fs.statSync(apkPath);
-            const fileSizeInMB = (stats.size / (1024 * 1024)).toFixed(2);            const comment = `🚀 **APK Build Successful!**
+            const fileSizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
+
+            // Check if keystore was used
+            const keystoreUsed = process.env.KEYSTORE_BASE64 ? '🔐 Signed with release keystore' : '⚠️ Signed with debug keystore';
+
+            const comment = `🚀 **APK Build Successful!**
 
             📱 **Download:** The APK has been built successfully and is available as an artifact.
             📊 **Size:** ${fileSizeInMB} MB
             🔗 **Download Link:** Check the "Artifacts" section in the workflow run details.
+            ${keystoreUsed}
 
             **Build Details:**
             - Version: ${{ steps.version.outputs.version }}
@@ -117,3 +153,5 @@ jobs:
               repo: context.repo.repo,
               body: comment
             });
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
