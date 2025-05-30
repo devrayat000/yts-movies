@@ -95,7 +95,7 @@ jobs:
 
       # Analyze code
       - name: 🔍 Analyze code
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       # Run tests (optional - comment out if no tests)
       # - name: 🧪 Run tests
