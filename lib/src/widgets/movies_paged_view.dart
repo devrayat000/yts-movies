@@ -80,48 +80,44 @@ class _MoviesPagedViewState extends State<MoviesPagedView> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: double.infinity,
-      margin: const EdgeInsets.all(8.0),
-      child: CupertinoScrollbar(
-        controller: _scrollController,
-        child: RefreshIndicator(
-          onRefresh: () => SynchronousFuture(_pagingController.refresh()),
-          child: PagedGridView<int, Movie>(
-            key: PageStorageKey(widget.label),
-            pagingController: _pagingController,
-            scrollController: _scrollController,
-            shrinkWrap: true,
-            physics: const BouncingScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio:
-                  0.67, // Slightly taller for better movie poster display
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
+    return CupertinoScrollbar(
+      controller: _scrollController,
+      child: RefreshIndicator(
+        onRefresh: () => SynchronousFuture(_pagingController.refresh()),
+        child: PagedGridView<int, Movie>(
+          padding: const EdgeInsets.all(8.0),
+          key: PageStorageKey(widget.label),
+          pagingController: _pagingController,
+          scrollController: _scrollController,
+          shrinkWrap: true,
+          physics: const BouncingScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio:
+                0.67, // Slightly taller for better movie poster display
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          showNewPageProgressIndicatorAsGridChild: false,
+          showNoMoreItemsIndicatorAsGridChild: false,
+          builderDelegate: PagedChildBuilderDelegate(
+            itemBuilder: (context, item, index) {
+              return MovieCard.grid(
+                key: ValueKey('movie-${item.id}'),
+                movie: item,
+              );
+            },
+            firstPageProgressIndicatorBuilder: (_) => const MovieListShimmer(),
+            newPageProgressIndicatorBuilder: (_) => Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: const MovieListShimmer(count: 2),
             ),
-            showNewPageProgressIndicatorAsGridChild: false,
-            showNoMoreItemsIndicatorAsGridChild: false,
-            builderDelegate: PagedChildBuilderDelegate(
-              itemBuilder: (context, item, index) {
-                return MovieCard.grid(
-                  key: ValueKey('movie-${item.id}'),
-                  movie: item,
-                );
-              },
-              firstPageProgressIndicatorBuilder: (_) =>
-                  const MovieListShimmer(),
-              newPageProgressIndicatorBuilder: (_) => Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: const MovieListShimmer(count: 2),
-              ),
-              firstPageErrorIndicatorBuilder: _firstPageErrorIndicator,
-              newPageErrorIndicatorBuilder: _newPageErrorIndicator,
-              noItemsFoundIndicatorBuilder:
-                  widget.noItemBuilder ?? _noItemsFoundIndicator,
-              noMoreItemsIndicatorBuilder: _noMoreItemsIndicator,
-              animateTransitions: true,
-            ),
+            firstPageErrorIndicatorBuilder: _firstPageErrorIndicator,
+            newPageErrorIndicatorBuilder: _newPageErrorIndicator,
+            noItemsFoundIndicatorBuilder:
+                widget.noItemBuilder ?? _noItemsFoundIndicator,
+            noMoreItemsIndicatorBuilder: _noMoreItemsIndicator,
+            animateTransitions: true,
           ),
         ),
       ),

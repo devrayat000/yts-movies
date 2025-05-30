@@ -1,5 +1,8 @@
 library app_bloc.filter;
 
+import 'dart:developer';
+
+import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:ytsmovies/src/utils/enums.dart';
@@ -9,7 +12,7 @@ part './rating.dart';
 part './dropdown.dart';
 part './order.dart';
 
-class Filter {
+class Filter extends Equatable {
   final order = OrderCubit();
   final sort = SortCubit();
   final genre = GenreCubit();
@@ -17,6 +20,7 @@ class Filter {
   final rating = RatingCubit();
 
   void reset() {
+    log("Resetting filter state");
     order.reset();
     sort.reset();
     genre.reset();
@@ -36,4 +40,16 @@ class Filter {
     debugPrint('mapping filter values');
     return params..removeWhere((_, value) => value == null || value == '0');
   }
+
+  @override
+  List<Object?> get props => [
+        order.state,
+        sort.state,
+        genre.state,
+        quality.state,
+        rating.state,
+      ];
+
+  @override
+  bool get stringify => true;
 }

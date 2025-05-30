@@ -5,6 +5,9 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+import java.util.Properties
+import java.io.FileInputStream
+
 // Load keystore properties for signing
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
@@ -13,7 +16,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.dev.standard.ytsmovies"
+    namespace = "com.rayat.dev.ytsmovies"
     compileSdk = 35
     ndkVersion = "27.0.12077973"
 
@@ -35,20 +38,19 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.dev.standard.ytsmovies"
+        applicationId = "com.rayat.dev.ytsmovies"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode        
         versionName = flutter.versionName
-    }
-
+    }    
     signingConfigs {
         create("release") {
             keyAlias = keystoreProperties["keyAlias"] as String?
             keyPassword = keystoreProperties["keyPassword"] as String?
-            storeFile = keystoreProperties["storeFile"]?.let { file(it) }
+            storeFile = keystoreProperties["storeFile"]?.let { rootProject.file(it) }
             storePassword = keystoreProperties["storePassword"] as String?
         }
     }
@@ -74,99 +76,3 @@ dependencies {
 flutter {
     source = "../.."
 }
-
-
-// def localProperties = new Properties()
-// def localPropertiesFile = rootProject.file('local.properties')
-// if (localPropertiesFile.exists()) {
-//     localPropertiesFile.withReader('UTF-8') { reader ->
-//         localProperties.load(reader)
-//     }
-// }
-
-// def flutterRoot = localProperties.getProperty('flutter.sdk')
-// if (flutterRoot == null) {
-//     throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
-// }
-
-// def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
-// if (flutterVersionCode == null) {
-//     flutterVersionCode = '1'
-// }
-
-// def flutterVersionName = localProperties.getProperty('flutter.versionName')
-// if (flutterVersionName == null) {
-//     flutterVersionName = '1.0'
-// }
-// // For Production
-// // def keystoreProperties = new Properties()
-// // def keystorePropertiesFile = rootProject.file('key.properties')
-// // if (keystorePropertiesFile.exists()) {
-// //     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-// // }
-
-// apply plugin: 'com.android.application'
-// apply plugin: 'kotlin-android'
-// apply plugin: 'kotlin-android-extensions'
-// apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
-
-// android {
-//     compileSdkVersion 33
-//     ndkVersion flutter.ndkVersion
-
-//     compileOptions {
-//         sourceCompatibility JavaVersion.VERSION_1_8
-//         targetCompatibility JavaVersion.VERSION_1_8
-//     }
-
-//     kotlinOptions {
-//         jvmTarget = '1.8'
-//     }
-
-//     sourceSets {
-//         main.java.srcDirs += 'src/main/kotlin'
-//     }
-
-//     defaultConfig {
-//         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-//         applicationId "com.dev.standard.ytsmovies"
-//         // You can update the following values to match your application needs.
-//         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-//         minSdkVersion 21
-//         targetSdkVersion flutter.targetSdkVersion
-//         versionCode flutterVersionCode.toInteger()
-//         versionName flutterVersionName
-//     }
-
-//     // For Production
-//     // signingConfigs {
-//     //    release {
-//     //         keyAlias keystoreProperties['keyAlias']
-//     //         keyPassword keystoreProperties['keyPassword']
-//     //         storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-//     //         storePassword keystoreProperties['storePassword']
-//     //     }
-//     // }
-
-//     buildTypes {
-//         release {
-//             // TODO: Add your own signing config for the release build.
-//             // Signing with the debug keys for now, so `flutter run --release` works.
-//             signingConfig signingConfigs.debug
-//             // For production
-//             // minifyEnabled true //Important step
-//             // shrinkResources true
-//             // proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-//             // signingConfig signingConfigs.release
-//         }
-//     }
-// }
-
-// flutter {
-//     source '../..'
-// }
-
-// dependencies {
-//     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-//     implementation 'androidx.cardview:cardview:1.0.0'
-// }

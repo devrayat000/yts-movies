@@ -95,7 +95,7 @@ class _MoviesClient implements MoviesClient {
       r'with_cast': cast,
     };
     queryParameters.removeWhere((k, v) => v == null);
-    final _headers = <String, dynamic>{r'Cache-Control': 'max-age=864000'};
+    final _headers = <String, dynamic>{r'cache-control': 'max-age=864000'};
     _headers.removeWhere((k, v) => v == null);
     const Map<String, dynamic>? _data = null;
     final _options = _setStreamType<MovieResponse>(Options(
