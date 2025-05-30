@@ -49,6 +49,14 @@ jobs:
       - name: 📥 Get dependencies
         run: flutter pub get
 
+      # Extract version from pubspec.yaml
+      - name: 📋 Extract version
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
       # Generate any needed files (if using build_runner)
       - name: 📂 Generate files
         run: |
@@ -67,13 +75,11 @@ jobs:
 
       # Build APK
       - name: 🏗️ Build APKs
-        run: flutter build apk --release
-
-      # Upload APK as artifact
+        run: flutter build apk --release # Upload APK as artifact
       - name: 📦 Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ytsmovies-${{ github.event.pull_request.number }}
+          name: ytsmovies-v${{ steps.version.outputs.version }}-pr${{ github.event.pull_request.number }}
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
 
@@ -88,23 +94,22 @@ jobs:
             // Get APK file size
             const apkPath = 'build/app/outputs/flutter-apk/app-release.apk';
             const stats = fs.statSync(apkPath);
-            const fileSizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
-
-            const comment = `🚀 **APK Build Successful!**
+            const fileSizeInMB = (stats.size / (1024 * 1024)).toFixed(2);            const comment = `🚀 **APK Build Successful!**
 
             📱 **Download:** The APK has been built successfully and is available as an artifact.
             📊 **Size:** ${fileSizeInMB} MB
             🔗 **Download Link:** Check the "Artifacts" section in the workflow run details.
 
             **Build Details:**
+            - Version: ${{ steps.version.outputs.version }}
             - Commit: ${context.sha.substring(0, 7)}
-            - Flutter Version: 3.24.0
+            - Flutter Version: 3.32.0
             - Build Type: Release APK
 
             To download the APK:
             1. Go to the "Actions" tab
             2. Click on this workflow run
-            3. Download the artifact named "ytsmovies-${context.payload.pull_request.number}"`;
+            3. Download the artifact named "ytsmovies-v${{ steps.version.outputs.version }}-pr${context.payload.pull_request.number}"`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
