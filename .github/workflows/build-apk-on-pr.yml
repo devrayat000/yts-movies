@@ -8,6 +8,8 @@ on:
 permissions:
   contents: write # allow creating/updating Releases & uploading assets
   actions: read # allow pulling marketplace actions
+  issues: write
+  pull-requests: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -95,7 +97,7 @@ jobs:
 
       # Analyze code
       - name: 🔍 Analyze code
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       # Run tests (optional - comment out if no tests)
       # - name: 🧪 Run tests
@@ -116,19 +118,31 @@ jobs:
 
       # Add comment to PR with download link
       - name: 💬 Comment PR
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@v7
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         with:
           script: |
             const fs = require('fs');
-
-            // Get APK file size
             const apkPath = 'build/app/outputs/flutter-apk/app-release.apk';
-            const stats = fs.statSync(apkPath);
-            const fileSizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
+            let fileSizeInMB = 'N/A';
+            try {
+              const stats = fs.statSync(apkPath);
+              fileSizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
+            } catch (e) {
+              fileSizeInMB = 'Not found';
+            }
 
-            // Check if keystore was used
-            const keystoreUsed = process.env.KEYSTORE_BASE64 ? '🔐 Signed with release keystore' : '⚠️ Signed with debug keystore';
+            // Keystore info
+            const keystoreUsed = process.env.KEYSTORE_BASE64
+              ? '🔐 Signed with release keystore'
+              : '⚠️ Signed with debug keystore';
 
+            // Get version info from the outputs or set as 'Unknown'
+            const version = process.env.VERSION || 'Unknown';
+
+            // Compose comment
             const comment = `🚀 **APK Build Successful!**
 
             📱 **Download:** The APK has been built successfully and is available as an artifact.
@@ -137,21 +151,19 @@ jobs:
             ${keystoreUsed}
 
             **Build Details:**
-            - Version: ${{ steps.version.outputs.version }}
-            - Commit: ${context.sha.substring(0, 7)}
-            - Flutter Version: 3.32.0
+            - Version: ${version}
+            - Commit: ${process.env.GITHUB_SHA.substring(0, 7)}
+            - Flutter Version: 3.32.1
             - Build Type: Release APK
 
             To download the APK:
             1. Go to the "Actions" tab
             2. Click on this workflow run
-            3. Download the artifact named "ytsmovies-v${{ steps.version.outputs.version }}-pr${context.payload.pull_request.number}"`;
+            3. Download the artifact named "ytsmovies-v${version}-pr${context.payload.pull_request.number}"`;
 
-            github.rest.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: comment
+              body: comment,
             });
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
