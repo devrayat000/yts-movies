@@ -107,13 +107,23 @@ jobs:
       - name: 🏗️ Build signed APK
         run: flutter build apk --release # Get APK file size for release notes
 
+      - name: 📦 Rename APK file
+        run: |
+          APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
+          if [ -f "$APK_PATH" ]; then
+            mv "$APK_PATH" "build/app/outputs/flutter-apk/yts-movies-v${{ steps.version.outputs.version }}.apk"
+            echo "APK renamed to yts-movies-v${{ steps.version.outputs.version }}.apk"
+          else
+            echo "APK file not found, skipping rename"
+          fi
+
       - name: 📊 Get APK info
         id: apk_info
         run: |
           # Install bc for calculations
           sudo apt-get update && sudo apt-get install -y bc
 
-          APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
+          APK_PATH="build/app/outputs/flutter-apk/yts-movies-v${{ steps.version.outputs.version }}.apk"
           if [ -f "$APK_PATH" ]; then
             SIZE_BYTES=$(stat -c%s "$APK_PATH")
             SIZE_MB=$(echo "scale=2; $SIZE_BYTES / 1024 / 1024" | bc)
@@ -131,6 +141,7 @@ jobs:
           TAG="v${{ steps.version.outputs.version }}-pr${{ github.event.pull_request.number }}"
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "Created tag: $TAG"      # Create GitHub Release
+
       - name: 🚀 Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
@@ -163,7 +174,7 @@ jobs:
           draft: false
           prerelease: true
           files: |
-            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/flutter-apk/yts-movies-v${{ steps.version.outputs.version }}.apk
           token: ${{ secrets.GITHUB_TOKEN }} # Add comment to PR with release link
 
       - name: 💬 Comment PR with Release Link
