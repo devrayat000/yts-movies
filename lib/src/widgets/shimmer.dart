@@ -1,4 +1,4 @@
-part of app_widgets;
+part of 'index.dart';
 
 class Shimmer extends StatefulWidget {
   static ShimmerState? of(BuildContext context) {

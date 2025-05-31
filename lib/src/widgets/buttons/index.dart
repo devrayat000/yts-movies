@@ -1,4 +1,4 @@
-library app_widgets.button;
+library;
 
 import 'dart:developer';
 import 'dart:math' hide log;

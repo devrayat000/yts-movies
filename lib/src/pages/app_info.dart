@@ -32,12 +32,12 @@ class AppInfoPage extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: isDark
                   ? [
-                      Colors.blueGrey[900]!.withOpacity(0.95),
-                      Colors.blueGrey[800]!.withOpacity(0.95),
+                      Colors.blueGrey[900]!.withAlpha((0.95 * 255).toInt()),
+                      Colors.blueGrey[800]!.withAlpha((0.95 * 255).toInt()),
                     ]
                   : [
-                      Colors.white.withOpacity(0.95),
-                      Colors.grey[50]!.withOpacity(0.95),
+                      Colors.white.withAlpha((0.95 * 255).toInt()),
+                      Colors.grey[50]!.withAlpha((0.95 * 255).toInt()),
                     ],
             ),
           ),
@@ -180,7 +180,7 @@ class AppInfoPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha((0.1 * 255).toInt()),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -196,7 +196,7 @@ class AppInfoPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withAlpha((0.1 * 255).toInt()),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -235,7 +235,7 @@ class AppInfoPage extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.1),
+                  color: theme.primaryColor.withAlpha((0.1 * 255).toInt()),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -299,7 +299,7 @@ class AppInfoPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withAlpha((0.05 * 255).toInt()),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -314,8 +314,8 @@ class AppInfoPage extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF818CF8).withOpacity(0.2)
-                      : theme.primaryColor.withOpacity(0.1),
+                      ? const Color(0xFF818CF8).withAlpha((0.2 * 255).toInt())
+                      : theme.primaryColor.withAlpha((0.1 * 255).toInt()),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -428,7 +428,7 @@ class AppInfoPage extends StatelessWidget {
             gradient: LinearGradient(
               colors: [
                 theme.primaryColor,
-                theme.primaryColor.withOpacity(0.8),
+                theme.primaryColor.withAlpha((0.8 * 255).toInt()),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -436,7 +436,7 @@ class AppInfoPage extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: theme.primaryColor.withOpacity(0.3),
+                color: theme.primaryColor.withAlpha((0.3 * 255).toInt()),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),

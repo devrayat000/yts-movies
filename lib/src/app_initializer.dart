@@ -5,10 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:ytsmovies/hive/hive_registrar.g.dart';
 
 import 'package:ytsmovies/src/api/client.dart';
 import 'package:ytsmovies/src/api/movies.dart';
@@ -121,9 +122,7 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> {
 
   Future<void> _initializeHive() async {
     await Hive.initFlutter();
-    Hive
-      ..registerAdapter(MovieAdapter())
-      ..registerAdapter(TorrentAdapter());
+    Hive.registerAdapters();
   }
 
   Future<void> _initializeHydratedStorage() async {

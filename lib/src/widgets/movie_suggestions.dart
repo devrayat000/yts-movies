@@ -1,4 +1,4 @@
-part of app_widgets;
+part of 'index.dart';
 
 class Suggestions extends StatefulWidget {
   final String id;

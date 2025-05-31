@@ -1,7 +1,7 @@
-part of app_widgets.card;
+part of 'index.dart';
 
 class SearchTile extends StatelessWidget {
-  const SearchTile({Key? key}) : super(key: key);
+  const SearchTile({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,8 +16,8 @@ class SearchTile extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: isDark
                 ? [
-                    Colors.blueGrey[800]!.withOpacity(0.9),
-                    Colors.blueGrey[900]!.withOpacity(0.9),
+                    Colors.blueGrey[800]!.withAlpha((0.9 * 255).toInt()),
+                    Colors.blueGrey[900]!.withAlpha((0.9 * 255).toInt()),
                   ]
                 : [
                     Colors.white,
@@ -28,8 +28,8 @@ class SearchTile extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: isDark
-                  ? Colors.black.withOpacity(0.3)
-                  : Colors.grey.withOpacity(0.15),
+                  ? Colors.black.withAlpha((0.3 * 255).toInt())
+                  : Colors.grey.withAlpha((0.15 * 255).toInt()),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -63,8 +63,8 @@ class SearchTile extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.deepPurple.withOpacity(0.8),
-                    Colors.indigo.withOpacity(0.8),
+                    Colors.deepPurple.withAlpha((0.8 * 255).toInt()),
+                    Colors.indigo.withAlpha((0.8 * 255).toInt()),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),

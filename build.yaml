@@ -17,3 +17,6 @@ targets:
           generic_argument_factories: false
           ignore_unannotated: false
           include_if_null: true
+
+      # hive_ce_generator|hive_schema_migrator:
+      #   enabled: true

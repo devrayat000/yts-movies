@@ -1,4 +1,4 @@
-part of app_widgets.button;
+part of 'index.dart';
 
 class ThemeToggleButton extends StatefulWidget {
   const ThemeToggleButton({super.key});
@@ -36,19 +36,19 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
         gradient: LinearGradient(
           colors: isDark
               ? [
-                  const Color(0xFF374151).withOpacity(0.8),
-                  const Color(0xFF1F2937).withOpacity(0.8),
+                  const Color(0xFF374151).withAlpha((0.8 * 255).toInt()),
+                  const Color(0xFF1F2937).withAlpha((0.8 * 255).toInt()),
                 ]
               : [
-                  Colors.white.withOpacity(0.9),
-                  Colors.grey[100]!.withOpacity(0.9),
+                  Colors.white.withAlpha((0.9 * 255).toInt()),
+                  Colors.grey[100]!.withAlpha((0.9 * 255).toInt()),
                 ],
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.black.withAlpha((0.2 * 255).toInt())
+                : Colors.grey.withAlpha((0.1 * 255).toInt()),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),

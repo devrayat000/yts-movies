@@ -1,4 +1,4 @@
-part of app_widgets;
+part of 'index.dart';
 
 class TorrentTab extends StatelessWidget {
   final List<Torrent> _torrents;
@@ -18,7 +18,7 @@ class TorrentTab extends StatelessWidget {
           borderRadius: BorderRadius.circular(16.0),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withAlpha((0.08 * 255).toInt()),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -45,7 +45,7 @@ class TorrentTab extends StatelessWidget {
               ),
               labelColor: Colors.white,
               unselectedLabelColor:
-                  theme.colorScheme.onSurface.withOpacity(0.7),
+                  theme.colorScheme.onSurface.withAlpha((0.7 * 255).toInt()),
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
               tabs: _tabs,
@@ -134,10 +134,10 @@ class TorrentTab extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withAlpha((0.08 * 255).toInt()),
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(
-          color: color.withOpacity(0.2),
+          color: color.withAlpha((0.2 * 255).toInt()),
           width: 1,
         ),
       ),
@@ -162,7 +162,8 @@ class TorrentTab extends StatelessWidget {
               Text(
                 title,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface
+                      .withAlpha((0.7 * 255).toInt()),
                   fontWeight: FontWeight.w500,
                   fontSize: 12,
                 ),

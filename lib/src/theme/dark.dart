@@ -1,4 +1,4 @@
-part of app_theme;
+part of 'index.dart';
 
 extension DarkTheme on AppTheme {
   ThemeData get dark {
@@ -20,11 +20,11 @@ extension DarkTheme on AppTheme {
     );
 
     return defaultDark.copyWith(
-      useMaterial3: true,
       canvasColor: const Color(0xFF0F172A),
-      cardColor: const Color(0xFF1E293B).withOpacity(0.9),
+      cardColor: const Color(0xFF1E293B).withAlpha((0.9 * 255).toInt()),
       appBarTheme: appbar.copyWith(
-        backgroundColor: const Color(0xFF111827).withOpacity(0.95),
+        backgroundColor:
+            const Color(0xFF111827).withAlpha((0.95 * 255).toInt()),
         surfaceTintColor: Colors.transparent,
         iconTheme: const IconThemeData(color: Color(0xFFF3F4F6)),
         titleTextStyle: const TextStyle(

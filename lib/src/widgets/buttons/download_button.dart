@@ -1,4 +1,4 @@
-part of app_widgets.button;
+part of 'index.dart';
 
 class DownloadButton extends StatelessWidget {
   final m.Torrent _torrent;
@@ -26,7 +26,7 @@ class DownloadButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.25),
+            color: theme.colorScheme.primary.withAlpha((0.25 * 255).toInt()),
             blurRadius: 12,
             offset: const Offset(0, 6),
             spreadRadius: 1,
@@ -36,8 +36,8 @@ class DownloadButton extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(16.0),
         onTap: () => _download(context),
-        splashColor: Colors.white.withOpacity(0.1),
-        highlightColor: Colors.white.withOpacity(0.05),
+        splashColor: Colors.white.withAlpha((0.1 * 255).toInt()),
+        highlightColor: Colors.white.withAlpha((0.05 * 255).toInt()),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
           child: Row(

@@ -1,9 +1,8 @@
-part of app_widgets;
+part of '../index.dart';
 
 class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
-  const HomeAppbar({Key? key})
-      : preferredSize = const Size.fromHeight(kToolbarHeight),
-        super(key: key);
+  const HomeAppbar({super.key})
+      : preferredSize = const Size.fromHeight(kToolbarHeight);
 
   @override
   final Size preferredSize;
@@ -46,19 +45,19 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
             end: Alignment.bottomRight,
             colors: isDark
                 ? [
-                    Colors.blueGrey[900]!.withOpacity(0.95),
-                    Colors.blueGrey[800]!.withOpacity(0.95),
+                    Colors.blueGrey[900]!.withAlpha((0.95 * 255).toInt()),
+                    Colors.blueGrey[800]!.withAlpha((0.95 * 255).toInt()),
                   ]
                 : [
-                    Colors.white.withOpacity(0.95),
-                    Colors.grey[50]!.withOpacity(0.95),
+                    Colors.white.withAlpha((0.95 * 255).toInt()),
+                    Colors.grey[50]!.withAlpha((0.95 * 255).toInt()),
                   ],
           ),
           boxShadow: [
             BoxShadow(
               color: isDark
-                  ? Colors.black.withOpacity(0.2)
-                  : Colors.grey.withOpacity(0.1),
+                  ? Colors.black.withAlpha((0.2 * 255).toInt())
+                  : Colors.grey.withAlpha((0.1 * 255).toInt()),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),

@@ -1,40 +1,36 @@
-import 'package:equatable/equatable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:hive/hive.dart';
 import 'package:ytsmovies/src/models/cover_image.dart';
 import 'package:ytsmovies/src/models/torrent.dart';
-import 'package:ytsmovies/src/utils/constants.dart';
 
 part 'movie.g.dart';
 part 'movie.freezed.dart';
 
-@Freezed(equal: false, toStringOverride: false)
-class Movie with _$Movie, EquatableMixin, HiveObjectMixin {
-  Movie._();
+@Freezed(equal: true, toStringOverride: true, copyWith: false)
+sealed class Movie with _$Movie {
+  const Movie._();
 
-  @HiveType(typeId: 1, adapterName: 'MovieAdapter')
   @JsonSerializable(fieldRename: FieldRename.snake)
-  factory Movie({
-    @HiveField(0) required int id,
-    @HiveField(1) required String title,
-    @HiveField(2) int? year,
-    @HiveField(3) required String backgroundImage,
-    @HiveField(4) required String url,
-    @HiveField(5) required String imdbCode,
-    @HiveField(6) required String language,
-    @HiveField(7) String? mpaRating,
-    @HiveField(8) required String descriptionFull,
-    @HiveField(9) String? descriptionIntro,
-    @HiveField(10) String? synopsis,
-    @HiveField(11) required int runtime,
-    @HiveField(12) required List<String> genres,
-    @HiveField(13) required List<Torrent> torrents,
-    @HiveField(14) required String smallCoverImage,
-    @HiveField(15) required String mediumCoverImage,
-    @HiveField(16) DateTime? dateUploaded,
-    @HiveField(17) String? largeCoverImage,
-    @HiveField(18) @JsonKey(name: 'yt_trailer_code') String? trailer,
-    @HiveField(19) required double rating,
+  const factory Movie({
+    required int id,
+    required String title,
+    int? year,
+    required String backgroundImage,
+    required String url,
+    required String imdbCode,
+    required String language,
+    String? mpaRating,
+    required String descriptionFull,
+    String? descriptionIntro,
+    String? synopsis,
+    required int runtime,
+    required List<String> genres,
+    required List<Torrent> torrents,
+    required String smallCoverImage,
+    required String mediumCoverImage,
+    String? largeCoverImage,
+    DateTime? dateUploaded,
+    @JsonKey(name: 'yt_trailer_code') String? trailer,
+    required double rating,
   }) = _Movie;
 
   factory Movie.fromJson(Map<String, dynamic> data) => _$MovieFromJson(data);
@@ -48,39 +44,4 @@ class Movie with _$Movie, EquatableMixin, HiveObjectMixin {
   List<String> get quality {
     return torrents.map((e) => e.quality).toSet().toList(growable: false);
   }
-
-  @override
-  List<Object?> get props => [
-        id,
-        title,
-        year,
-        rating,
-        backgroundImage,
-        dateUploaded,
-        url,
-        imdbCode,
-        language,
-        mpaRating,
-        descriptionFull,
-        synopsis,
-        runtime,
-        genres,
-        torrents,
-        coverImage,
-        trailer,
-      ];
-
-  @override
-  bool? get stringify => true;
-
-  @override
-  BoxBase<Movie>? get box => Hive.box(MyBoxs.favouriteBox);
-
-  @override
-  int get key => id;
-}
-
-class MovieArg {
-  final Movie movie;
-  MovieArg(this.movie);
 }

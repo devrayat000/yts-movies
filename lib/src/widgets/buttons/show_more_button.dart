@@ -1,13 +1,13 @@
-part of app_widgets.button;
+part of 'index.dart';
 
 class ShowMoreButton extends StatelessWidget {
   final void Function()? onPressed;
   final double radius;
   const ShowMoreButton({
-    Key? key,
+    super.key,
     required this.onPressed,
     this.radius = 30,
-  }) : super(key: key);
+  });
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -22,13 +22,13 @@ class ShowMoreButton extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.deepPurple.withOpacity(0.8),
-              Colors.indigo.withOpacity(0.8),
+              Colors.deepPurple.withAlpha((0.8 * 255).toInt()),
+              Colors.indigo.withAlpha((0.8 * 255).toInt()),
             ],
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.3),
+              color: Colors.deepPurple.withAlpha((0.3 * 255).toInt()),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),

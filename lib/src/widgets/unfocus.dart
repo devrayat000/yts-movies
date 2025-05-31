@@ -1,8 +1,8 @@
-part of app_widgets;
+part of 'index.dart';
 
 class Unfocus extends StatelessWidget {
   final Widget child;
-  const Unfocus({Key? key, required this.child}) : super(key: key);
+  const Unfocus({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {

@@ -1,4 +1,4 @@
-part of app_bloc.filter;
+part of 'index.dart';
 
 abstract class DropdownCubit extends HydratedCubit<String?> {
   final String? _default;

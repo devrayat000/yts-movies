@@ -1,4 +1,4 @@
-library app_widgets.card;
+library;
 
 import 'package:flutter/cupertino.dart' show CupertinoScrollbar;
 import 'package:flutter/material.dart';

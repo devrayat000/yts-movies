@@ -1,18 +1,16 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class CustomException with EquatableMixin implements Exception {
-  final String message;
-  final StackTrace? stackTrace;
+part 'exceptions.freezed.dart';
 
-  const CustomException(this.message, [this.stackTrace]);
+@Freezed(equal: true, toStringOverride: false, copyWith: false)
+sealed class CustomException with _$CustomException implements Exception {
+  const factory CustomException(String message, [StackTrace? stackTrace]) =
+      _CustomException;
 
   @override
   String toString() {
     return '$runtimeType: $message,\n $stackTrace';
   }
-
-  @override
-  List<Object?> get props => [message, stackTrace];
 
   static String getCustomError(Object error) {
     return error is CustomException ? error.message : error.toString();

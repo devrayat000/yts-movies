@@ -1,4 +1,4 @@
-part of app_widgets.card;
+part of 'index.dart';
 
 class MovieListShimmer extends StatelessWidget {
   final int? count;
@@ -47,7 +47,7 @@ class ShimmerMovieCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16.0),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withAlpha((0.15 * 255).toInt()),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -63,7 +63,7 @@ class ShimmerMovieCard extends StatelessWidget {
       aspectRatio: 0.67,
       child: Container(
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceVariant,
+          color: theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16.0),
         ),
         child: Stack(
@@ -72,7 +72,7 @@ class ShimmerMovieCard extends StatelessWidget {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceVariant,
+                  color: theme.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(16.0),
                 ),
               ),
@@ -90,8 +90,8 @@ class ShimmerMovieCard extends StatelessWidget {
                     height: 16,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color:
-                          theme.colorScheme.onSurfaceVariant.withOpacity(0.3),
+                      color: theme.colorScheme.onSurfaceVariant
+                          .withAlpha((0.3 * 255).toInt()),
                       borderRadius: BorderRadius.circular(4.0),
                     ),
                   ),
@@ -104,7 +104,7 @@ class ShimmerMovieCard extends StatelessWidget {
                         width: 40,
                         decoration: BoxDecoration(
                           color: theme.colorScheme.onSurfaceVariant
-                              .withOpacity(0.3),
+                              .withAlpha((0.3 * 255).toInt()),
                           borderRadius: BorderRadius.circular(4.0),
                         ),
                       ),
@@ -113,7 +113,7 @@ class ShimmerMovieCard extends StatelessWidget {
                         width: 30,
                         decoration: BoxDecoration(
                           color: theme.colorScheme.onSurfaceVariant
-                              .withOpacity(0.3),
+                              .withAlpha((0.3 * 255).toInt()),
                           borderRadius: BorderRadius.circular(4.0),
                         ),
                       ),
@@ -130,7 +130,8 @@ class ShimmerMovieCard extends StatelessWidget {
                 height: 16,
                 width: 32,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.3),
+                  color: theme.colorScheme.onSurfaceVariant
+                      .withAlpha((0.3 * 255).toInt()),
                   borderRadius: BorderRadius.circular(6.0),
                 ),
               ),
@@ -151,7 +152,7 @@ class ShimmerMovieCard extends StatelessWidget {
             width: 80,
             height: 120,
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceVariant,
+              color: theme.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12.0),
             ),
           ),
@@ -167,7 +168,7 @@ class ShimmerMovieCard extends StatelessWidget {
                   height: 20,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant,
+                    color: theme.colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(4.0),
                   ),
                 ),
@@ -177,7 +178,7 @@ class ShimmerMovieCard extends StatelessWidget {
                   height: 16,
                   width: 150,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant,
+                    color: theme.colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(4.0),
                   ),
                 ),
@@ -189,7 +190,7 @@ class ShimmerMovieCard extends StatelessWidget {
                       height: 16,
                       width: 60,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceVariant,
+                        color: theme.colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(4.0),
                       ),
                     ),
@@ -198,7 +199,7 @@ class ShimmerMovieCard extends StatelessWidget {
                       height: 16,
                       width: 40,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceVariant,
+                        color: theme.colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(4.0),
                       ),
                     ),
