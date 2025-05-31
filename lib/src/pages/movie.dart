@@ -41,10 +41,9 @@ class MoviePage extends StatelessWidget {
           error: error!,
           onRetry: () {
             // Trigger a rebuild by setting state
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => MoviePage(id: id),
-              ),
+            context.pushReplacementNamed(
+              'details',
+              pathParameters: {'id': id.toString()},
             );
           },
         );
@@ -56,10 +55,10 @@ class MoviePage extends StatelessWidget {
           return ErrorDisplayWidget(
             error: CustomException('Movie not found'),
             onRetry: () {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => MoviePage(id: id),
-                ),
+              // Trigger a rebuild by setting state
+              context.pushReplacementNamed(
+                'details',
+                pathParameters: {'id': id.toString()},
               );
             },
           );

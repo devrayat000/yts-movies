@@ -22,10 +22,9 @@ extension RouterExtension on YTSApp {
 
   GoRouter get router => GoRouter(
         navigatorKey: _rootNavigatorKey,
-        initialLocation: "/splash",
         routes: [
           GoRoute(
-            path: '/splash',
+            path: '/',
             name: "splash",
             builder: (context, state) => const InitializationSplashScreen(),
           ),
@@ -52,7 +51,7 @@ extension RouterExtension on YTSApp {
             ),
             routes: [
               GoRoute(
-                path: '/',
+                path: "/home",
                 name: "home",
                 builder: (context, state) => const HomePage(),
                 routes: [

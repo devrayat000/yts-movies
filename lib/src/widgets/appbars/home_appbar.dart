@@ -8,7 +8,7 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
   final Size preferredSize;
   void _handleSearchTap(BuildContext context) async {
     try {
-      await context.pushNamed("search");
+      context.pushNamed("search");
     } catch (error) {
       if (context.mounted) {
         // Use ScaffoldMessenger for showing errors in appbar context
@@ -81,7 +81,7 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
         IconButton(
           onPressed: () async {
             try {
-              await context.pushNamed("favourites");
+              context.pushNamed("favourites");
             } catch (e, s) {
               log(e.toString(), error: e, stackTrace: s);
             }
@@ -97,7 +97,7 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
         IconButton(
           onPressed: () async {
             try {
-              await context.pushNamed("app-info");
+              context.pushNamed("app-info");
             } catch (e, s) {
               log(e.toString(), error: e, stackTrace: s);
             }

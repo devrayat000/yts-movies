@@ -92,7 +92,7 @@ class _InitializationSplashScreenState
 
       // Navigate to home after successful initialization
       if (mounted) {
-        context.go('/');
+        context.pushReplacementNamed('home');
       }
     } catch (e, s) {
       log(e.toString(), error: e, stackTrace: s);
@@ -124,6 +124,7 @@ class _InitializationSplashScreenState
         isDark ? const Color(0xFF0F172A) : const Color(0xFFFAFAFA);
 
     return Scaffold(
+      restorationId: 'initialization_splash_screen',
       backgroundColor: backgroundColor,
       body: Container(
         width: double.infinity,

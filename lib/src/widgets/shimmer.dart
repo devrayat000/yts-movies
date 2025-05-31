@@ -68,7 +68,6 @@ class ShimmerState extends State<Shimmer>
   }
 }
 
-// TODO: Solve the issue of not being able to use ShimmerLoading
 class ShimmerLoading extends StatefulWidget {
   const ShimmerLoading({
     super.key,
@@ -131,17 +130,20 @@ class ShimmerLoadingState extends State<ShimmerLoading> {
       descendant: context.findRenderObject() as RenderBox,
     );
 
-    return ShaderMask(
-      blendMode: BlendMode.srcATop,
-      shaderCallback: (bounds) => gradient.createShader(
-        Rect.fromLTWH(
-          -offsetWithinShimmer.dx,
-          -offsetWithinShimmer.dy,
-          shimmerSize.width,
-          shimmerSize.height,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16.0),
+      child: ShaderMask(
+        blendMode: BlendMode.srcATop,
+        shaderCallback: (bounds) => gradient.createShader(
+          Rect.fromLTWH(
+            -offsetWithinShimmer.dx,
+            -offsetWithinShimmer.dy,
+            shimmerSize.width,
+            shimmerSize.height,
+          ),
         ),
+        child: widget.child,
       ),
-      child: widget.child,
     );
   }
 }
