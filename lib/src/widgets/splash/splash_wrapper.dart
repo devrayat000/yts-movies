@@ -1,18 +1,118 @@
+import 'dart:async';
+import 'dart:developer';
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
+
+import 'package:ytsmovies/src/api/client.dart';
+import 'package:ytsmovies/src/api/movies.dart';
+import 'package:ytsmovies/src/models/index.dart';
+import 'package:ytsmovies/src/utils/index.dart';
+import 'package:ytsmovies/src/services/connectivity_service.dart';
+
+/// App initialization states
+enum AppInitState {
+  initializing,
+  ready,
+  error,
+}
+
+/// Global variable to store the initialized client
+MoviesClient? _globalClient;
+
+/// Get the initialized client
+MoviesClient? get globalClient => _globalClient;
 
 /// Custom splash screen for app initialization
-class InitializationSplashScreen extends StatelessWidget {
-  final String currentStep;
-  final VoidCallback? onRetry;
-  final String? errorMessage;
+class InitializationSplashScreen extends StatefulWidget {
+  const InitializationSplashScreen({super.key});
 
-  const InitializationSplashScreen({
-    super.key,
-    required this.currentStep,
-    this.onRetry,
-    this.errorMessage,
-  });
+  @override
+  State<InitializationSplashScreen> createState() =>
+      _InitializationSplashScreenState();
+}
+
+class _InitializationSplashScreenState
+    extends State<InitializationSplashScreen> {
+  String? _errorMessage;
+  String _currentStep = 'Starting initialization...';
+
+  @override
+  void initState() {
+    super.initState();
+    // Start initialization when splash screen is first loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initialize();
+    });
+  }
+
+  Future<void> _initialize() async {
+    try {
+      Timeline.startSync('init');
+
+      setState(() {
+        _errorMessage = null;
+      });
+
+      await _updateStep('Initializing Flutter engine...');
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      await _updateStep('Setting up system UI...');
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarBrightness: Brightness.dark,
+        ),
+      );
+      await Future.delayed(const Duration(milliseconds: 200));
+
+      await _updateStep('Opening data stores...');
+      await Future.wait([
+        Hive.openBox<Movie>(MyBoxs.favouriteBox),
+        Hive.openBox<String>(MyBoxs.searchHistoryBox),
+      ]);
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      await _updateStep('Checking network connectivity...');
+      await ConnectivityService.instance.initialize();
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      await _updateStep('Initializing API client...');
+      final client = await initClient();
+      BlocProvider.of<MoviesClientCubit>(context).setClient(client);
+      await Future.delayed(const Duration(milliseconds: 300));
+      Timeline.finishSync();
+
+      await _updateStep('Finalizing setup...');
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Navigate to home after successful initialization
+      if (mounted) {
+        context.go('/');
+      }
+    } catch (e, s) {
+      log(e.toString(), error: e, stackTrace: s);
+      setState(() {
+        _errorMessage = e.toString();
+      });
+    }
+  }
+
+  Future<void> _updateStep(String step) async {
+    if (mounted) {
+      setState(() {
+        _currentStep = step;
+      });
+    }
+  }
+
+  void _retry() {
+    _initialize();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +146,7 @@ class InitializationSplashScreen extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: errorMessage != null
+          child: _errorMessage != null
               ? _buildErrorView(context, colorScheme)
               : _buildLoadingView(context, colorScheme),
         ),
@@ -121,24 +221,22 @@ class InitializationSplashScreen extends StatelessWidget {
                 },
                 onEnd: () {
                   // Restart animation for continuous effect
-                  if (errorMessage == null) {
+                  if (_errorMessage == null && mounted) {
                     Future.delayed(const Duration(milliseconds: 100), () {
-                      if (context.mounted) {
-                        (context as Element).markNeedsBuild();
+                      if (mounted) {
+                        setState(() {});
                       }
                     });
                   }
                 },
               ),
 
-              const SizedBox(height: 20),
-
-              // Current step text
+              const SizedBox(height: 20), // Current step text
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 child: Text(
-                  currentStep,
-                  key: ValueKey(currentStep),
+                  _currentStep,
+                  key: ValueKey(_currentStep),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurface
                             .withAlpha((0.7 * 255).toInt()),
@@ -180,13 +278,11 @@ class InitializationSplashScreen extends StatelessWidget {
               ),
         ),
 
-        const SizedBox(height: 20),
-
-        // Error Message
+        const SizedBox(height: 20), // Error Message
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40),
           child: Text(
-            errorMessage ?? 'An unexpected error occurred',
+            _errorMessage ?? 'An unexpected error occurred',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurface.withAlpha((0.7 * 255).toInt()),
                 ),
@@ -194,20 +290,17 @@ class InitializationSplashScreen extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 40),
-
-        // Retry Button
-        if (onRetry != null)
-          ElevatedButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colorScheme.primary,
-              foregroundColor: colorScheme.onPrimary,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-            ),
+        const SizedBox(height: 40), // Retry Button
+        ElevatedButton.icon(
+          onPressed: _retry,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Retry'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: colorScheme.primary,
+            foregroundColor: colorScheme.onPrimary,
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
           ),
+        ),
 
         const Spacer(),
       ],

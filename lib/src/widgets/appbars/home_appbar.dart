@@ -27,18 +27,13 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AppBar(
-      title: Row(
-        children: [
-          Image.asset(
-            'images/logo-YTS.png',
-            height: 32,
-          ),
-        ],
+      title: Image.asset(
+        'images/logo-YTS.png',
+        height: 32,
       ),
       centerTitle: false, // Align logo to the left
       elevation: 0,
-      backgroundColor: Colors.transparent,
-      flexibleSpace: Container(
+      flexibleSpace: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,

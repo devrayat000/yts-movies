@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:dio/dio.dart' hide Headers;
 import 'package:flutter/foundation.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/index.dart' hide Query;
@@ -43,4 +44,27 @@ abstract class MoviesClient {
   Future<MovieSuggestionResponse> getMovieSuggestions(
       @Query('movie_id') String id,
       {@CancelRequest() CancelToken? token});
+}
+
+class MoviesClientCubit extends Cubit<MoviesClient> {
+  MoviesClientCubit() : super(MoviesClient(Dio())) {
+    if (kDebugMode) {
+      debugPrint('MoviesClientCubit initialized');
+    }
+  }
+
+  void setClient(MoviesClient client) {
+    if (kDebugMode) {
+      debugPrint('Setting new MoviesClient');
+    }
+    emit(client);
+  }
+
+  @override
+  Future<void> close() {
+    if (kDebugMode) {
+      debugPrint('MoviesClientCubit closed');
+    }
+    return super.close();
+  }
 }

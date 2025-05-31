@@ -68,7 +68,7 @@ class HomePageState extends State<HomePage> {
       body: ScrollConfiguration(
         behavior: const MaterialScrollBehavior(),
         child: HeroMode(
-          enabled: true,
+          enabled: false,
           child: ListView(
             padding: const EdgeInsets.all(12.0),
             restorationId: "home-screen-listview",

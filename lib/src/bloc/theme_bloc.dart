@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:ytsmovies/src/theme/index.dart';
@@ -7,9 +9,9 @@ class ThemeCubit extends HydratedCubit<ThemeData> {
   ThemeCubit({required this.theme}) : super(theme.light);
 
   void sync(Brightness brightness) {
-    if (brightness == Brightness.dark) {
-      emit(theme.dark);
-    }
+    // if (brightness == Brightness.dark) {
+    //   emit(theme.dark);
+    // }
   }
 
   void toggle() {
@@ -18,12 +20,14 @@ class ThemeCubit extends HydratedCubit<ThemeData> {
 
   @override
   ThemeData? fromJson(Map<String, dynamic> json) {
+    log('ThemeCubit.fromJson: $json');
     final isDark = json['value'] as bool;
     return isDark ? theme.dark : theme.light;
   }
 
   @override
   Map<String, dynamic>? toJson(ThemeData state) {
+    log('ThemeCubit.toJson: ${state.brightness}');
     final json = state.brightness == Brightness.dark ? true : false;
     return {'value': json};
   }

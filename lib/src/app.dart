@@ -4,26 +4,21 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/router.dart';
-import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/widgets.dart';
 
 class YTSApp extends StatelessWidget {
   const YTSApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Unfocus(
-      child: PageStorage(
-        bucket: MyGlobals.bucket,
-        child: MaterialApp.router(
-          title: 'YTS Movies',
-          debugShowCheckedModeBanner: false,
-          routerConfig: router,
-          scrollBehavior: const CupertinoScrollBehavior(),
-          builder: (context, widget) => ConnectivityBanner(
-            showWhenConnected: true,
-            child: _AppShell(child: widget!),
-          ),
-        ),
+    return MaterialApp.router(
+      title: 'YTS Movies',
+      debugShowCheckedModeBanner: false,
+      routerConfig: router,
+      scrollBehavior: const CupertinoScrollBehavior(),
+      builder: (context, widget) => ConnectivityBanner(
+        showWhenConnected: true,
+        child: _AppShell(child: widget!),
       ),
     );
   }
@@ -53,8 +48,8 @@ class _ThemeProvider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = MediaQuery.platformBrightnessOf(context);
-    context.read<ThemeCubit>().sync(brightness);
+    // final brightness = MediaQuery.platformBrightnessOf(context);
+    // context.read<ThemeCubit>().sync(brightness);
 
     return BlocBuilder<ThemeCubit, ThemeData>(
       builder: (context, theme) => AnimatedTheme(
