@@ -23,16 +23,16 @@ extension RouterExtension on YTSApp {
   GoRouter get router => GoRouter(
         navigatorKey: _rootNavigatorKey,
         initialLocation: "/splash",
-        redirect: (context, state) {
-          final isOnSplash = state.uri.path == '/splash';
+        // redirect: (context, state) {
+        //   final isOnSplash = state.uri.path == '/splash';
 
-          // If ready and on splash, redirect to home
-          if (isOnSplash) {
-            return '/';
-          }
+        //   // If ready and on splash, redirect to home
+        //   if (isOnSplash) {
+        //     return '/';
+        //   }
 
-          return null; // No redirect needed
-        },
+        //   return null; // No redirect needed
+        // },
         routes: [
           GoRoute(
             path: '/splash',
