@@ -6,7 +6,6 @@ import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/router.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/widgets.dart';
-import 'package:ytsmovies/src/widgets/connectivity_widgets.dart';
 
 class YTSApp extends StatelessWidget {
   const YTSApp({super.key});

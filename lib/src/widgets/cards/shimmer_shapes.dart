@@ -1,4 +1,4 @@
-part of app_widgets.card;
+part of 'index.dart';
 
 class ShimmerShape extends StatelessWidget {
   final _ShimmerShapes _shape;

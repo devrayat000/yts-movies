@@ -1,4 +1,4 @@
-part of app_widgets;
+part of 'index.dart';
 
 class MyFutureBuilder<T> extends StatelessWidget {
   final Future<T>? future;

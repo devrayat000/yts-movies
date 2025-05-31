@@ -2,13 +2,12 @@ import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
 import 'package:ytsmovies/src/bloc/filter/index.dart';
 import '../widgets/index.dart' hide SearchSuggestions;
 import '../widgets/search/search_suggestions.dart';
-import '../widgets/search/search_results.dart';
 import '../models/index.dart';
 import '../utils/index.dart';
 import '../api/movies.dart';
@@ -431,7 +430,8 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                     color: colorScheme.surface,
                     border: Border(
                       bottom: BorderSide(
-                        color: colorScheme.outline.withOpacity(0.2),
+                        color:
+                            colorScheme.outline.withAlpha((0.2 * 255).toInt()),
                       ),
                     ),
                   ),

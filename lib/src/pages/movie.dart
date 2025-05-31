@@ -402,7 +402,8 @@ class _Screen extends StatelessWidget {
                                       Shadow(
                                         offset: const Offset(1, 1),
                                         blurRadius: 3,
-                                        color: Colors.black.withOpacity(0.7),
+                                        color: Colors.black
+                                            .withAlpha((0.7 * 255).toInt()),
                                       ),
                                     ],
                                   ),
@@ -410,7 +411,7 @@ class _Screen extends StatelessWidget {
                               Material(
                                 color: Theme.of(context)
                                     .colorScheme
-                                    .surfaceVariant,
+                                    .surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(20.0),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
@@ -449,12 +450,10 @@ class _Screen extends StatelessWidget {
                                 spacing: 12.0,
                                 runSpacing: 4.0,
                                 children: [
-                                  ..._movie.torrents
-                                      .map((t) => DownloadButton(
-                                            torrent: t,
-                                            title: _movie.title,
-                                          ))
-                                      .toList(),
+                                  ..._movie.torrents.map((t) => DownloadButton(
+                                        torrent: t,
+                                        title: _movie.title,
+                                      )),
                                 ],
                               ),
                               _space(spacing: 6.0),
@@ -465,7 +464,7 @@ class _Screen extends StatelessWidget {
                                   boxShadow: [
                                     BoxShadow(
                                       color: theme.colorScheme.primary
-                                          .withOpacity(0.25),
+                                          .withAlpha((0.25 * 255).toInt()),
                                       blurRadius: 12,
                                       offset: const Offset(0, 6),
                                       spreadRadius: 1,
@@ -512,9 +511,10 @@ class _Screen extends StatelessWidget {
                                       }
                                     }
                                   },
-                                  splashColor: Colors.white.withOpacity(0.1),
-                                  highlightColor:
-                                      Colors.white.withOpacity(0.05),
+                                  splashColor: Colors.white
+                                      .withAlpha((0.1 * 255).toInt()),
+                                  highlightColor: Colors.white
+                                      .withAlpha((0.05 * 255).toInt()),
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 8.0, horizontal: 12.0),
@@ -546,7 +546,7 @@ class _Screen extends StatelessWidget {
                                 Material(
                                   color: Theme.of(context)
                                       .colorScheme
-                                      .surfaceVariant,
+                                      .surfaceContainerHighest,
                                   borderRadius: BorderRadius.circular(20.0),
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(

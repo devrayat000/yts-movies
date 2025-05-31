@@ -1,4 +1,4 @@
-part of app_widgets.card;
+part of 'index.dart';
 
 class IntroItem extends StatelessWidget {
   final void Function()? onAction;
@@ -28,12 +28,12 @@ class IntroItem extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: isDark
               ? [
-                  Colors.blueGrey[800]!.withOpacity(0.3),
-                  Colors.blueGrey[900]!.withOpacity(0.4),
+                  Colors.blueGrey[800]!.withAlpha((0.3 * 255).toInt()),
+                  Colors.blueGrey[900]!.withAlpha((0.4 * 255).toInt()),
                 ]
               : [
-                  Colors.white.withOpacity(0.7),
-                  Colors.grey[50]!.withOpacity(0.8),
+                  Colors.white.withAlpha((0.7 * 255).toInt()),
+                  Colors.grey[50]!.withAlpha((0.8 * 255).toInt()),
                 ],
         ),
       ),
@@ -53,8 +53,8 @@ class IntroItem extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Colors.deepPurple.withOpacity(0.1),
-                      Colors.indigo.withOpacity(0.1),
+                      Colors.deepPurple.withAlpha((0.1 * 255).toInt()),
+                      Colors.indigo.withAlpha((0.1 * 255).toInt()),
                     ],
                   ),
                   borderRadius: const BorderRadius.only(
@@ -79,8 +79,8 @@ class IntroItem extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Colors.deepPurple.withOpacity(0.8),
-                            Colors.indigo.withOpacity(0.8),
+                            Colors.deepPurple.withAlpha((0.8 * 255).toInt()),
+                            Colors.indigo.withAlpha((0.8 * 255).toInt()),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(10),

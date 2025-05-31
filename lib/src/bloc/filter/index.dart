@@ -1,23 +1,35 @@
-library app_bloc.filter;
+library;
 
 import 'dart:developer';
 
-import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:ytsmovies/src/utils/enums.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:ytsmovies/src/utils/lists.dart' as list;
 
 part './rating.dart';
 part './dropdown.dart';
 part './order.dart';
 
-class Filter extends Equatable {
-  final order = OrderCubit();
-  final sort = SortCubit();
-  final genre = GenreCubit();
-  final quality = QualityCubit();
-  final rating = RatingCubit();
+part 'index.freezed.dart';
+
+@Freezed(equal: true, toStringOverride: true, copyWith: false)
+sealed class Filter with _$Filter {
+  @override
+  final OrderCubit order = OrderCubit();
+  @override
+  final SortCubit sort = SortCubit();
+  @override
+  final GenreCubit genre = GenreCubit();
+  @override
+  final QualityCubit quality = QualityCubit();
+  @override
+  final RatingCubit rating = RatingCubit();
+
+  Filter._();
+
+  factory Filter() = _Filter;
 
   void reset() {
     log("Resetting filter state");
@@ -40,16 +52,4 @@ class Filter extends Equatable {
     debugPrint('mapping filter values');
     return params..removeWhere((_, value) => value == null || value == '0');
   }
-
-  @override
-  List<Object?> get props => [
-        order.state,
-        sort.state,
-        genre.state,
-        quality.state,
-        rating.state,
-      ];
-
-  @override
-  bool get stringify => true;
 }
