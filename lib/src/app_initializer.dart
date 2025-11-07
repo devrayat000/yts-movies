@@ -4,14 +4,73 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ytsmovies/src/api/movies.dart';
 import 'package:ytsmovies/src/app.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
+import 'package:ytsmovies/src/bloc/download_manager/index.dart';
+import 'package:ytsmovies/src/services/torrent_download_service.dart';
 import 'package:ytsmovies/src/theme/index.dart';
 
 /// Main app widget that handles initialization and provides dependencies
-class YTSAppInitializer extends StatelessWidget {
+class YTSAppInitializer extends StatefulWidget {
   const YTSAppInitializer({super.key});
+
+  @override
+  State<YTSAppInitializer> createState() => _YTSAppInitializerState();
+}
+
+class _YTSAppInitializerState extends State<YTSAppInitializer> {
+  TorrentDownloadService? _downloadService;
+  bool _isInitializing = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeServices();
+  }
+
+  Future<void> _initializeServices() async {
+    try {
+      // Initialize torrent download service
+      _downloadService = await TorrentDownloadService.initialize();
+      setState(() {
+        _isInitializing = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isInitializing = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _downloadService?.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Always provide the theme cubit since storage is now initialized
+    if (_isInitializing) {
+      return const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Text('Initialization error: $_error'),
+          ),
+        ),
+      );
+    }
+
+    // Always provide the theme cubit and download manager since storage is now initialized
     return MultiBlocProvider(
       providers: [
         BlocProvider<ThemeCubit>(
@@ -19,7 +78,11 @@ class YTSAppInitializer extends StatelessWidget {
         ),
         BlocProvider(
           create: (_) => MoviesClientCubit(),
-        )
+        ),
+        BlocProvider<DownloadManagerBloc>(
+          create: (_) => DownloadManagerBloc(_downloadService!)
+            ..add(DownloadManagerStarted()),
+        ),
       ],
       child: const YTSApp(),
     );

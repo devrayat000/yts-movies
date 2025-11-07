@@ -452,6 +452,7 @@ class _Screen extends StatelessWidget {
                                   ..._movie.torrents.map((t) => DownloadButton(
                                         torrent: t,
                                         title: _movie.title,
+                                        movie: _movie,
                                       )),
                                 ],
                               ),

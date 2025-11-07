@@ -77,7 +77,8 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
           ),
           tooltip: 'Toggle theme',
           iconSize: 24,
-        ), // Favourites action
+        ),
+        // Favourites action
         IconButton(
           onPressed: () async {
             try {
@@ -91,6 +92,22 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
             color: Colors.pinkAccent,
           ),
           tooltip: 'Favourites',
+          iconSize: 24,
+        ),
+        // Downloads action
+        IconButton(
+          onPressed: () async {
+            try {
+              context.pushNamed("downloads");
+            } catch (e, s) {
+              log(e.toString(), error: e, stackTrace: s);
+            }
+          },
+          icon: const Icon(
+            Icons.download_outlined,
+            color: Colors.blueAccent,
+          ),
+          tooltip: 'Downloads',
           iconSize: 24,
         ),
         // App info action

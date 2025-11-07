@@ -3,12 +3,15 @@ part of 'index.dart';
 class DownloadButton extends StatelessWidget {
   final m.Torrent _torrent;
   final String title;
+  final Movie? movie;
 
   const DownloadButton({
     super.key,
     required this.title,
     required m.Torrent torrent,
+    this.movie,
   }) : _torrent = torrent;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -74,6 +77,105 @@ class DownloadButton extends StatelessWidget {
   }
 
   void _download(BuildContext context) async {
+    // Show dialog to choose download method
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Download Method'),
+        content: const Text('How would you like to download this torrent?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop('internal'),
+            child: const Text('Download in App'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop('external'),
+            child: const Text('Open with Torrent Client'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == null || !context.mounted) return;
+
+    if (result == 'internal') {
+      await _downloadInternal(context);
+    } else {
+      await _downloadExternal(context);
+    }
+  }
+
+  Future<void> _downloadInternal(BuildContext context) async {
+    try {
+      if (movie == null) {
+        throw Exception('Movie information not available');
+      }
+
+      final taskId = '${movie!.id}_${_torrent.hash}';
+
+      // Check if already downloading
+      final bloc = context.read<DownloadManagerBloc>();
+      if (bloc.state.downloads.containsKey(taskId)) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('This movie is already in your downloads'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          // Navigate to downloads page
+          context.pushNamed('downloads');
+        }
+        return;
+      }
+
+      // Create download task
+      final task = DownloadTask(
+        taskId: taskId,
+        movieId: movie!.id,
+        movieTitle: movie!.title,
+        torrentHash: _torrent.hash,
+        magnetUri: _torrent.magnet(movie!.title).toString(),
+        quality: _torrent.quality,
+        type: _torrent.type,
+        size: _torrent.size,
+        coverImage: movie!.mediumCoverImage,
+      );
+
+      // Add to download manager
+      bloc.add(DownloadManagerAddDownload(
+        task: task,
+        movie: movie!,
+        torrent: _torrent,
+      ));
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Download started'),
+            action: SnackBarAction(
+              label: 'View',
+              onPressed: () {
+                context.pushNamed('downloads');
+              },
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e, s) {
+      log(e.toString(), error: e, stackTrace: s);
+      if (context.mounted) {
+        ErrorNotificationService.instance.showError(
+          context,
+          e,
+          customMessage: 'Failed to start download',
+        );
+      }
+    }
+  }
+
+  Future<void> _downloadExternal(BuildContext context) async {
     try {
       var downloadUri = _torrent.magnet(title);
       if (!(await canLaunchUrl(downloadUri))) {

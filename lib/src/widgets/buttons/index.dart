@@ -8,8 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ytsmovies/src/api/favourites.dart';
 import 'package:ytsmovies/src/services/error_notification_service.dart';
+import 'package:ytsmovies/src/bloc/download_manager/index.dart';
+import 'package:ytsmovies/src/models/download_task.dart';
 
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/utils/index.dart';

@@ -13,6 +13,7 @@ import 'package:ytsmovies/src/pages/others.dart';
 import 'package:ytsmovies/src/pages/favourites.dart';
 import 'package:ytsmovies/src/pages/app_info.dart';
 import 'package:ytsmovies/src/pages/search.dart';
+import 'package:ytsmovies/src/pages/downloads.dart';
 import 'package:ytsmovies/src/widgets.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 
@@ -82,6 +83,11 @@ extension RouterExtension on YTSApp {
                     path: 'favourites',
                     name: "favourites",
                     builder: (context, state) => const FavouritesPage(),
+                  ),
+                  GoRoute(
+                    path: 'downloads',
+                    name: "downloads",
+                    builder: (context, state) => const DownloadsPage(),
                   ),
                   GoRoute(
                     path: 'app-info',
