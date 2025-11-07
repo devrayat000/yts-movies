@@ -11,11 +11,12 @@ Future<MoviesClient> initClient() async {
   final cacheOptions = CacheOptions(
     store: HiveCacheStore(tempDir.path),
     policy: CachePolicy.request,
-    maxStale: const Duration(hours: 1),
+    maxStale: const Duration(days: 30),
     priority: CachePriority.normal,
     keyBuilder: CacheOptions.defaultCacheKeyBuilder,
     allowPostMethod: false,
     hitCacheOnNetworkFailure: true,
+    hitCacheOnErrorCodes: const [500],
   );
   final dio = Dio()
     ..interceptors.addAll([
