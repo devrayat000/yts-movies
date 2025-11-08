@@ -51,10 +51,17 @@ class TorrentDownloadService {
         _downloadPath = customPath;
         log('Using custom download path: $_downloadPath');
       } else {
-        // Use default app documents directory
-        final appDir = await getApplicationDocumentsDirectory();
-        _downloadPath = '${appDir.path}/downloads';
-        log('Using default download path: $_downloadPath');
+        // Use default downloads directory
+        final downloadsDir = await getDownloadsDirectory();
+        if (downloadsDir != null) {
+          _downloadPath = '${downloadsDir.path}/Movies';
+          log('Using default download path: $_downloadPath');
+        } else {
+          // Fallback to app documents directory if downloads not available
+          final appDir = await getApplicationDocumentsDirectory();
+          _downloadPath = '${appDir.path}/downloads';
+          log('Downloads directory not available, using fallback: $_downloadPath');
+        }
       }
 
       final appDir = await getApplicationDocumentsDirectory();
@@ -163,8 +170,17 @@ class TorrentDownloadService {
   /// Reset to default download path
   Future<void> resetToDefaultPath() async {
     try {
-      final appDir = await getApplicationDocumentsDirectory();
-      final defaultPath = '${appDir.path}/downloads';
+      // Use default downloads directory
+      final downloadsDir = await getDownloadsDirectory();
+      String defaultPath;
+
+      if (downloadsDir != null) {
+        defaultPath = '${downloadsDir.path}/Movies';
+      } else {
+        // Fallback to app documents directory if downloads not available
+        final appDir = await getApplicationDocumentsDirectory();
+        defaultPath = '${appDir.path}/downloads';
+      }
 
       await PreferencesService.instance.setCustomDownloadPath(null);
       _downloadPath = defaultPath;
