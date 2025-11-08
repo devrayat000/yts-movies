@@ -117,6 +117,7 @@ sealed class DownloadTask with _$DownloadTask {
 
   /// Format bytes to human readable format
   static String _formatBytes(int bytes) {
+    bytes = bytes * 1000;
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(2)} KB';
     if (bytes < 1024 * 1024 * 1024) {
