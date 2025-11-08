@@ -80,19 +80,9 @@ class DownloadButton extends StatelessWidget {
     // Show dialog to choose download method
     final result = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Download Method'),
-        content: const Text('How would you like to download this torrent?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop('internal'),
-            child: const Text('Download in App'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop('external'),
-            child: const Text('Open with Torrent Client'),
-          ),
-        ],
+      builder: (dialogContext) => _DownloadMethodDialog(
+        torrent: _torrent,
+        movieTitle: title,
       ),
     );
 
@@ -201,5 +191,143 @@ class DownloadButton extends StatelessWidget {
         );
       }
     }
+  }
+}
+
+class _DownloadMethodDialog extends StatelessWidget {
+  final m.Torrent torrent;
+  final String movieTitle;
+
+  const _DownloadMethodDialog({
+    required this.torrent,
+    required this.movieTitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final downloadPath = TorrentDownloadService.instance.downloadPath;
+    final customPath = PreferencesService.instance.customDownloadPath;
+    final isUsingCustomPath = customPath != null;
+
+    return AlertDialog(
+      title: const Text('Download Method'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('How would you like to download this torrent?'),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.folder,
+                      size: 16,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Download Location',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (isUsingCustomPath) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                        child: const Text(
+                          'Custom',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  downloadPath,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontFamily: 'monospace',
+                    fontSize: 10,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const DownloadSettingsPage(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.settings, size: 14),
+                  label: const Text('Change Location'),
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Quality: ${torrent.quality}${torrent.type != null ? " ${torrent.type!.toUpperCase()}" : ""}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          Text(
+            'Size: ${torrent.size}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        TextButton.icon(
+          onPressed: () => Navigator.of(context).pop('external'),
+          icon: const Icon(Icons.open_in_new),
+          label: const Text('Open External'),
+        ),
+        FilledButton.icon(
+          onPressed: () => Navigator.of(context).pop('internal'),
+          icon: const Icon(Icons.download),
+          label: const Text('Download'),
+        ),
+      ],
+    );
   }
 }

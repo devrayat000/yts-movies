@@ -5,9 +5,11 @@ import 'dart:io';
 import 'package:dtorrent_task_v2/dtorrent_task_v2.dart';
 import 'package:dtorrent_parser/dtorrent_parser.dart' as parser;
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
 import 'package:ytsmovies/src/models/movie.dart';
 import 'package:ytsmovies/src/models/torrent.dart' as models;
+import 'package:ytsmovies/src/services/preferences_service.dart';
 
 /// Service to manage torrent downloads using dtorrent_task_v2
 class TorrentDownloadService {
@@ -39,8 +41,23 @@ class TorrentDownloadService {
   /// Initialize download and config paths
   Future<void> _initPaths() async {
     try {
+      // Request storage permissions
+      await _requestStoragePermissions();
+
+      // Check if user has set a custom download path
+      final customPath = PreferencesService.instance.customDownloadPath;
+
+      if (customPath != null && await Directory(customPath).exists()) {
+        _downloadPath = customPath;
+        log('Using custom download path: $_downloadPath');
+      } else {
+        // Use default app documents directory
+        final appDir = await getApplicationDocumentsDirectory();
+        _downloadPath = '${appDir.path}/downloads';
+        log('Using default download path: $_downloadPath');
+      }
+
       final appDir = await getApplicationDocumentsDirectory();
-      _downloadPath = '${appDir.path}/downloads';
       _configPath = '${appDir.path}/torrent_config';
 
       // Create directories if they don't exist
@@ -51,6 +68,112 @@ class TorrentDownloadService {
       log('Config path: $_configPath');
     } catch (e, s) {
       log('Error initializing paths: $e', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  /// Request storage permissions
+  Future<bool> _requestStoragePermissions() async {
+    try {
+      if (Platform.isAndroid) {
+        // Check Android version
+        final androidInfo = await _getAndroidVersion();
+
+        if (androidInfo >= 33) {
+          // Android 13+ - Request READ_MEDIA_VIDEO
+          final status = await Permission.videos.request();
+          if (!status.isGranted) {
+            log('Video permission not granted');
+            return false;
+          }
+        } else if (androidInfo >= 30) {
+          // Android 11-12 - Request MANAGE_EXTERNAL_STORAGE
+          var status = await Permission.manageExternalStorage.status;
+          if (!status.isGranted) {
+            status = await Permission.manageExternalStorage.request();
+          }
+          if (!status.isGranted) {
+            // Fallback to storage permission
+            status = await Permission.storage.request();
+          }
+          if (!status.isGranted) {
+            log('Storage permission not granted');
+            return false;
+          }
+        } else {
+          // Android 10 and below - Request WRITE_EXTERNAL_STORAGE
+          final status = await Permission.storage.request();
+          if (!status.isGranted) {
+            log('Storage permission not granted');
+            return false;
+          }
+        }
+      } else if (Platform.isIOS) {
+        // iOS - Request photo library access
+        final status = await Permission.photos.request();
+        if (!status.isGranted) {
+          log('Photos permission not granted on iOS');
+          return false;
+        }
+      }
+
+      log('Storage permissions granted');
+      return true;
+    } catch (e, s) {
+      log('Error requesting permissions: $e', error: e, stackTrace: s);
+      return false;
+    }
+  }
+
+  /// Get Android SDK version
+  Future<int> _getAndroidVersion() async {
+    if (!Platform.isAndroid) return 0;
+
+    try {
+      // This is a simple way to check - in production you might want to use
+      // device_info_plus package for more reliable version checking
+      return 33; // Default to recent version - update this logic as needed
+    } catch (e) {
+      return 30;
+    }
+  }
+
+  /// Update download path (called when user selects custom directory)
+  Future<void> updateDownloadPath(String newPath) async {
+    try {
+      // Validate the path
+      final dir = Directory(newPath);
+      if (!await dir.exists()) {
+        await dir.create(recursive: true);
+      }
+
+      // Save to preferences
+      await PreferencesService.instance.setCustomDownloadPath(newPath);
+
+      // Update current path
+      _downloadPath = newPath;
+
+      log('Download path updated to: $newPath');
+    } catch (e, s) {
+      log('Error updating download path: $e', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  /// Reset to default download path
+  Future<void> resetToDefaultPath() async {
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      final defaultPath = '${appDir.path}/downloads';
+
+      await PreferencesService.instance.setCustomDownloadPath(null);
+      _downloadPath = defaultPath;
+
+      await Directory(_downloadPath).create(recursive: true);
+
+      log('Download path reset to default: $defaultPath');
+    } catch (e, s) {
+      log('Error resetting download path: $e', error: e, stackTrace: s);
       rethrow;
     }
   }

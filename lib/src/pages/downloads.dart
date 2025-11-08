@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:ytsmovies/src/bloc/download_manager/index.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
+import 'package:ytsmovies/src/pages/download_settings.dart';
 
 class DownloadsPage extends StatelessWidget {
   const DownloadsPage({super.key});
@@ -13,6 +14,18 @@ class DownloadsPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Downloads'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DownloadSettingsPage(),
+                ),
+              );
+            },
+            tooltip: 'Download settings',
+          ),
           IconButton(
             icon: const Icon(Icons.delete_sweep),
             onPressed: () {
