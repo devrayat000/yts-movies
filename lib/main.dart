@@ -3,7 +3,6 @@ import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
@@ -22,8 +21,6 @@ void main() {
 
 Future<void> _initializeApp() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize port for communication between TaskHandler and UI.
-  FlutterForegroundTask.initCommunicationPort();
 
   // Initialize critical storage first (before any UI)
   await _initializeCriticalStorage();

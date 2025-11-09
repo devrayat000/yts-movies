@@ -7,6 +7,7 @@ import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
 import 'package:ytsmovies/src/models/movie.dart';
 import 'package:ytsmovies/src/models/torrent.dart' as models;
+import 'package:ytsmovies/src/models/torrent_service_models.dart';
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
 
 part 'download_manager_event.dart';
@@ -15,7 +16,7 @@ part 'download_manager_state.dart';
 /// BLoC for managing downloads
 class DownloadManagerBloc
     extends HydratedBloc<DownloadManagerEvent, DownloadManagerState> {
-  StreamSubscription<Map<String, dynamic>>? _progressSubscription;
+  StreamSubscription<ProgressUpdate>? _progressSubscription;
 
   DownloadManagerBloc() : super(const DownloadManagerState()) {
     on<DownloadManagerStarted>(_onStarted);
@@ -37,7 +38,7 @@ class DownloadManagerBloc
       // Subscribe to progress updates from foreground service
       _progressSubscription =
           ForegroundDownloadService.instance.progressStream.listen(
-        (data) => _handleProgressUpdate(data),
+        (update) => _handleProgressUpdate(update),
       );
 
       log('DownloadManager started and listening to foreground service progress updates');
@@ -47,66 +48,54 @@ class DownloadManagerBloc
   }
 
   /// Handle progress updates from background service
-  void _handleProgressUpdate(Map<String, dynamic> data) {
+  void _handleProgressUpdate(ProgressUpdate update) {
     try {
       log('=== DownloadManager received progress update ===');
-      log('Data: $data');
-
-      final taskId = data['taskId'] as String?;
-      if (taskId == null) {
-        log('ERROR: No taskId in progress update');
-        return;
-      }
+      log('TaskId: ${update.taskId}, Status: ${update.status}');
 
       // Get existing task or return if not found
-      final existingTask = state.downloads[taskId];
+      final existingTask = state.downloads[update.taskId];
       if (existingTask == null) {
-        log('WARNING: Received progress for unknown task: $taskId');
+        log('WARNING: Received progress for unknown task: ${update.taskId}');
         return;
       }
 
       log('Found existing task: ${existingTask.movieTitle}');
 
-      // Parse status
-      final statusString = data['status'] as String?;
-      DownloadStatus? status;
-      if (statusString != null) {
-        log('Status string: $statusString');
-        switch (statusString) {
-          case 'downloading_metadata':
-          case 'downloading':
-            status = DownloadStatus.downloading;
-            break;
-          case 'paused':
-            status = DownloadStatus.paused;
-            break;
-          case 'completed':
-            status = DownloadStatus.completed;
-            break;
-          case 'failed':
-            status = DownloadStatus.failed;
-            break;
-          case 'stopped':
-            status = DownloadStatus.stopped;
-            break;
-        }
-        log('Parsed status: $status');
+      // Parse status from DownloadStatusType to DownloadStatus
+      DownloadStatus status;
+      log('Status type: ${update.status}');
+      switch (update.status) {
+        case DownloadStatusType.downloadingMetadata:
+        case DownloadStatusType.downloading:
+          status = DownloadStatus.downloading;
+          break;
+        case DownloadStatusType.paused:
+          status = DownloadStatus.paused;
+          break;
+        case DownloadStatusType.completed:
+          status = DownloadStatus.completed;
+          break;
+        case DownloadStatusType.failed:
+          status = DownloadStatus.failed;
+          break;
+        case DownloadStatusType.stopped:
+          status = DownloadStatus.stopped;
+          break;
       }
+      log('Parsed status: $status');
 
       // Update task with new data
       final updatedTask = existingTask.copyWith(
-        status: status ?? existingTask.status,
-        progress:
-            (data['progress'] as num?)?.toDouble() ?? existingTask.progress,
-        downloadSpeed:
-            (data['downloadSpeed'] as int?) ?? existingTask.downloadSpeed,
-        uploadSpeed: (data['uploadSpeed'] as int?) ?? existingTask.uploadSpeed,
-        peers: (data['peers'] as int?) ?? existingTask.peers,
-        seeders: (data['seeders'] as int?) ?? existingTask.seeders,
-        downloadedBytes:
-            (data['downloadedBytes'] as int?) ?? existingTask.downloadedBytes,
-        totalBytes: (data['totalBytes'] as int?) ?? existingTask.totalBytes,
-        errorMessage: data['error'] as String?,
+        status: status,
+        progress: update.progress,
+        downloadSpeed: update.downloadSpeed,
+        uploadSpeed: update.uploadSpeed,
+        peers: update.peers,
+        seeders: update.seeders,
+        downloadedBytes: update.downloadedBytes,
+        totalBytes: update.totalBytes,
+        errorMessage: update.error,
         completedAt: status == DownloadStatus.completed
             ? DateTime.now()
             : existingTask.completedAt,

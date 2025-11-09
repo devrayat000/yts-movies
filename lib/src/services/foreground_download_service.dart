@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:ytsmovies/src/models/torrent_service_models.dart';
 import 'package:ytsmovies/src/services/torrent_task_handler.dart';
 import 'package:ytsmovies/src/services/preferences_service.dart';
 
@@ -18,11 +19,11 @@ class ForegroundDownloadService {
 
   bool _isInitialized = false;
   String? _downloadPath;
-  final StreamController<Map<String, dynamic>> _progressController =
-      StreamController<Map<String, dynamic>>.broadcast();
+  final StreamController<ProgressUpdate> _progressController =
+      StreamController<ProgressUpdate>.broadcast();
 
   /// Stream of download progress updates from background service
-  Stream<Map<String, dynamic>> get progressStream => _progressController.stream;
+  Stream<ProgressUpdate> get progressStream => _progressController.stream;
 
   /// Get current download path
   /// Returns a safe default if not initialized yet
@@ -48,34 +49,63 @@ class ForegroundDownloadService {
     // Also request runtime permissions
     await checkPermissions();
 
-    // Initialize foreground task
-    FlutterForegroundTask.init(
-      androidNotificationOptions: AndroidNotificationOptions(
-        channelId: 'yts_torrent_downloads',
-        channelName: 'YTS Torrent Downloads',
-        channelDescription: 'Shows progress for active torrent downloads.',
-        channelImportance: NotificationChannelImportance.LOW,
-        priority: NotificationPriority.LOW,
-        onlyAlertOnce: true,
+    // Initialize notification plugin
+    final FlutterLocalNotificationsPlugin notificationsPlugin =
+        FlutterLocalNotificationsPlugin();
+
+    // Create notification channel
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      notificationChannelId,
+      'Torrent Downloads',
+      description: 'Shows progress for active torrent downloads',
+      importance: Importance.low,
+    );
+
+    await notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+
+    // Initialize background service
+    final service = FlutterBackgroundService();
+
+    await service.configure(
+      iosConfiguration: IosConfiguration(
+        autoStart: false,
+        onForeground: onStartBackgroundService,
+        onBackground: _onIosBackground,
       ),
-      iosNotificationOptions: const IOSNotificationOptions(
-        showNotification: false,
-        playSound: false,
-      ),
-      foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.repeat(5000),
-        autoRunOnBoot: false,
-        autoRunOnMyPackageReplaced: false,
-        allowWakeLock: true,
-        allowWifiLock: true,
+      androidConfiguration: AndroidConfiguration(
+        onStart: onStartBackgroundService,
+        autoStart: false,
+        isForegroundMode: true,
+        notificationChannelId: notificationChannelId,
+        initialNotificationTitle: 'YTS Movies',
+        initialNotificationContent: 'Torrent download service running',
+        foregroundServiceNotificationId: notificationId,
       ),
     );
 
-    // Add callback to receive data sent from the TaskHandler
-    FlutterForegroundTask.addTaskDataCallback(_handleBackgroundData);
+    // Listen for progress updates from background service
+    service.on('progressUpdate').listen((event) {
+      if (event != null) {
+        try {
+          final update = ProgressUpdate.fromJson(event);
+          _progressController.add(update);
+        } catch (e) {
+          log('Error parsing progress update: $e');
+        }
+      }
+    });
 
     _isInitialized = true;
     log('ForegroundDownloadService initialized');
+  }
+
+  /// iOS background handler
+  @pragma('vm:entry-point')
+  static Future<bool> _onIosBackground(ServiceInstance service) async {
+    return true;
   }
 
   /// Initialize download path
@@ -165,42 +195,23 @@ class ForegroundDownloadService {
 
   /// Request necessary permissions for foreground service
   Future<void> _requestPermissions() async {
-    // Android 13+, you need to allow notification permission to display foreground service notification.
-    final notificationPermission =
-        await FlutterForegroundTask.checkNotificationPermission();
-    if (notificationPermission != NotificationPermission.granted) {
-      await FlutterForegroundTask.requestNotificationPermission();
-    }
+    // Request notification permission
+    await Permission.notification.request();
 
-    // Android 12+, there are restrictions on starting a foreground service.
-    // To restart the service on device reboot or unexpected problem, you need to allow below permission.
-    if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
-      // This function requires `android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` permission.
-      await FlutterForegroundTask.requestIgnoreBatteryOptimization();
-    }
-  }
-
-  void _handleBackgroundData(Object data) {
-    if (data is Map<String, dynamic>) {
-      log('Received data from background: $data');
-      _progressController.add(data);
+    // Request storage permissions
+    if (await Permission.videos.isDenied) {
+      await Permission.videos.request();
     }
   }
 
   /// Check if we have necessary permissions to start the service
   Future<bool> checkPermissions() async {
     try {
-      // Check notification permission (required for foreground service)
-      final notificationPermission =
-          await FlutterForegroundTask.checkNotificationPermission();
-      if (notificationPermission != NotificationPermission.granted) {
+      // Check notification permission
+      if (await Permission.notification.isDenied) {
         log('Notification permission not granted, requesting...');
-        await FlutterForegroundTask.requestNotificationPermission();
-
-        // Check again after request
-        final notificationPermissionAfter =
-            await FlutterForegroundTask.checkNotificationPermission();
-        if (notificationPermissionAfter != NotificationPermission.granted) {
+        final status = await Permission.notification.request();
+        if (!status.isGranted) {
           log('Notification permission denied by user');
           return false;
         }
@@ -236,7 +247,9 @@ class ForegroundDownloadService {
 
   /// Start the foreground service if not already running
   Future<bool> startService() async {
-    if (await FlutterForegroundTask.isRunningService) {
+    final service = FlutterBackgroundService();
+
+    if (await service.isRunning()) {
       log('Foreground service already running');
       return true;
     }
@@ -247,18 +260,9 @@ class ForegroundDownloadService {
       return false;
     }
 
-    await FlutterForegroundTask.startService(
-      serviceId: 256,
-      notificationTitle: 'YTS Movies',
-      notificationText: 'Torrent download service running',
-      notificationButtons: [
-        const NotificationButton(id: 'pause_all', text: 'Pause All'),
-        const NotificationButton(id: 'stop_all', text: 'Stop All'),
-      ],
-      callback: startTorrentCallback,
-    );
+    await service.startService();
 
-    log('Foreground service started with serviceId: 256');
+    log('Foreground service started');
     return true;
   }
 
@@ -275,8 +279,10 @@ class ForegroundDownloadService {
     log('SavePath: $savePath');
     log('MovieTitle: $movieTitle');
 
+    final service = FlutterBackgroundService();
+
     // Ensure service is running
-    if (!await FlutterForegroundTask.isRunningService) {
+    if (!await service.isRunning()) {
       log('Service not running, starting it...');
       final started = await startService();
       if (!started) {
@@ -295,70 +301,64 @@ class ForegroundDownloadService {
     log('Sending download command to background task...');
 
     // Send data to background service
-    FlutterForegroundTask.sendDataToTask({
-      'action': 'startDownload',
-      'taskId': taskId,
-      'magnetUri': magnetUri,
-      'savePath': savePath,
-      'movieTitle': movieTitle,
-    });
+    service.invoke(
+      'startDownload',
+      StartDownloadRequest(
+        taskId: taskId,
+        magnetUri: magnetUri,
+        savePath: savePath,
+        movieTitle: movieTitle,
+      ).toJson(),
+    );
 
     log('Download command sent successfully');
   }
 
   /// Pause a download
   Future<void> pauseDownload(String taskId) async {
-    FlutterForegroundTask.sendDataToTask({
-      'action': 'pauseDownload',
-      'taskId': taskId,
-    });
+    final service = FlutterBackgroundService();
+    service.invoke(
+      'pauseDownload',
+      PauseDownloadRequest(taskId: taskId).toJson(),
+    );
   }
 
   /// Resume a download
   Future<void> resumeDownload(String taskId) async {
-    FlutterForegroundTask.sendDataToTask({
-      'action': 'resumeDownload',
-      'taskId': taskId,
-    });
+    final service = FlutterBackgroundService();
+    service.invoke(
+      'resumeDownload',
+      ResumeDownloadRequest(taskId: taskId).toJson(),
+    );
   }
 
   /// Stop a download
   Future<void> stopDownload(String taskId) async {
-    FlutterForegroundTask.sendDataToTask({
-      'action': 'stopDownload',
-      'taskId': taskId,
-    });
+    final service = FlutterBackgroundService();
+    service.invoke(
+      'stopDownload',
+      StopDownloadRequest(taskId: taskId).toJson(),
+    );
   }
 
   /// Stop the foreground service
   Future<void> stopService() async {
-    if (await FlutterForegroundTask.isRunningService) {
-      await FlutterForegroundTask.stopService();
+    final service = FlutterBackgroundService();
+    if (await service.isRunning()) {
+      service.invoke('stopService');
       log('Foreground service stopped');
     }
   }
 
   /// Check if service is running
   Future<bool> isServiceRunning() async {
-    return await FlutterForegroundTask.isRunningService;
+    final service = FlutterBackgroundService();
+    return await service.isRunning();
   }
 
   /// Dispose the service
   Future<void> dispose() async {
-    FlutterForegroundTask.removeTaskDataCallback(_handleBackgroundData);
     await _progressController.close();
     _isInitialized = false;
-  }
-}
-
-/// Widget wrapper for foreground task requirements
-class WithForegroundTask extends StatelessWidget {
-  final Widget child;
-
-  const WithForegroundTask({super.key, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return WithForegroundTask(child: child);
   }
 }
