@@ -138,8 +138,15 @@ class ForegroundDownloadService {
     required String savePath,
     required String movieTitle,
   }) async {
+    log('=== ForegroundDownloadService.startDownload ===');
+    log('TaskId: $taskId');
+    log('MagnetUri: $magnetUri');
+    log('SavePath: $savePath');
+    log('MovieTitle: $movieTitle');
+
     // Ensure service is running
     if (!await FlutterForegroundTask.isRunningService) {
+      log('Service not running, starting it...');
       final started = await startService();
       if (!started) {
         throw Exception('Failed to start foreground service');
@@ -147,9 +154,12 @@ class ForegroundDownloadService {
 
       // Wait a bit for service to initialize
       await Future.delayed(const Duration(milliseconds: 500));
+      log('Service started, waited 500ms for initialization');
+    } else {
+      log('Service already running');
     }
 
-    log('Sending download command for $taskId');
+    log('Sending download command to background task...');
 
     // Send data to background service
     FlutterForegroundTask.sendDataToTask({
@@ -159,6 +169,8 @@ class ForegroundDownloadService {
       'savePath': savePath,
       'movieTitle': movieTitle,
     });
+
+    log('Download command sent successfully');
   }
 
   /// Pause a download

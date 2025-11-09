@@ -144,6 +144,11 @@ class TorrentTaskHandler extends TaskHandler {
     String movieTitle,
   ) async {
     try {
+      log('=== Starting download for $taskId ===');
+      log('Magnet URI: $magnetUri');
+      log('Save path: $savePath');
+      log('Movie title: $movieTitle');
+
       if (_tasks.containsKey(taskId)) {
         log('Task $taskId already running');
         return;
@@ -160,11 +165,15 @@ class TorrentTaskHandler extends TaskHandler {
         return;
       }
 
+      log('Magnet parsed successfully. Info hash: ${magnet.infoHashString}');
+
       // Update notification
       FlutterForegroundTask.updateService(
         notificationTitle: 'Downloading Metadata',
         notificationText: movieTitle,
       );
+
+      log('Starting metadata download...');
 
       // Download metadata
       final metadata = MetadataDownloader.fromMagnet(magnetUri);
@@ -180,7 +189,7 @@ class TorrentTaskHandler extends TaskHandler {
           });
         })
         ..on<MetaDataDownloadComplete>((event) async {
-          log('Metadata complete for $taskId');
+          log('Metadata complete for $taskId. Data size: ${event.data.length} bytes');
 
           try {
             // Parse torrent from metadata
@@ -252,9 +261,10 @@ class TorrentTaskHandler extends TaskHandler {
 
       metadata.startDownload();
 
-      // Set timeout for metadata download
-      Timer(const Duration(seconds: 30), () {
+      // Set timeout for metadata download (5 minutes should be enough)
+      Timer(const Duration(minutes: 5), () {
         if (_metadataDownloaders.containsKey(taskId)) {
+          log('Metadata download timeout for $taskId');
           metadata.stop();
           _metadataDownloaders.remove(taskId);
           _sendProgressUpdate(taskId, {
