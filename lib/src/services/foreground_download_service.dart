@@ -24,6 +24,10 @@ class ForegroundDownloadService {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
+    // Request permissions first
+    await _requestPermissions();
+
+    // Initialize foreground task
     FlutterForegroundTask.init(
       androidNotificationOptions: AndroidNotificationOptions(
         channelId: 'yts_torrent_downloads',
@@ -31,9 +35,10 @@ class ForegroundDownloadService {
         channelDescription: 'Shows progress for active torrent downloads.',
         channelImportance: NotificationChannelImportance.LOW,
         priority: NotificationPriority.LOW,
+        onlyAlertOnce: true,
       ),
       iosNotificationOptions: const IOSNotificationOptions(
-        showNotification: true,
+        showNotification: false,
         playSound: false,
       ),
       foregroundTaskOptions: ForegroundTaskOptions(
@@ -45,11 +50,28 @@ class ForegroundDownloadService {
       ),
     );
 
-    // Listen for data from background service
+    // Add callback to receive data sent from the TaskHandler
     FlutterForegroundTask.addTaskDataCallback(_handleBackgroundData);
 
     _isInitialized = true;
     log('ForegroundDownloadService initialized');
+  }
+
+  /// Request necessary permissions for foreground service
+  Future<void> _requestPermissions() async {
+    // Android 13+, you need to allow notification permission to display foreground service notification.
+    final notificationPermission =
+        await FlutterForegroundTask.checkNotificationPermission();
+    if (notificationPermission != NotificationPermission.granted) {
+      await FlutterForegroundTask.requestNotificationPermission();
+    }
+
+    // Android 12+, there are restrictions on starting a foreground service.
+    // To restart the service on device reboot or unexpected problem, you need to allow below permission.
+    if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
+      // This function requires `android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` permission.
+      await FlutterForegroundTask.requestIgnoreBatteryOptimization();
+    }
   }
 
   void _handleBackgroundData(Object data) {
@@ -59,18 +81,17 @@ class ForegroundDownloadService {
     }
   }
 
-  /// Request necessary permissions
-  Future<bool> requestPermissions() async {
-    // Request notification permission (Android 13+)
-    if (await Permission.notification.isDenied) {
-      final status = await Permission.notification.request();
-      if (!status.isGranted) {
-        log('Notification permission denied');
-        return false;
-      }
+  /// Check if we have necessary permissions to start the service
+  Future<bool> checkPermissions() async {
+    // Check notification permission
+    final notificationPermission =
+        await FlutterForegroundTask.checkNotificationPermission();
+    if (notificationPermission != NotificationPermission.granted) {
+      log('Notification permission not granted');
+      return false;
     }
 
-    // Request storage permissions
+    // Check storage permissions
     if (await Permission.storage.isDenied) {
       final status = await Permission.storage.request();
       if (!status.isGranted) {
@@ -89,12 +110,13 @@ class ForegroundDownloadService {
       return true;
     }
 
-    // Request permissions first
-    if (!await requestPermissions()) {
+    // Check permissions
+    if (!await checkPermissions()) {
+      log('Missing required permissions');
       return false;
     }
 
-    final serviceId = await FlutterForegroundTask.startService(
+    await FlutterForegroundTask.startService(
       serviceId: 256,
       notificationTitle: 'YTS Movies',
       notificationText: 'Torrent download service running',
@@ -105,7 +127,7 @@ class ForegroundDownloadService {
       callback: startTorrentCallback,
     );
 
-    log('Foreground service started: $serviceId');
+    log('Foreground service started with serviceId: 256');
     return true;
   }
 

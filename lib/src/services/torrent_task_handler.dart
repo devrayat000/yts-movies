@@ -6,7 +6,6 @@ import 'package:b_encode_decode/b_encode_decode.dart';
 import 'package:dtorrent_parser/dtorrent_parser.dart';
 import 'package:dtorrent_task_v2/dtorrent_task_v2.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-import 'package:events_emitter2/src/events_emitter.dart' show EventsListener;
 
 /// Entry point for the background isolate
 @pragma('vm:entry-point')
@@ -20,7 +19,7 @@ class TorrentTaskHandler extends TaskHandler {
   // Key: taskId, Value: TorrentTask
   final Map<String, TorrentTask> _tasks = {};
   final Map<String, MetadataDownloader> _metadataDownloaders = {};
-  final Map<String, EventsListener<TaskEvent>> _taskListeners = {};
+  final Map<String, dynamic> _taskListeners = {};
 
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
@@ -91,7 +90,9 @@ class TorrentTaskHandler extends TaskHandler {
 
     // Clean up all running tasks
     for (var listener in _taskListeners.values) {
-      listener.dispose();
+      if (listener != null) {
+        listener.clear();
+      }
     }
 
     for (var metadata in _metadataDownloaders.values) {
@@ -105,6 +106,35 @@ class TorrentTaskHandler extends TaskHandler {
     _taskListeners.clear();
     _metadataDownloaders.clear();
     _tasks.clear();
+  }
+
+  @override
+  void onNotificationButtonPressed(String id) {
+    log('Notification button pressed: $id');
+
+    switch (id) {
+      case 'pause_all':
+        for (var taskId in _tasks.keys.toList()) {
+          _pauseDownload(taskId);
+        }
+        break;
+      case 'stop_all':
+        for (var taskId in _tasks.keys.toList()) {
+          _stopDownload(taskId);
+        }
+        break;
+    }
+  }
+
+  @override
+  void onNotificationPressed() {
+    // Bring app to foreground when notification is pressed
+    FlutterForegroundTask.launchApp('/downloads');
+  }
+
+  @override
+  void onNotificationDismissed() {
+    log('Notification dismissed');
   }
 
   Future<void> _startDownload(
