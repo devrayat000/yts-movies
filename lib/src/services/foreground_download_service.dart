@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:ytsmovies/src/services/torrent_task_handler.dart';
+import 'package:ytsmovies/src/services/preferences_service.dart';
 
 /// Service to manage foreground torrent downloads
 class ForegroundDownloadService {
@@ -14,18 +17,36 @@ class ForegroundDownloadService {
   ForegroundDownloadService._();
 
   bool _isInitialized = false;
+  String? _downloadPath;
   final StreamController<Map<String, dynamic>> _progressController =
       StreamController<Map<String, dynamic>>.broadcast();
 
   /// Stream of download progress updates from background service
   Stream<Map<String, dynamic>> get progressStream => _progressController.stream;
 
+  /// Get current download path
+  /// Returns a safe default if not initialized yet
+  String get downloadPath {
+    if (_downloadPath != null) {
+      return _downloadPath!;
+    }
+    // Return a temporary safe default while initializing
+    // This will be replaced once initialization completes
+    return '/storage/emulated/0/Download/Movies';
+  }
+
   /// Initialize the foreground task service
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    // Request permissions first
+    // Initialize download path first
+    await _initDownloadPath();
+
+    // Request permissions early
     await _requestPermissions();
+
+    // Also request runtime permissions
+    await checkPermissions();
 
     // Initialize foreground task
     FlutterForegroundTask.init(
@@ -57,6 +78,91 @@ class ForegroundDownloadService {
     log('ForegroundDownloadService initialized');
   }
 
+  /// Initialize download path
+  Future<void> _initDownloadPath() async {
+    try {
+      // Check if user has set a custom download path
+      final customPath = PreferencesService.instance.customDownloadPath;
+
+      if (customPath != null && await Directory(customPath).exists()) {
+        _downloadPath = customPath;
+        log('Using custom download path: $_downloadPath');
+      } else {
+        // Use default downloads directory
+        final downloadsDir = await getDownloadsDirectory();
+        if (downloadsDir != null) {
+          _downloadPath = '${downloadsDir.path}/Movies';
+          log('Using default download path: $_downloadPath');
+        } else {
+          // Fallback to app documents directory if downloads not available
+          final appDir = await getApplicationDocumentsDirectory();
+          _downloadPath = '${appDir.path}/downloads';
+          log('Downloads directory not available, using fallback: $_downloadPath');
+        }
+      }
+
+      // Create directory if it doesn't exist
+      await Directory(_downloadPath!).create(recursive: true);
+
+      log('Download path initialized: $_downloadPath');
+    } catch (e, s) {
+      log('Error initializing download path: $e', error: e, stackTrace: s);
+      // Fallback to a safe default
+      final appDir = await getApplicationDocumentsDirectory();
+      _downloadPath = '${appDir.path}/downloads';
+      await Directory(_downloadPath!).create(recursive: true);
+    }
+  }
+
+  /// Update download path (called when user selects custom directory)
+  Future<void> updateDownloadPath(String newPath) async {
+    try {
+      // Validate the path
+      final dir = Directory(newPath);
+      if (!await dir.exists()) {
+        await dir.create(recursive: true);
+      }
+
+      // Save to preferences
+      await PreferencesService.instance.setCustomDownloadPath(newPath);
+
+      // Update current path
+      _downloadPath = newPath;
+
+      log('Download path updated to: $newPath');
+    } catch (e, s) {
+      log('Error updating download path: $e', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  /// Reset to default download path
+  Future<void> resetToDefaultPath() async {
+    try {
+      // Use default downloads directory
+      final downloadsDir = await getDownloadsDirectory();
+      String defaultPath;
+
+      if (downloadsDir != null) {
+        defaultPath = '${downloadsDir.path}/Movies';
+      } else {
+        // Fallback to app documents directory if downloads not available
+        final appDir = await getApplicationDocumentsDirectory();
+        defaultPath = '${appDir.path}/downloads';
+      }
+
+      await PreferencesService.instance.setCustomDownloadPath(null);
+      _downloadPath = defaultPath;
+
+      await Directory(_downloadPath!).create(recursive: true);
+
+      log('Download path reset to default: $defaultPath');
+    } catch (e, s) {
+      log('Error resetting download path: $e', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
   /// Request necessary permissions for foreground service
   Future<void> _requestPermissions() async {
     // Android 13+, you need to allow notification permission to display foreground service notification.
@@ -83,24 +189,49 @@ class ForegroundDownloadService {
 
   /// Check if we have necessary permissions to start the service
   Future<bool> checkPermissions() async {
-    // Check notification permission
-    final notificationPermission =
-        await FlutterForegroundTask.checkNotificationPermission();
-    if (notificationPermission != NotificationPermission.granted) {
-      log('Notification permission not granted');
+    try {
+      // Check notification permission (required for foreground service)
+      final notificationPermission =
+          await FlutterForegroundTask.checkNotificationPermission();
+      if (notificationPermission != NotificationPermission.granted) {
+        log('Notification permission not granted, requesting...');
+        await FlutterForegroundTask.requestNotificationPermission();
+
+        // Check again after request
+        final notificationPermissionAfter =
+            await FlutterForegroundTask.checkNotificationPermission();
+        if (notificationPermissionAfter != NotificationPermission.granted) {
+          log('Notification permission denied by user');
+          return false;
+        }
+      }
+
+      // Check storage permissions based on Android version
+      // Android 13+ uses granular media permissions
+      if (await Permission.videos.isDenied) {
+        log('Videos permission not granted, requesting...');
+        final status = await Permission.videos.request();
+        if (!status.isGranted) {
+          log('Videos permission denied');
+          // Try with manageExternalStorage for Android 11+
+          if (await Permission.manageExternalStorage.isDenied) {
+            log('Requesting MANAGE_EXTERNAL_STORAGE permission...');
+            final manageStatus =
+                await Permission.manageExternalStorage.request();
+            if (!manageStatus.isGranted) {
+              log('MANAGE_EXTERNAL_STORAGE permission denied');
+              return false;
+            }
+          }
+        }
+      }
+
+      log('All permissions granted');
+      return true;
+    } catch (e, s) {
+      log('Error checking permissions: $e', error: e, stackTrace: s);
       return false;
     }
-
-    // Check storage permissions
-    if (await Permission.storage.isDenied) {
-      final status = await Permission.storage.request();
-      if (!status.isGranted) {
-        log('Storage permission denied');
-        return false;
-      }
-    }
-
-    return true;
   }
 
   /// Start the foreground service if not already running
@@ -149,7 +280,9 @@ class ForegroundDownloadService {
       log('Service not running, starting it...');
       final started = await startService();
       if (!started) {
-        throw Exception('Failed to start foreground service');
+        throw Exception(
+          'Failed to start foreground service. Please grant notification and storage permissions in app settings.',
+        );
       }
 
       // Wait a bit for service to initialize

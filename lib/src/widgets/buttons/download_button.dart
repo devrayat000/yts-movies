@@ -206,7 +206,7 @@ class _DownloadMethodDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final downloadPath = TorrentDownloadService.instance.downloadPath;
+    final downloadPath = ForegroundDownloadService.instance.downloadPath;
     final customPath = PreferencesService.instance.customDownloadPath;
     final isUsingCustomPath = customPath != null;
 

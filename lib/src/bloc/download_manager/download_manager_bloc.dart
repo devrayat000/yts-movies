@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
 import 'package:ytsmovies/src/models/movie.dart';
 import 'package:ytsmovies/src/models/torrent.dart' as models;
-import 'package:ytsmovies/src/services/torrent_download_service.dart';
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
 
 part 'download_manager_event.dart';
@@ -15,11 +15,9 @@ part 'download_manager_state.dart';
 /// BLoC for managing downloads
 class DownloadManagerBloc
     extends HydratedBloc<DownloadManagerEvent, DownloadManagerState> {
-  final TorrentDownloadService _downloadService;
   StreamSubscription<Map<String, dynamic>>? _progressSubscription;
 
-  DownloadManagerBloc(this._downloadService)
-      : super(const DownloadManagerState()) {
+  DownloadManagerBloc() : super(const DownloadManagerState()) {
     on<DownloadManagerStarted>(_onStarted);
     on<DownloadManagerAddDownload>(_onAddDownload);
     on<DownloadManagerPauseDownload>(_onPauseDownload);
@@ -107,6 +105,7 @@ class DownloadManagerBloc
         seeders: (data['seeders'] as int?) ?? existingTask.seeders,
         downloadedBytes:
             (data['downloadedBytes'] as int?) ?? existingTask.downloadedBytes,
+        totalBytes: (data['totalBytes'] as int?) ?? existingTask.totalBytes,
         errorMessage: data['error'] as String?,
         completedAt: status == DownloadStatus.completed
             ? DateTime.now()
@@ -144,7 +143,7 @@ class DownloadManagerBloc
       await ForegroundDownloadService.instance.startDownload(
         taskId: event.task.taskId,
         magnetUri: event.task.magnetUri,
-        savePath: _downloadService.downloadPath,
+        savePath: ForegroundDownloadService.instance.downloadPath,
         movieTitle: event.task.movieTitle,
       );
 
@@ -241,7 +240,22 @@ class DownloadManagerBloc
   ) async {
     try {
       final task = state.downloads[event.taskId];
-      await _downloadService.deleteDownload(event.taskId, task?.filePath);
+
+      // Stop the download first
+      await ForegroundDownloadService.instance.stopDownload(event.taskId);
+
+      // Delete the files if they exist
+      if (task?.filePath != null) {
+        try {
+          final file = File(task!.filePath!);
+          if (await file.exists()) {
+            await file.delete();
+            log('Deleted download file: ${task.filePath}');
+          }
+        } catch (e) {
+          log('Error deleting file: $e');
+        }
+      }
 
       final updatedDownloads = Map<String, DownloadTask>.from(state.downloads)
         ..remove(event.taskId);

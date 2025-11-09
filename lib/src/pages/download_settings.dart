@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:ytsmovies/src/services/torrent_download_service.dart';
+import 'package:ytsmovies/src/services/foreground_download_service.dart';
 import 'package:ytsmovies/src/services/preferences_service.dart';
 
 class DownloadSettingsPage extends StatefulWidget {
@@ -24,7 +24,7 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
 
   void _loadCurrentPath() {
     setState(() {
-      _currentPath = TorrentDownloadService.instance.downloadPath;
+      _currentPath = ForegroundDownloadService.instance.downloadPath;
     });
   }
 
@@ -52,7 +52,7 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
 
       if (selectedDirectory != null) {
         // Update download path
-        await TorrentDownloadService.instance
+        await ForegroundDownloadService.instance
             .updateDownloadPath(selectedDirectory);
 
         setState(() {
@@ -137,10 +137,10 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
     });
 
     try {
-      await TorrentDownloadService.instance.resetToDefaultPath();
+      await ForegroundDownloadService.instance.resetToDefaultPath();
 
       setState(() {
-        _currentPath = TorrentDownloadService.instance.downloadPath;
+        _currentPath = ForegroundDownloadService.instance.downloadPath;
       });
 
       if (mounted) {

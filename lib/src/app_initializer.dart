@@ -5,7 +5,6 @@ import 'package:ytsmovies/src/api/movies.dart';
 import 'package:ytsmovies/src/app.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/bloc/download_manager/index.dart';
-import 'package:ytsmovies/src/services/torrent_download_service.dart';
 import 'package:ytsmovies/src/services/preferences_service.dart';
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
 import 'package:ytsmovies/src/theme/index.dart';
@@ -19,7 +18,6 @@ class YTSAppInitializer extends StatefulWidget {
 }
 
 class _YTSAppInitializerState extends State<YTSAppInitializer> {
-  TorrentDownloadService? _downloadService;
   bool _isInitializing = true;
   String? _error;
 
@@ -37,8 +35,6 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> {
       // Initialize foreground download service
       await ForegroundDownloadService.instance.initialize();
 
-      // Initialize torrent download service
-      _downloadService = await TorrentDownloadService.initialize();
       setState(() {
         _isInitializing = false;
       });
@@ -52,7 +48,6 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> {
 
   @override
   void dispose() {
-    _downloadService?.dispose();
     super.dispose();
   }
 
@@ -88,8 +83,7 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> {
           create: (_) => MoviesClientCubit(),
         ),
         BlocProvider<DownloadManagerBloc>(
-          create: (_) => DownloadManagerBloc(_downloadService!)
-            ..add(DownloadManagerStarted()),
+          create: (_) => DownloadManagerBloc()..add(DownloadManagerStarted()),
         ),
       ],
       child: const YTSApp(),

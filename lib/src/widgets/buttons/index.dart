@@ -12,7 +12,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ytsmovies/src/api/favourites.dart';
 import 'package:ytsmovies/src/services/error_notification_service.dart';
-import 'package:ytsmovies/src/services/torrent_download_service.dart';
+import 'package:ytsmovies/src/services/foreground_download_service.dart';
 import 'package:ytsmovies/src/services/preferences_service.dart';
 import 'package:ytsmovies/src/bloc/download_manager/index.dart';
 import 'package:ytsmovies/src/models/download_task.dart';

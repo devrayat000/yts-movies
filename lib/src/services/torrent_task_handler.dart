@@ -244,8 +244,25 @@ class TorrentTaskHandler extends TaskHandler {
             _tasks[taskId] = torrentTask;
             _metadataDownloaders.remove(taskId);
 
+            // Get total size from torrent
+            final totalBytes = torrentModel.length;
+            log('Total torrent size: $totalBytes bytes');
+
+            // Send initial progress update
+            _sendProgressUpdate(taskId, {
+              'status': 'downloading',
+              'progress': 0.0,
+              'downloadSpeed': 0,
+              'uploadSpeed': 0,
+              'peers': 0,
+              'seeders': 0,
+              'downloadedBytes': 0,
+              'totalBytes': totalBytes,
+            });
+
             // Start progress monitoring
-            _startProgressMonitoring(taskId, torrentTask, movieTitle);
+            _startProgressMonitoring(
+                taskId, torrentTask, movieTitle, totalBytes);
 
             log('Download started successfully for task $taskId');
           } catch (e, s) {
@@ -286,6 +303,7 @@ class TorrentTaskHandler extends TaskHandler {
     String taskId,
     TorrentTask task,
     String movieTitle,
+    int totalBytes,
   ) {
     // Create listener for task events
     final listener = task.createListener();
@@ -294,6 +312,13 @@ class TorrentTaskHandler extends TaskHandler {
     // Listen for state file updates (progress, speed, etc.)
     listener
       ..on<StateFileUpdated>((event) {
+        print('=== StateFileUpdated for $taskId ===');
+        print('Progress: ${task.progress}');
+        print('Download Speed: ${task.currentDownloadSpeed}');
+        print('Upload Speed: ${task.uploadSpeed}');
+        print('Peers: ${task.connectedPeersNumber}');
+        print('Seeders: ${task.seederNumber}');
+        print('Downloaded: ${task.downloaded}');
         if (!_tasks.containsKey(taskId)) return;
 
         final progress = task.progress;
@@ -302,6 +327,8 @@ class TorrentTaskHandler extends TaskHandler {
         final peers = task.connectedPeersNumber;
         final seeders = task.seederNumber;
         final downloaded = task.downloaded ?? 0;
+
+        log('Progress update for $taskId: ${(progress * 100).toStringAsFixed(1)}% - Speed: ${_formatSpeed(downloadSpeed)}');
 
         // Update notification
         FlutterForegroundTask.updateService(
@@ -319,6 +346,7 @@ class TorrentTaskHandler extends TaskHandler {
           'peers': peers,
           'seeders': seeders,
           'downloadedBytes': downloaded.toInt(),
+          'totalBytes': totalBytes,
         });
       })
       ..on<TaskCompleted>((event) {
@@ -337,6 +365,7 @@ class TorrentTaskHandler extends TaskHandler {
           'status': 'completed',
           'progress': 1.0,
           'downloadedBytes': downloaded.toInt(),
+          'totalBytes': totalBytes,
         });
 
         // Clean up
@@ -369,6 +398,7 @@ class TorrentTaskHandler extends TaskHandler {
   }
 
   void _resumeDownload(String taskId) {
+    print('=== Resuming download for $taskId ===');
     final task = _tasks[taskId];
     if (task != null) {
       task.start();
