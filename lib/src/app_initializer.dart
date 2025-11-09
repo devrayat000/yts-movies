@@ -7,6 +7,7 @@ import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/bloc/download_manager/index.dart';
 import 'package:ytsmovies/src/services/torrent_download_service.dart';
 import 'package:ytsmovies/src/services/preferences_service.dart';
+import 'package:ytsmovies/src/services/foreground_download_service.dart';
 import 'package:ytsmovies/src/theme/index.dart';
 
 /// Main app widget that handles initialization and provides dependencies
@@ -32,6 +33,9 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> {
     try {
       // Initialize preferences service first
       await PreferencesService.initialize();
+
+      // Initialize foreground download service
+      await ForegroundDownloadService.instance.initialize();
 
       // Initialize torrent download service
       _downloadService = await TorrentDownloadService.initialize();
