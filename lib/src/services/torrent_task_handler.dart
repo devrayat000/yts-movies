@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:events_emitter2/src/events_emitter.dart' show EventsListener;
 import 'package:b_encode_decode/b_encode_decode.dart';
 import 'package:dtorrent_parser/dtorrent_parser.dart';
 import 'package:dtorrent_task_v2/dtorrent_task_v2.dart';
@@ -92,7 +93,7 @@ class _TorrentTaskHandler {
   // Key: taskId, Value: TorrentTask
   final Map<String, TorrentTask> _tasks = {};
   final Map<String, MetadataDownloader> _metadataDownloaders = {};
-  final Map<String, dynamic> _taskListeners = {};
+  final Map<String, EventsListener<TaskEvent>> _taskListeners = {};
 
   _TorrentTaskHandler(this.service, this.notificationsPlugin);
 
@@ -163,12 +164,12 @@ class _TorrentTaskHandler {
 
       metadataListener
         ..on<MetaDataDownloadProgress>((event) {
-          log('Metadata progress for $taskId: ${(event.progress * 100).toInt()}%');
+          log('Metadata progress for $taskId: ${event.progress}%');
           _sendProgressUpdate(
             ProgressUpdate(
               taskId: taskId,
               status: DownloadStatusType.downloadingMetadata,
-              progress: event.progress * 0.05,
+              progress: event.progress.toDouble(),
             ),
           );
         })
@@ -264,25 +265,36 @@ class _TorrentTaskHandler {
               ),
             );
           }
-        });
-
-      metadata.startDownload();
-
-      // Set timeout for metadata download (5 minutes should be enough)
-      Timer(const Duration(minutes: 5), () {
-        if (_metadataDownloaders.containsKey(taskId)) {
-          log('Metadata download timeout for $taskId');
-          metadata.stop();
+        })
+        ..on<MetaDataDownloadFailed>((event) {
+          log('Metadata download failed for $taskId: ${event.error}');
           _metadataDownloaders.remove(taskId);
           _sendProgressUpdate(
             ProgressUpdate(
               taskId: taskId,
               status: DownloadStatusType.failed,
-              error: 'Metadata download timeout',
+              error: event.error,
             ),
           );
-        }
-      });
+        });
+
+      metadata.startDownload();
+
+      // Set timeout for metadata download (5 minutes should be enough)
+      // Timer(const Duration(minutes: 5), () {
+      //   if (_metadataDownloaders.containsKey(taskId)) {
+      //     log('Metadata download timeout for $taskId');
+      //     metadata.stop();
+      //     _metadataDownloaders.remove(taskId);
+      //     _sendProgressUpdate(
+      //       ProgressUpdate(
+      //         taskId: taskId,
+      //         status: DownloadStatusType.failed,
+      //         error: 'Metadata download timeout',
+      //       ),
+      //     );
+      //   }
+      // });
     } catch (e, s) {
       log('Error starting download for $taskId: $e', error: e, stackTrace: s);
       _sendProgressUpdate(
@@ -488,22 +500,20 @@ class _TorrentTaskHandler {
     );
   }
 
-  String _formatSpeed(int bytesPerSecond) {
-    if (bytesPerSecond < 1024) {
-      return '${bytesPerSecond}B/s';
-    } else if (bytesPerSecond < 1024 * 1024) {
-      return '${(bytesPerSecond / 1024).toStringAsFixed(1)}KB/s';
-    } else {
-      return '${(bytesPerSecond / (1024 * 1024)).toStringAsFixed(1)}MB/s';
+  String _formatSpeed(int bytes) {
+    bytes = bytes * 1000;
+    if (bytes < 1024) return '$bytes B/s';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(2)} KB/s';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB/s';
     }
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB/s';
   }
 
   void cleanup() {
     // Clean up all running tasks
     for (var listener in _taskListeners.values) {
-      if (listener != null) {
-        listener.clear();
-      }
+      listener.dispose();
     }
 
     for (var metadata in _metadataDownloaders.values) {
