@@ -475,6 +475,7 @@ class _TorrentTaskHandler {
       autoCancel: false,
       playSound: false,
       enableVibration: false,
+      icon: '@mipmap/ic_launcher',
     );
 
     final notificationDetails = NotificationDetails(android: androidDetails);

@@ -84,6 +84,7 @@ class ForegroundDownloadService {
         initialNotificationTitle: 'YTS Movies',
         initialNotificationContent: 'Torrent download service running',
         foregroundServiceNotificationId: notificationId,
+        // foregroundServiceNotificationIcon: '@mipmap/ic_launcher',
       ),
     );
 
