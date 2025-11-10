@@ -136,8 +136,6 @@ class DownloadButton extends StatelessWidget {
       // Add to download manager
       bloc.add(DownloadManagerAddDownload(
         task: task,
-        movie: movie!,
-        torrent: _torrent,
       ));
 
       if (context.mounted) {

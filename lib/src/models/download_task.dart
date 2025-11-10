@@ -3,13 +3,21 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'download_task.g.dart';
 part 'download_task.freezed.dart';
 
-/// Download status enumeration
+/// Unified download status enumeration for both UI and background service
 enum DownloadStatus {
+  @JsonValue('queued')
   queued,
+  @JsonValue('downloading_metadata')
+  downloadingMetadata,
+  @JsonValue('downloading')
   downloading,
+  @JsonValue('paused')
   paused,
+  @JsonValue('completed')
   completed,
+  @JsonValue('failed')
   failed,
+  @JsonValue('stopped')
   stopped,
 }
 

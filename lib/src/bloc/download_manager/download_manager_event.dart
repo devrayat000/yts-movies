@@ -9,13 +9,9 @@ class DownloadManagerStarted extends DownloadManagerEvent {}
 /// Event to add a new download
 class DownloadManagerAddDownload extends DownloadManagerEvent {
   final DownloadTask task;
-  final Movie movie;
-  final models.Torrent torrent;
 
   DownloadManagerAddDownload({
     required this.task,
-    required this.movie,
-    required this.torrent,
   });
 }
 

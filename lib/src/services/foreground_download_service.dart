@@ -321,7 +321,7 @@ class ForegroundDownloadService {
     final service = FlutterBackgroundService();
     service.invoke(
       'pauseDownload',
-      PauseDownloadRequest(taskId: taskId).toJson(),
+      DownloadControlRequest(taskId: taskId).toJson(),
     );
   }
 
@@ -330,7 +330,7 @@ class ForegroundDownloadService {
     final service = FlutterBackgroundService();
     service.invoke(
       'resumeDownload',
-      ResumeDownloadRequest(taskId: taskId).toJson(),
+      DownloadControlRequest(taskId: taskId).toJson(),
     );
   }
 
@@ -339,7 +339,7 @@ class ForegroundDownloadService {
     final service = FlutterBackgroundService();
     service.invoke(
       'stopDownload',
-      StopDownloadRequest(taskId: taskId).toJson(),
+      DownloadControlRequest(taskId: taskId).toJson(),
     );
   }
 

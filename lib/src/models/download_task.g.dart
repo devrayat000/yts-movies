@@ -63,6 +63,7 @@ Map<String, dynamic> _$DownloadTaskToJson(_DownloadTask instance) =>
 
 const _$DownloadStatusEnumMap = {
   DownloadStatus.queued: 'queued',
+  DownloadStatus.downloadingMetadata: 'downloading_metadata',
   DownloadStatus.downloading: 'downloading',
   DownloadStatus.paused: 'paused',
   DownloadStatus.completed: 'completed',

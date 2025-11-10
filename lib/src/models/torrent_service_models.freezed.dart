@@ -216,25 +216,25 @@ class __$StartDownloadRequestCopyWithImpl<$Res>
 }
 
 /// @nodoc
-mixin _$PauseDownloadRequest {
+mixin _$DownloadControlRequest {
   int get taskId;
 
-  /// Create a copy of PauseDownloadRequest
+  /// Create a copy of DownloadControlRequest
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
-  $PauseDownloadRequestCopyWith<PauseDownloadRequest> get copyWith =>
-      _$PauseDownloadRequestCopyWithImpl<PauseDownloadRequest>(
-          this as PauseDownloadRequest, _$identity);
+  $DownloadControlRequestCopyWith<DownloadControlRequest> get copyWith =>
+      _$DownloadControlRequestCopyWithImpl<DownloadControlRequest>(
+          this as DownloadControlRequest, _$identity);
 
-  /// Serializes this PauseDownloadRequest to a JSON map.
+  /// Serializes this DownloadControlRequest to a JSON map.
   Map<String, dynamic> toJson();
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is PauseDownloadRequest &&
+            other is DownloadControlRequest &&
             (identical(other.taskId, taskId) || other.taskId == taskId));
   }
 
@@ -244,28 +244,28 @@ mixin _$PauseDownloadRequest {
 
   @override
   String toString() {
-    return 'PauseDownloadRequest(taskId: $taskId)';
+    return 'DownloadControlRequest(taskId: $taskId)';
   }
 }
 
 /// @nodoc
-abstract mixin class $PauseDownloadRequestCopyWith<$Res> {
-  factory $PauseDownloadRequestCopyWith(PauseDownloadRequest value,
-          $Res Function(PauseDownloadRequest) _then) =
-      _$PauseDownloadRequestCopyWithImpl;
+abstract mixin class $DownloadControlRequestCopyWith<$Res> {
+  factory $DownloadControlRequestCopyWith(DownloadControlRequest value,
+          $Res Function(DownloadControlRequest) _then) =
+      _$DownloadControlRequestCopyWithImpl;
   @useResult
   $Res call({int taskId});
 }
 
 /// @nodoc
-class _$PauseDownloadRequestCopyWithImpl<$Res>
-    implements $PauseDownloadRequestCopyWith<$Res> {
-  _$PauseDownloadRequestCopyWithImpl(this._self, this._then);
+class _$DownloadControlRequestCopyWithImpl<$Res>
+    implements $DownloadControlRequestCopyWith<$Res> {
+  _$DownloadControlRequestCopyWithImpl(this._self, this._then);
 
-  final PauseDownloadRequest _self;
-  final $Res Function(PauseDownloadRequest) _then;
+  final DownloadControlRequest _self;
+  final $Res Function(DownloadControlRequest) _then;
 
-  /// Create a copy of PauseDownloadRequest
+  /// Create a copy of DownloadControlRequest
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
@@ -283,26 +283,26 @@ class _$PauseDownloadRequestCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _PauseDownloadRequest implements PauseDownloadRequest {
-  const _PauseDownloadRequest({required this.taskId});
-  factory _PauseDownloadRequest.fromJson(Map<String, dynamic> json) =>
-      _$PauseDownloadRequestFromJson(json);
+class _DownloadControlRequest implements DownloadControlRequest {
+  const _DownloadControlRequest({required this.taskId});
+  factory _DownloadControlRequest.fromJson(Map<String, dynamic> json) =>
+      _$DownloadControlRequestFromJson(json);
 
   @override
   final int taskId;
 
-  /// Create a copy of PauseDownloadRequest
+  /// Create a copy of DownloadControlRequest
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
-  _$PauseDownloadRequestCopyWith<_PauseDownloadRequest> get copyWith =>
-      __$PauseDownloadRequestCopyWithImpl<_PauseDownloadRequest>(
+  _$DownloadControlRequestCopyWith<_DownloadControlRequest> get copyWith =>
+      __$DownloadControlRequestCopyWithImpl<_DownloadControlRequest>(
           this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$PauseDownloadRequestToJson(
+    return _$DownloadControlRequestToJson(
       this,
     );
   }
@@ -311,7 +311,7 @@ class _PauseDownloadRequest implements PauseDownloadRequest {
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _PauseDownloadRequest &&
+            other is _DownloadControlRequest &&
             (identical(other.taskId, taskId) || other.taskId == taskId));
   }
 
@@ -321,327 +321,37 @@ class _PauseDownloadRequest implements PauseDownloadRequest {
 
   @override
   String toString() {
-    return 'PauseDownloadRequest(taskId: $taskId)';
+    return 'DownloadControlRequest(taskId: $taskId)';
   }
 }
 
 /// @nodoc
-abstract mixin class _$PauseDownloadRequestCopyWith<$Res>
-    implements $PauseDownloadRequestCopyWith<$Res> {
-  factory _$PauseDownloadRequestCopyWith(_PauseDownloadRequest value,
-          $Res Function(_PauseDownloadRequest) _then) =
-      __$PauseDownloadRequestCopyWithImpl;
+abstract mixin class _$DownloadControlRequestCopyWith<$Res>
+    implements $DownloadControlRequestCopyWith<$Res> {
+  factory _$DownloadControlRequestCopyWith(_DownloadControlRequest value,
+          $Res Function(_DownloadControlRequest) _then) =
+      __$DownloadControlRequestCopyWithImpl;
   @override
   @useResult
   $Res call({int taskId});
 }
 
 /// @nodoc
-class __$PauseDownloadRequestCopyWithImpl<$Res>
-    implements _$PauseDownloadRequestCopyWith<$Res> {
-  __$PauseDownloadRequestCopyWithImpl(this._self, this._then);
+class __$DownloadControlRequestCopyWithImpl<$Res>
+    implements _$DownloadControlRequestCopyWith<$Res> {
+  __$DownloadControlRequestCopyWithImpl(this._self, this._then);
 
-  final _PauseDownloadRequest _self;
-  final $Res Function(_PauseDownloadRequest) _then;
+  final _DownloadControlRequest _self;
+  final $Res Function(_DownloadControlRequest) _then;
 
-  /// Create a copy of PauseDownloadRequest
+  /// Create a copy of DownloadControlRequest
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $Res call({
     Object? taskId = null,
   }) {
-    return _then(_PauseDownloadRequest(
-      taskId: null == taskId
-          ? _self.taskId
-          : taskId // ignore: cast_nullable_to_non_nullable
-              as int,
-    ));
-  }
-}
-
-/// @nodoc
-mixin _$ResumeDownloadRequest {
-  int get taskId;
-
-  /// Create a copy of ResumeDownloadRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @pragma('vm:prefer-inline')
-  $ResumeDownloadRequestCopyWith<ResumeDownloadRequest> get copyWith =>
-      _$ResumeDownloadRequestCopyWithImpl<ResumeDownloadRequest>(
-          this as ResumeDownloadRequest, _$identity);
-
-  /// Serializes this ResumeDownloadRequest to a JSON map.
-  Map<String, dynamic> toJson();
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is ResumeDownloadRequest &&
-            (identical(other.taskId, taskId) || other.taskId == taskId));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, taskId);
-
-  @override
-  String toString() {
-    return 'ResumeDownloadRequest(taskId: $taskId)';
-  }
-}
-
-/// @nodoc
-abstract mixin class $ResumeDownloadRequestCopyWith<$Res> {
-  factory $ResumeDownloadRequestCopyWith(ResumeDownloadRequest value,
-          $Res Function(ResumeDownloadRequest) _then) =
-      _$ResumeDownloadRequestCopyWithImpl;
-  @useResult
-  $Res call({int taskId});
-}
-
-/// @nodoc
-class _$ResumeDownloadRequestCopyWithImpl<$Res>
-    implements $ResumeDownloadRequestCopyWith<$Res> {
-  _$ResumeDownloadRequestCopyWithImpl(this._self, this._then);
-
-  final ResumeDownloadRequest _self;
-  final $Res Function(ResumeDownloadRequest) _then;
-
-  /// Create a copy of ResumeDownloadRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? taskId = null,
-  }) {
-    return _then(_self.copyWith(
-      taskId: null == taskId
-          ? _self.taskId
-          : taskId // ignore: cast_nullable_to_non_nullable
-              as int,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _ResumeDownloadRequest implements ResumeDownloadRequest {
-  const _ResumeDownloadRequest({required this.taskId});
-  factory _ResumeDownloadRequest.fromJson(Map<String, dynamic> json) =>
-      _$ResumeDownloadRequestFromJson(json);
-
-  @override
-  final int taskId;
-
-  /// Create a copy of ResumeDownloadRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @pragma('vm:prefer-inline')
-  _$ResumeDownloadRequestCopyWith<_ResumeDownloadRequest> get copyWith =>
-      __$ResumeDownloadRequestCopyWithImpl<_ResumeDownloadRequest>(
-          this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$ResumeDownloadRequestToJson(
-      this,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _ResumeDownloadRequest &&
-            (identical(other.taskId, taskId) || other.taskId == taskId));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, taskId);
-
-  @override
-  String toString() {
-    return 'ResumeDownloadRequest(taskId: $taskId)';
-  }
-}
-
-/// @nodoc
-abstract mixin class _$ResumeDownloadRequestCopyWith<$Res>
-    implements $ResumeDownloadRequestCopyWith<$Res> {
-  factory _$ResumeDownloadRequestCopyWith(_ResumeDownloadRequest value,
-          $Res Function(_ResumeDownloadRequest) _then) =
-      __$ResumeDownloadRequestCopyWithImpl;
-  @override
-  @useResult
-  $Res call({int taskId});
-}
-
-/// @nodoc
-class __$ResumeDownloadRequestCopyWithImpl<$Res>
-    implements _$ResumeDownloadRequestCopyWith<$Res> {
-  __$ResumeDownloadRequestCopyWithImpl(this._self, this._then);
-
-  final _ResumeDownloadRequest _self;
-  final $Res Function(_ResumeDownloadRequest) _then;
-
-  /// Create a copy of ResumeDownloadRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $Res call({
-    Object? taskId = null,
-  }) {
-    return _then(_ResumeDownloadRequest(
-      taskId: null == taskId
-          ? _self.taskId
-          : taskId // ignore: cast_nullable_to_non_nullable
-              as int,
-    ));
-  }
-}
-
-/// @nodoc
-mixin _$StopDownloadRequest {
-  int get taskId;
-
-  /// Create a copy of StopDownloadRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @pragma('vm:prefer-inline')
-  $StopDownloadRequestCopyWith<StopDownloadRequest> get copyWith =>
-      _$StopDownloadRequestCopyWithImpl<StopDownloadRequest>(
-          this as StopDownloadRequest, _$identity);
-
-  /// Serializes this StopDownloadRequest to a JSON map.
-  Map<String, dynamic> toJson();
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is StopDownloadRequest &&
-            (identical(other.taskId, taskId) || other.taskId == taskId));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, taskId);
-
-  @override
-  String toString() {
-    return 'StopDownloadRequest(taskId: $taskId)';
-  }
-}
-
-/// @nodoc
-abstract mixin class $StopDownloadRequestCopyWith<$Res> {
-  factory $StopDownloadRequestCopyWith(
-          StopDownloadRequest value, $Res Function(StopDownloadRequest) _then) =
-      _$StopDownloadRequestCopyWithImpl;
-  @useResult
-  $Res call({int taskId});
-}
-
-/// @nodoc
-class _$StopDownloadRequestCopyWithImpl<$Res>
-    implements $StopDownloadRequestCopyWith<$Res> {
-  _$StopDownloadRequestCopyWithImpl(this._self, this._then);
-
-  final StopDownloadRequest _self;
-  final $Res Function(StopDownloadRequest) _then;
-
-  /// Create a copy of StopDownloadRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? taskId = null,
-  }) {
-    return _then(_self.copyWith(
-      taskId: null == taskId
-          ? _self.taskId
-          : taskId // ignore: cast_nullable_to_non_nullable
-              as int,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _StopDownloadRequest implements StopDownloadRequest {
-  const _StopDownloadRequest({required this.taskId});
-  factory _StopDownloadRequest.fromJson(Map<String, dynamic> json) =>
-      _$StopDownloadRequestFromJson(json);
-
-  @override
-  final int taskId;
-
-  /// Create a copy of StopDownloadRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @pragma('vm:prefer-inline')
-  _$StopDownloadRequestCopyWith<_StopDownloadRequest> get copyWith =>
-      __$StopDownloadRequestCopyWithImpl<_StopDownloadRequest>(
-          this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$StopDownloadRequestToJson(
-      this,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _StopDownloadRequest &&
-            (identical(other.taskId, taskId) || other.taskId == taskId));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, taskId);
-
-  @override
-  String toString() {
-    return 'StopDownloadRequest(taskId: $taskId)';
-  }
-}
-
-/// @nodoc
-abstract mixin class _$StopDownloadRequestCopyWith<$Res>
-    implements $StopDownloadRequestCopyWith<$Res> {
-  factory _$StopDownloadRequestCopyWith(_StopDownloadRequest value,
-          $Res Function(_StopDownloadRequest) _then) =
-      __$StopDownloadRequestCopyWithImpl;
-  @override
-  @useResult
-  $Res call({int taskId});
-}
-
-/// @nodoc
-class __$StopDownloadRequestCopyWithImpl<$Res>
-    implements _$StopDownloadRequestCopyWith<$Res> {
-  __$StopDownloadRequestCopyWithImpl(this._self, this._then);
-
-  final _StopDownloadRequest _self;
-  final $Res Function(_StopDownloadRequest) _then;
-
-  /// Create a copy of StopDownloadRequest
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $Res call({
-    Object? taskId = null,
-  }) {
-    return _then(_StopDownloadRequest(
+    return _then(_DownloadControlRequest(
       taskId: null == taskId
           ? _self.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
@@ -653,7 +363,7 @@ class __$StopDownloadRequestCopyWithImpl<$Res>
 /// @nodoc
 mixin _$ProgressUpdate {
   int get taskId;
-  DownloadStatusType get status;
+  DownloadStatus get status;
   double get progress;
   int get downloadSpeed;
   int get uploadSpeed;
@@ -725,7 +435,7 @@ abstract mixin class $ProgressUpdateCopyWith<$Res> {
   @useResult
   $Res call(
       {int taskId,
-      DownloadStatusType status,
+      DownloadStatus status,
       double progress,
       int downloadSpeed,
       int uploadSpeed,
@@ -768,7 +478,7 @@ class _$ProgressUpdateCopyWithImpl<$Res>
       status: null == status
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable
-              as DownloadStatusType,
+              as DownloadStatus,
       progress: null == progress
           ? _self.progress
           : progress // ignore: cast_nullable_to_non_nullable
@@ -825,7 +535,7 @@ class _ProgressUpdate implements ProgressUpdate {
   @override
   final int taskId;
   @override
-  final DownloadStatusType status;
+  final DownloadStatus status;
   @override
   @JsonKey()
   final double progress;
@@ -918,7 +628,7 @@ abstract mixin class _$ProgressUpdateCopyWith<$Res>
   @useResult
   $Res call(
       {int taskId,
-      DownloadStatusType status,
+      DownloadStatus status,
       double progress,
       int downloadSpeed,
       int uploadSpeed,
@@ -961,7 +671,7 @@ class __$ProgressUpdateCopyWithImpl<$Res>
       status: null == status
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable
-              as DownloadStatusType,
+              as DownloadStatus,
       progress: null == progress
           ? _self.progress
           : progress // ignore: cast_nullable_to_non_nullable

@@ -5,8 +5,6 @@ import 'dart:io';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
-import 'package:ytsmovies/src/models/movie.dart';
-import 'package:ytsmovies/src/models/torrent.dart' as models;
 import 'package:ytsmovies/src/models/torrent_service_models.dart';
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
 
@@ -63,33 +61,11 @@ class DownloadManagerBloc
       }
 
       log('Found existing task: ${existingTask.movieTitle}');
+      log('Status from background service: ${update.status}');
 
-      // Parse status from DownloadStatusType to DownloadStatus
-      DownloadStatus status;
-      log('Status type: ${update.status}');
-      switch (update.status) {
-        case DownloadStatusType.downloadingMetadata:
-        case DownloadStatusType.downloading:
-          status = DownloadStatus.downloading;
-          break;
-        case DownloadStatusType.paused:
-          status = DownloadStatus.paused;
-          break;
-        case DownloadStatusType.completed:
-          status = DownloadStatus.completed;
-          break;
-        case DownloadStatusType.failed:
-          status = DownloadStatus.failed;
-          break;
-        case DownloadStatusType.stopped:
-          status = DownloadStatus.stopped;
-          break;
-      }
-      log('Parsed status: $status');
-
-      // Update task with new data
+      // Update task with new data - status is now unified
       final updatedTask = existingTask.copyWith(
-        status: status,
+        status: update.status,
         progress: update.progress,
         downloadSpeed: update.downloadSpeed,
         uploadSpeed: update.uploadSpeed,
@@ -98,7 +74,7 @@ class DownloadManagerBloc
         downloadedBytes: update.downloadedBytes,
         totalBytes: update.totalBytes,
         errorMessage: update.error,
-        completedAt: status == DownloadStatus.completed
+        completedAt: update.status == DownloadStatus.completed
             ? DateTime.now()
             : existingTask.completedAt,
       );

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:ytsmovies/src/models/download_task.dart';
 
 part 'torrent_service_models.freezed.dart';
 part 'torrent_service_models.g.dart';
@@ -17,53 +18,15 @@ sealed class StartDownloadRequest with _$StartDownloadRequest {
       _$StartDownloadRequestFromJson(json);
 }
 
-/// Request to pause a download
+/// Unified control request for pause/resume/stop operations
 @freezed
-sealed class PauseDownloadRequest with _$PauseDownloadRequest {
-  const factory PauseDownloadRequest({
+sealed class DownloadControlRequest with _$DownloadControlRequest {
+  const factory DownloadControlRequest({
     required int taskId,
-  }) = _PauseDownloadRequest;
+  }) = _DownloadControlRequest;
 
-  factory PauseDownloadRequest.fromJson(Map<String, dynamic> json) =>
-      _$PauseDownloadRequestFromJson(json);
-}
-
-/// Request to resume a download
-@freezed
-sealed class ResumeDownloadRequest with _$ResumeDownloadRequest {
-  const factory ResumeDownloadRequest({
-    required int taskId,
-  }) = _ResumeDownloadRequest;
-
-  factory ResumeDownloadRequest.fromJson(Map<String, dynamic> json) =>
-      _$ResumeDownloadRequestFromJson(json);
-}
-
-/// Request to stop a download
-@freezed
-sealed class StopDownloadRequest with _$StopDownloadRequest {
-  const factory StopDownloadRequest({
-    required int taskId,
-  }) = _StopDownloadRequest;
-
-  factory StopDownloadRequest.fromJson(Map<String, dynamic> json) =>
-      _$StopDownloadRequestFromJson(json);
-}
-
-/// Download status enum
-enum DownloadStatusType {
-  @JsonValue('downloading_metadata')
-  downloadingMetadata,
-  @JsonValue('downloading')
-  downloading,
-  @JsonValue('paused')
-  paused,
-  @JsonValue('completed')
-  completed,
-  @JsonValue('failed')
-  failed,
-  @JsonValue('stopped')
-  stopped,
+  factory DownloadControlRequest.fromJson(Map<String, dynamic> json) =>
+      _$DownloadControlRequestFromJson(json);
 }
 
 /// Progress update from background service
@@ -71,7 +34,7 @@ enum DownloadStatusType {
 sealed class ProgressUpdate with _$ProgressUpdate {
   const factory ProgressUpdate({
     required int taskId,
-    required DownloadStatusType status,
+    required DownloadStatus status,
     @Default(0.0) double progress,
     @Default(0) int downloadSpeed,
     @Default(0) int uploadSpeed,

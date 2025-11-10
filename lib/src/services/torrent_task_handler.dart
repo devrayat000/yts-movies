@@ -2,15 +2,14 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:typed_data';
 import 'dart:ui';
-import 'dart:convert';
 
-import 'package:crypto/crypto.dart';
 import 'package:events_emitter2/src/events_emitter.dart' show EventsListener;
 import 'package:b_encode_decode/b_encode_decode.dart';
 import 'package:dtorrent_parser/dtorrent_parser.dart';
 import 'package:dtorrent_task_v2/dtorrent_task_v2.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:ytsmovies/src/models/download_task.dart';
 import 'package:ytsmovies/src/models/torrent_service_models.dart';
 
 /// Notification channel ID for torrent downloads
@@ -44,7 +43,7 @@ void onStartBackgroundService(ServiceInstance service) async {
   service.on('pauseDownload').listen((event) {
     if (event != null) {
       try {
-        final request = PauseDownloadRequest.fromJson(event);
+        final request = DownloadControlRequest.fromJson(event);
         handler.pauseDownload(request);
       } catch (e) {
         log('Error parsing pauseDownload event: $e');
@@ -55,7 +54,7 @@ void onStartBackgroundService(ServiceInstance service) async {
   service.on('resumeDownload').listen((event) {
     if (event != null) {
       try {
-        final request = ResumeDownloadRequest.fromJson(event);
+        final request = DownloadControlRequest.fromJson(event);
         handler.resumeDownload(request);
       } catch (e) {
         log('Error parsing resumeDownload event: $e');
@@ -66,7 +65,7 @@ void onStartBackgroundService(ServiceInstance service) async {
   service.on('stopDownload').listen((event) {
     if (event != null) {
       try {
-        final request = StopDownloadRequest.fromJson(event);
+        final request = DownloadControlRequest.fromJson(event);
         handler.stopDownload(request);
       } catch (e) {
         log('Error parsing stopDownload event: $e');
@@ -149,7 +148,7 @@ class _TorrentTaskHandler {
         _sendProgressUpdate(
           ProgressUpdate(
             taskId: taskId,
-            status: DownloadStatusType.failed,
+            status: DownloadStatus.failed,
             error: 'Invalid magnet URI',
           ),
         );
@@ -178,7 +177,7 @@ class _TorrentTaskHandler {
           _sendProgressUpdate(
             ProgressUpdate(
               taskId: taskId,
-              status: DownloadStatusType.downloadingMetadata,
+              status: DownloadStatus.downloadingMetadata,
               progress: event.progress.toDouble(),
             ),
           );
@@ -247,7 +246,7 @@ class _TorrentTaskHandler {
             _sendProgressUpdate(
               ProgressUpdate(
                 taskId: taskId,
-                status: DownloadStatusType.downloading,
+                status: DownloadStatus.downloading,
                 progress: 0.0,
                 downloadSpeed: 0,
                 uploadSpeed: 0,
@@ -270,7 +269,7 @@ class _TorrentTaskHandler {
             _sendProgressUpdate(
               ProgressUpdate(
                 taskId: taskId,
-                status: DownloadStatusType.failed,
+                status: DownloadStatus.failed,
                 error: e.toString(),
               ),
             );
@@ -282,7 +281,7 @@ class _TorrentTaskHandler {
           _sendProgressUpdate(
             ProgressUpdate(
               taskId: taskId,
-              status: DownloadStatusType.failed,
+              status: DownloadStatus.failed,
               error: event.error,
             ),
           );
@@ -299,7 +298,7 @@ class _TorrentTaskHandler {
       //     _sendProgressUpdate(
       //       ProgressUpdate(
       //         taskId: taskId,
-      //         status: DownloadStatusType.failed,
+      //         status: DownloadStatus.failed,
       //         error: 'Metadata download timeout',
       //       ),
       //     );
@@ -310,7 +309,7 @@ class _TorrentTaskHandler {
       _sendProgressUpdate(
         ProgressUpdate(
           taskId: taskId,
-          status: DownloadStatusType.failed,
+          status: DownloadStatus.failed,
           error: e.toString(),
         ),
       );
@@ -361,7 +360,7 @@ class _TorrentTaskHandler {
         _sendProgressUpdate(
           ProgressUpdate(
             taskId: taskId,
-            status: DownloadStatusType.downloading,
+            status: DownloadStatus.downloading,
             progress: progress,
             downloadSpeed: downloadSpeed,
             uploadSpeed: uploadSpeed,
@@ -390,7 +389,7 @@ class _TorrentTaskHandler {
         _sendProgressUpdate(
           ProgressUpdate(
             taskId: taskId,
-            status: DownloadStatusType.completed,
+            status: DownloadStatus.completed,
             progress: 1.0,
             downloadedBytes: downloaded.toInt(),
             totalBytes: totalBytes,
@@ -416,13 +415,13 @@ class _TorrentTaskHandler {
         _sendProgressUpdate(
           ProgressUpdate(
             taskId: taskId,
-            status: DownloadStatusType.stopped,
+            status: DownloadStatus.stopped,
           ),
         );
       });
   }
 
-  void pauseDownload(PauseDownloadRequest request) {
+  void pauseDownload(DownloadControlRequest request) {
     final taskId = request.taskId;
     final task = _tasks[taskId];
     if (task != null) {
@@ -430,14 +429,14 @@ class _TorrentTaskHandler {
       _sendProgressUpdate(
         ProgressUpdate(
           taskId: taskId,
-          status: DownloadStatusType.paused,
+          status: DownloadStatus.paused,
         ),
       );
       log('Download paused: $taskId');
     }
   }
 
-  void resumeDownload(ResumeDownloadRequest request) {
+  void resumeDownload(DownloadControlRequest request) {
     final taskId = request.taskId;
     print('=== Resuming download for $taskId ===');
     final task = _tasks[taskId];
@@ -446,14 +445,14 @@ class _TorrentTaskHandler {
       _sendProgressUpdate(
         ProgressUpdate(
           taskId: taskId,
-          status: DownloadStatusType.downloading,
+          status: DownloadStatus.downloading,
         ),
       );
       log('Download resumed: $taskId');
     }
   }
 
-  Future<void> stopDownload(StopDownloadRequest request) async {
+  Future<void> stopDownload(DownloadControlRequest request) async {
     final taskId = request.taskId;
     final task = _tasks.remove(taskId);
     if (task != null) {
@@ -463,7 +462,7 @@ class _TorrentTaskHandler {
       _sendProgressUpdate(
         ProgressUpdate(
           taskId: taskId,
-          status: DownloadStatusType.stopped,
+          status: DownloadStatus.stopped,
         ),
       );
       log('Download stopped: $taskId');

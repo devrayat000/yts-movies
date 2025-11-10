@@ -24,37 +24,14 @@ Map<String, dynamic> _$StartDownloadRequestToJson(
       'movieTitle': instance.movieTitle,
     };
 
-_PauseDownloadRequest _$PauseDownloadRequestFromJson(
+_DownloadControlRequest _$DownloadControlRequestFromJson(
         Map<String, dynamic> json) =>
-    _PauseDownloadRequest(
+    _DownloadControlRequest(
       taskId: (json['taskId'] as num).toInt(),
     );
 
-Map<String, dynamic> _$PauseDownloadRequestToJson(
-        _PauseDownloadRequest instance) =>
-    <String, dynamic>{
-      'taskId': instance.taskId,
-    };
-
-_ResumeDownloadRequest _$ResumeDownloadRequestFromJson(
-        Map<String, dynamic> json) =>
-    _ResumeDownloadRequest(
-      taskId: (json['taskId'] as num).toInt(),
-    );
-
-Map<String, dynamic> _$ResumeDownloadRequestToJson(
-        _ResumeDownloadRequest instance) =>
-    <String, dynamic>{
-      'taskId': instance.taskId,
-    };
-
-_StopDownloadRequest _$StopDownloadRequestFromJson(Map<String, dynamic> json) =>
-    _StopDownloadRequest(
-      taskId: (json['taskId'] as num).toInt(),
-    );
-
-Map<String, dynamic> _$StopDownloadRequestToJson(
-        _StopDownloadRequest instance) =>
+Map<String, dynamic> _$DownloadControlRequestToJson(
+        _DownloadControlRequest instance) =>
     <String, dynamic>{
       'taskId': instance.taskId,
     };
@@ -62,7 +39,7 @@ Map<String, dynamic> _$StopDownloadRequestToJson(
 _ProgressUpdate _$ProgressUpdateFromJson(Map<String, dynamic> json) =>
     _ProgressUpdate(
       taskId: (json['taskId'] as num).toInt(),
-      status: $enumDecode(_$DownloadStatusTypeEnumMap, json['status']),
+      status: $enumDecode(_$DownloadStatusEnumMap, json['status']),
       progress: (json['progress'] as num?)?.toDouble() ?? 0.0,
       downloadSpeed: (json['downloadSpeed'] as num?)?.toInt() ?? 0,
       uploadSpeed: (json['uploadSpeed'] as num?)?.toInt() ?? 0,
@@ -76,7 +53,7 @@ _ProgressUpdate _$ProgressUpdateFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$ProgressUpdateToJson(_ProgressUpdate instance) =>
     <String, dynamic>{
       'taskId': instance.taskId,
-      'status': _$DownloadStatusTypeEnumMap[instance.status]!,
+      'status': _$DownloadStatusEnumMap[instance.status]!,
       'progress': instance.progress,
       'downloadSpeed': instance.downloadSpeed,
       'uploadSpeed': instance.uploadSpeed,
@@ -87,11 +64,12 @@ Map<String, dynamic> _$ProgressUpdateToJson(_ProgressUpdate instance) =>
       'error': instance.error,
     };
 
-const _$DownloadStatusTypeEnumMap = {
-  DownloadStatusType.downloadingMetadata: 'downloading_metadata',
-  DownloadStatusType.downloading: 'downloading',
-  DownloadStatusType.paused: 'paused',
-  DownloadStatusType.completed: 'completed',
-  DownloadStatusType.failed: 'failed',
-  DownloadStatusType.stopped: 'stopped',
+const _$DownloadStatusEnumMap = {
+  DownloadStatus.queued: 'queued',
+  DownloadStatus.downloadingMetadata: 'downloading_metadata',
+  DownloadStatus.downloading: 'downloading',
+  DownloadStatus.paused: 'paused',
+  DownloadStatus.completed: 'completed',
+  DownloadStatus.failed: 'failed',
+  DownloadStatus.stopped: 'stopped',
 };
