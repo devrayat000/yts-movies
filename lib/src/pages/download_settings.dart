@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
 import 'package:ytsmovies/src/services/preferences_service.dart';
+import 'package:ytsmovies/src/injection.dart';
 
 class DownloadSettingsPage extends StatefulWidget {
   const DownloadSettingsPage({super.key});
@@ -24,7 +25,7 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
 
   void _loadCurrentPath() {
     setState(() {
-      _currentPath = ForegroundDownloadService.instance.downloadPath;
+      _currentPath = getIt<ForegroundDownloadService>().downloadPath;
     });
   }
 
@@ -52,7 +53,7 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
 
       if (selectedDirectory != null) {
         // Update download path
-        await ForegroundDownloadService.instance
+        await getIt<ForegroundDownloadService>()
             .updateDownloadPath(selectedDirectory);
 
         setState(() {
@@ -137,10 +138,10 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
     });
 
     try {
-      await ForegroundDownloadService.instance.resetToDefaultPath();
+      await getIt<ForegroundDownloadService>().resetToDefaultPath();
 
       setState(() {
-        _currentPath = ForegroundDownloadService.instance.downloadPath;
+        _currentPath = getIt<ForegroundDownloadService>().downloadPath;
       });
 
       if (mounted) {
@@ -170,7 +171,7 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final customPath = PreferencesService.instance.customDownloadPath;
+    final customPath = getIt<PreferencesService>().customDownloadPath;
     final isUsingCustomPath = customPath != null;
 
     return Scaffold(

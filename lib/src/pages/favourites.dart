@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ytsmovies/src/api/favourites.dart';
+import 'package:ytsmovies/src/service_extensions.dart';
 import 'package:ytsmovies/src/widgets/movies_list.dart';
 
 class FavouritesPage extends StatelessWidget {
@@ -10,7 +10,7 @@ class FavouritesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MoviesList(
       label: 'favourite',
-      handler: FavouritesService.instance.getFavouriteMovies,
+      handler: context.favouritesService.getFavouriteMovies,
       appBar: AppBar(
         title: Text(
           'Favourite Movies',

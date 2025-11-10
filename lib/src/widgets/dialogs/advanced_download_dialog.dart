@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ytsmovies/src/models/torrent.dart' as m;
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
+import 'package:ytsmovies/src/injection.dart';
 import 'package:file_picker/file_picker.dart';
 
 class AdvancedDownloadDialog extends StatefulWidget {
@@ -33,7 +34,7 @@ class _AdvancedDownloadDialogState extends State<AdvancedDownloadDialog> {
   @override
   void initState() {
     super.initState();
-    _savePath = ForegroundDownloadService.instance.downloadPath;
+    _savePath = getIt<ForegroundDownloadService>().downloadPath;
     _loadTrackers();
   }
 

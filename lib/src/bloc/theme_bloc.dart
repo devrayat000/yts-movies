@@ -2,11 +2,13 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:injectable/injectable.dart';
 import 'package:ytsmovies/src/theme/index.dart';
 
+@lazySingleton
 class ThemeCubit extends HydratedCubit<ThemeData> {
   final AppTheme theme;
-  ThemeCubit({required this.theme}) : super(theme.light);
+  ThemeCubit(this.theme) : super(theme.light);
 
   void sync(Brightness brightness) {
     // if (brightness == Brightness.dark) {

@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:ytsmovies/src/models/torrent_service_models.dart';
@@ -10,12 +11,11 @@ import 'package:ytsmovies/src/services/torrent_task_handler.dart';
 import 'package:ytsmovies/src/services/preferences_service.dart';
 
 /// Service to manage foreground torrent downloads
+@singleton
 class ForegroundDownloadService {
-  static ForegroundDownloadService? _instance;
-  static ForegroundDownloadService get instance =>
-      _instance ?? (_instance = ForegroundDownloadService._());
+  final PreferencesService _preferencesService;
 
-  ForegroundDownloadService._();
+  ForegroundDownloadService(this._preferencesService);
 
   bool _isInitialized = false;
   String? _downloadPath;
@@ -37,6 +37,7 @@ class ForegroundDownloadService {
   }
 
   /// Initialize the foreground task service
+  @postConstruct
   Future<void> initialize() async {
     if (_isInitialized) return;
 
@@ -112,7 +113,7 @@ class ForegroundDownloadService {
   Future<void> _initDownloadPath() async {
     try {
       // Check if user has set a custom download path
-      final customPath = PreferencesService.instance.customDownloadPath;
+      final customPath = _preferencesService.customDownloadPath;
 
       if (customPath != null && await Directory(customPath).exists()) {
         _downloadPath = customPath;
@@ -154,7 +155,7 @@ class ForegroundDownloadService {
       }
 
       // Save to preferences
-      await PreferencesService.instance.setCustomDownloadPath(newPath);
+      await _preferencesService.setCustomDownloadPath(newPath);
 
       // Update current path
       _downloadPath = newPath;
@@ -181,7 +182,7 @@ class ForegroundDownloadService {
         defaultPath = '${appDir.path}/downloads';
       }
 
-      await PreferencesService.instance.setCustomDownloadPath(null);
+      await _preferencesService.setCustomDownloadPath(null);
       _downloadPath = defaultPath;
 
       await Directory(_downloadPath!).create(recursive: true);

@@ -1,15 +1,13 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/foundation.dart';
+import 'package:injectable/injectable.dart';
 import 'package:ytsmovies/src/utils/exceptions.dart';
 
 /// Service for reporting and tracking errors
+@lazySingleton
 class ErrorReportingService {
-  static final ErrorReportingService _instance =
-      ErrorReportingService._internal();
-  static ErrorReportingService get instance => _instance;
-
-  ErrorReportingService._internal();
+  ErrorReportingService();
 
   final List<ErrorReport> _errorHistory = [];
   final StreamController<ErrorReport> _errorController =

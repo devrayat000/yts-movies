@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:ytsmovies/src/api/movies.dart';
 import 'package:ytsmovies/src/app.dart';
 import 'package:ytsmovies/src/bloc/filter/index.dart';
+import 'package:ytsmovies/src/injection.dart';
 import 'package:ytsmovies/src/models/movie.dart';
 import 'package:ytsmovies/src/pages/home.dart';
 import 'package:ytsmovies/src/pages/movie.dart';
@@ -35,8 +36,8 @@ extension RouterExtension on YTSApp {
             builder: (context, state, child) => MultiProvider(
               providers: [
                 RepositoryProvider(
-                  create: (context) => context.read<MoviesClientCubit>().state,
-                  lazy: false,
+                  create: (context) => getIt.get<MoviesClient>(),
+                  lazy: true,
                 ),
                 Provider<Filter>(
                   create: (_) => Filter(),

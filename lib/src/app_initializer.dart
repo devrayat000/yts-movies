@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:ytsmovies/src/api/movies.dart';
 import 'package:ytsmovies/src/app.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/bloc/download_manager/index.dart';
-import 'package:ytsmovies/src/services/preferences_service.dart';
-import 'package:ytsmovies/src/services/foreground_download_service.dart';
-import 'package:ytsmovies/src/theme/index.dart';
+import 'package:ytsmovies/src/injection.dart';
 
 /// Main app widget that handles initialization and provides dependencies
 class YTSAppInitializer extends StatefulWidget {
@@ -29,11 +26,8 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> {
 
   Future<void> _initializeServices() async {
     try {
-      // Initialize preferences service first
-      await PreferencesService.initialize();
-
-      // Initialize foreground download service
-      await ForegroundDownloadService.instance.initialize();
+      // Initialize dependency injection
+      await configureDependencies();
 
       setState(() {
         _isInitializing = false;
@@ -77,13 +71,11 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> {
     return MultiBlocProvider(
       providers: [
         BlocProvider<ThemeCubit>(
-          create: (_) => ThemeCubit(theme: AppTheme()),
-        ),
-        BlocProvider(
-          create: (_) => MoviesClientCubit(),
+          create: (_) => getIt<ThemeCubit>(),
         ),
         BlocProvider<DownloadManagerBloc>(
-          create: (_) => DownloadManagerBloc()..add(DownloadManagerStarted()),
+          create: (_) =>
+              getIt<DownloadManagerBloc>()..add(DownloadManagerStarted()),
         ),
       ],
       child: const YTSApp(),

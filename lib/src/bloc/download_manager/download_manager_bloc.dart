@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:injectable/injectable.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
 import 'package:ytsmovies/src/models/movie.dart';
 import 'package:ytsmovies/src/models/torrent.dart' as models;
@@ -14,11 +14,14 @@ part 'download_manager_event.dart';
 part 'download_manager_state.dart';
 
 /// BLoC for managing downloads
+@singleton
 class DownloadManagerBloc
     extends HydratedBloc<DownloadManagerEvent, DownloadManagerState> {
+  final ForegroundDownloadService _foregroundDownloadService;
   StreamSubscription<ProgressUpdate>? _progressSubscription;
 
-  DownloadManagerBloc() : super(const DownloadManagerState()) {
+  DownloadManagerBloc(this._foregroundDownloadService)
+      : super(const DownloadManagerState()) {
     on<DownloadManagerStarted>(_onStarted);
     on<DownloadManagerAddDownload>(_onAddDownload);
     on<DownloadManagerPauseDownload>(_onPauseDownload);
@@ -36,8 +39,7 @@ class DownloadManagerBloc
   ) async {
     try {
       // Subscribe to progress updates from foreground service
-      _progressSubscription =
-          ForegroundDownloadService.instance.progressStream.listen(
+      _progressSubscription = _foregroundDownloadService.progressStream.listen(
         (update) => _handleProgressUpdate(update),
       );
 
@@ -129,10 +131,10 @@ class DownloadManagerBloc
       emit(state.copyWith(downloads: updatedDownloads));
 
       // Start download in foreground service
-      await ForegroundDownloadService.instance.startDownload(
+      await _foregroundDownloadService.startDownload(
         taskId: event.task.taskId,
         magnetUri: event.task.magnetUri,
-        savePath: ForegroundDownloadService.instance.downloadPath,
+        savePath: _foregroundDownloadService.downloadPath,
         movieTitle: event.task.movieTitle,
       );
 
@@ -165,7 +167,7 @@ class DownloadManagerBloc
     Emitter<DownloadManagerState> emit,
   ) async {
     try {
-      await ForegroundDownloadService.instance.pauseDownload(event.taskId);
+      await _foregroundDownloadService.pauseDownload(event.taskId);
 
       final task = state.downloads[event.taskId];
       if (task != null) {
@@ -188,7 +190,7 @@ class DownloadManagerBloc
     try {
       final task = state.downloads[event.taskId];
       if (task != null) {
-        await ForegroundDownloadService.instance.resumeDownload(event.taskId);
+        await _foregroundDownloadService.resumeDownload(event.taskId);
 
         final updatedTask = task.copyWith(status: DownloadStatus.downloading);
         final updatedDownloads = Map<String, DownloadTask>.from(state.downloads)
@@ -207,7 +209,7 @@ class DownloadManagerBloc
     Emitter<DownloadManagerState> emit,
   ) async {
     try {
-      await ForegroundDownloadService.instance.stopDownload(event.taskId);
+      await _foregroundDownloadService.stopDownload(event.taskId);
 
       final task = state.downloads[event.taskId];
       if (task != null) {
@@ -231,7 +233,7 @@ class DownloadManagerBloc
       final task = state.downloads[event.taskId];
 
       // Stop the download first
-      await ForegroundDownloadService.instance.stopDownload(event.taskId);
+      await _foregroundDownloadService.stopDownload(event.taskId);
 
       // Delete the files if they exist
       if (task?.filePath != null) {

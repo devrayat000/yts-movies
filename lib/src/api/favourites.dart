@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:injectable/injectable.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 
+@lazySingleton
 class FavouritesService {
-  FavouritesService._();
-  static final instance = FavouritesService._();
+  FavouritesService();
 
   Box<Movie> get _favouriteBox {
     if (!Hive.isBoxOpen(MyBoxs.favouriteBox)) {

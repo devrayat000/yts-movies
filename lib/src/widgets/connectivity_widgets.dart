@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ytsmovies/src/services/connectivity_service.dart';
+import 'package:ytsmovies/src/injection.dart';
 
 /// Widget that displays network connectivity status
 class ConnectivityBanner extends StatefulWidget {
@@ -40,8 +41,9 @@ class _ConnectivityBannerState extends State<ConnectivityBanner>
     ));
 
     // Listen to connectivity changes
-    _isConnected = ConnectivityService.instance.isConnected;
-    ConnectivityService.instance.connectivityStream.listen((isConnected) {
+    final connectivityService = getIt<ConnectivityService>();
+    _isConnected = connectivityService.isConnected;
+    connectivityService.connectivityStream.listen((isConnected) {
       if (mounted) {
         setState(() {
           _isConnected = isConnected;
@@ -119,7 +121,7 @@ class _ConnectivityBannerState extends State<ConnectivityBanner>
                       TextButton(
                         onPressed: () async {
                           // Trigger a connectivity check
-                          await ConnectivityService.instance
+                          await getIt<ConnectivityService>()
                               .hasInternetConnection();
                         },
                         child: const Text(

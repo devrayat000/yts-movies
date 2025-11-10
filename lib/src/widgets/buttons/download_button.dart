@@ -156,7 +156,7 @@ class DownloadButton extends StatelessWidget {
     } catch (e, s) {
       log(e.toString(), error: e, stackTrace: s);
       if (context.mounted) {
-        ErrorNotificationService.instance.showError(
+        context.errorNotificationService.showError(
           context,
           e,
           customMessage: 'Failed to start download',
@@ -175,7 +175,7 @@ class DownloadButton extends StatelessWidget {
     } on TorrentClientException catch (e, s) {
       log(e.toString(), error: e, stackTrace: s);
       if (context.mounted) {
-        ErrorNotificationService.instance.showError(
+        context.errorNotificationService.showError(
           context,
           e,
           customMessage: 'Unable to download torrent',
@@ -184,7 +184,7 @@ class DownloadButton extends StatelessWidget {
     } catch (e, s) {
       log(e.toString(), error: e, stackTrace: s);
       if (context.mounted) {
-        ErrorNotificationService.instance.showError(
+        context.errorNotificationService.showError(
           context,
           e,
           customMessage: 'Download failed',
@@ -206,8 +206,8 @@ class _DownloadMethodDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final downloadPath = ForegroundDownloadService.instance.downloadPath;
-    final customPath = PreferencesService.instance.customDownloadPath;
+    final downloadPath = getIt<ForegroundDownloadService>().downloadPath;
+    final customPath = getIt<PreferencesService>().customDownloadPath;
     final isUsingCustomPath = customPath != null;
 
     return AlertDialog(

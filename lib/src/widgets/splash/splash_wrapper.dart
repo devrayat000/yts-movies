@@ -4,30 +4,15 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 
-import 'package:ytsmovies/src/api/client.dart';
-import 'package:ytsmovies/src/api/movies.dart';
+import 'package:ytsmovies/src/injection.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/services/connectivity_service.dart';
 
-/// App initialization states
-enum AppInitState {
-  initializing,
-  ready,
-  error,
-}
-
-/// Global variable to store the initialized client
-MoviesClient? _globalClient;
-
-/// Get the initialized client
-MoviesClient? get globalClient => _globalClient;
-
-/// Custom splash screen for app initialization
+/// A splash screen wrapper that handles app initialization
 class InitializationSplashScreen extends StatefulWidget {
   const InitializationSplashScreen({super.key});
 
@@ -53,7 +38,6 @@ class _InitializationSplashScreenState
   Future<void> _initialize() async {
     try {
       Timeline.startSync('init');
-
       setState(() {
         _errorMessage = null;
       });
@@ -78,12 +62,11 @@ class _InitializationSplashScreenState
       await Future.delayed(const Duration(milliseconds: 300));
 
       await _updateStep('Checking network connectivity...');
-      await ConnectivityService.instance.initialize();
+      await getIt<ConnectivityService>().initialize();
       await Future.delayed(const Duration(milliseconds: 300));
 
-      await _updateStep('Initializing API client...');
-      final client = await initClient();
-      BlocProvider.of<MoviesClientCubit>(context).setClient(client);
+      await _updateStep('Initializing services...');
+      // Services are already initialized via dependency injection
       await Future.delayed(const Duration(milliseconds: 300));
       Timeline.finishSync();
 

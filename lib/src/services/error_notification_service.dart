@@ -1,16 +1,17 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:injectable/injectable.dart';
+import 'package:ytsmovies/src/injection.dart';
 import 'package:ytsmovies/src/utils/exceptions.dart';
 import './error_reporting_service.dart';
 
 /// Service for handling and displaying errors consistently across the app
+@lazySingleton
 class ErrorNotificationService {
-  static final ErrorNotificationService _instance =
-      ErrorNotificationService._();
-  static ErrorNotificationService get instance => _instance;
+  final ErrorReportingService _errorReportingService;
 
-  ErrorNotificationService._();
+  ErrorNotificationService(this._errorReportingService);
 
   /// Show error notification with proper user-friendly messages
   void showError(
@@ -24,7 +25,7 @@ class ErrorNotificationService {
     final message = customMessage ?? _getErrorMessage(error);
 
     // Report error to analytics/reporting service
-    ErrorReportingService.instance.reportError(
+    _errorReportingService.reportError(
       error: error,
       context: 'User notification',
       metadata: {
@@ -267,7 +268,7 @@ class ErrorNotificationService {
 /// Extension to make error handling easier in widgets
 extension ErrorHandling on BuildContext {
   void showError(Object error, {String? customMessage, VoidCallback? onRetry}) {
-    ErrorNotificationService.instance.showError(
+    getIt<ErrorNotificationService>().showError(
       this,
       error,
       customMessage: customMessage,
@@ -276,14 +277,14 @@ extension ErrorHandling on BuildContext {
   }
 
   void showSuccess(String message) {
-    ErrorNotificationService.instance.showSuccess(this, message);
+    getIt<ErrorNotificationService>().showSuccess(this, message);
   }
 
   void showLoading(String message) {
-    ErrorNotificationService.instance.showLoading(this, message);
+    getIt<ErrorNotificationService>().showLoading(this, message);
   }
 
   void hideNotification() {
-    ErrorNotificationService.instance.hideCurrentNotification(this);
+    getIt<ErrorNotificationService>().hideCurrentNotification(this);
   }
 }

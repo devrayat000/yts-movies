@@ -1,26 +1,21 @@
 import 'dart:developer';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:injectable/injectable.dart';
 
 /// Service for managing app preferences and settings
+@singleton
 class PreferencesService {
   static const String _boxName = 'app_preferences';
   static const String _downloadPathKey = 'download_path';
 
-  static PreferencesService? _instance;
-  static PreferencesService get instance => _instance!;
-
   late Box _box;
 
-  PreferencesService._();
+  PreferencesService();
 
   /// Initialize the preferences service
-  static Future<PreferencesService> initialize() async {
-    if (_instance != null) return _instance!;
-
-    final service = PreferencesService._();
-    await service._initBox();
-    _instance = service;
-    return service;
+  @postConstruct
+  Future<void> initialize() async {
+    await _initBox();
   }
 
   Future<void> _initBox() async {
