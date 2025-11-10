@@ -21,7 +21,7 @@ sealed class DownloadTask with _$DownloadTask {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory DownloadTask({
     /// Unique task identifier
-    required String taskId,
+    required int taskId,
 
     /// Movie ID from YTS
     required int movieId,

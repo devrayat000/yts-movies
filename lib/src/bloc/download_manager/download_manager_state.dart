@@ -2,7 +2,7 @@ part of 'download_manager_bloc.dart';
 
 /// State for download manager
 class DownloadManagerState {
-  final Map<String, DownloadTask> downloads;
+  final Map<int, DownloadTask> downloads;
 
   const DownloadManagerState({
     this.downloads = const {},
@@ -42,7 +42,7 @@ class DownloadManagerState {
 
   /// Copy with
   DownloadManagerState copyWith({
-    Map<String, DownloadTask>? downloads,
+    Map<int, DownloadTask>? downloads,
   }) {
     return DownloadManagerState(
       downloads: downloads ?? this.downloads,
@@ -58,7 +58,7 @@ class DownloadManagerState {
 
   /// Deserialize from JSON
   factory DownloadManagerState.fromJson(Map<String, dynamic> json) {
-    final downloadsMap = (json['downloads'] as Map<String, dynamic>?) ?? {};
+    final downloadsMap = (json['downloads'] as Map<int, dynamic>?) ?? {};
     return DownloadManagerState(
       downloads: downloadsMap.map(
         (key, value) => MapEntry(

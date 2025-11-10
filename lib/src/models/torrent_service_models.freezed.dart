@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$StartDownloadRequest {
-  String get taskId;
+  int get taskId;
   String get magnetUri;
   String get savePath;
   String get movieTitle;
@@ -62,8 +62,7 @@ abstract mixin class $StartDownloadRequestCopyWith<$Res> {
           $Res Function(StartDownloadRequest) _then) =
       _$StartDownloadRequestCopyWithImpl;
   @useResult
-  $Res call(
-      {String taskId, String magnetUri, String savePath, String movieTitle});
+  $Res call({int taskId, String magnetUri, String savePath, String movieTitle});
 }
 
 /// @nodoc
@@ -88,7 +87,7 @@ class _$StartDownloadRequestCopyWithImpl<$Res>
       taskId: null == taskId
           ? _self.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
       magnetUri: null == magnetUri
           ? _self.magnetUri
           : magnetUri // ignore: cast_nullable_to_non_nullable
@@ -117,7 +116,7 @@ class _StartDownloadRequest implements StartDownloadRequest {
       _$StartDownloadRequestFromJson(json);
 
   @override
-  final String taskId;
+  final int taskId;
   @override
   final String magnetUri;
   @override
@@ -174,8 +173,7 @@ abstract mixin class _$StartDownloadRequestCopyWith<$Res>
       __$StartDownloadRequestCopyWithImpl;
   @override
   @useResult
-  $Res call(
-      {String taskId, String magnetUri, String savePath, String movieTitle});
+  $Res call({int taskId, String magnetUri, String savePath, String movieTitle});
 }
 
 /// @nodoc
@@ -200,7 +198,7 @@ class __$StartDownloadRequestCopyWithImpl<$Res>
       taskId: null == taskId
           ? _self.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
       magnetUri: null == magnetUri
           ? _self.magnetUri
           : magnetUri // ignore: cast_nullable_to_non_nullable
@@ -219,7 +217,7 @@ class __$StartDownloadRequestCopyWithImpl<$Res>
 
 /// @nodoc
 mixin _$PauseDownloadRequest {
-  String get taskId;
+  int get taskId;
 
   /// Create a copy of PauseDownloadRequest
   /// with the given fields replaced by the non-null parameter values.
@@ -256,7 +254,7 @@ abstract mixin class $PauseDownloadRequestCopyWith<$Res> {
           $Res Function(PauseDownloadRequest) _then) =
       _$PauseDownloadRequestCopyWithImpl;
   @useResult
-  $Res call({String taskId});
+  $Res call({int taskId});
 }
 
 /// @nodoc
@@ -278,7 +276,7 @@ class _$PauseDownloadRequestCopyWithImpl<$Res>
       taskId: null == taskId
           ? _self.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
     ));
   }
 }
@@ -291,7 +289,7 @@ class _PauseDownloadRequest implements PauseDownloadRequest {
       _$PauseDownloadRequestFromJson(json);
 
   @override
-  final String taskId;
+  final int taskId;
 
   /// Create a copy of PauseDownloadRequest
   /// with the given fields replaced by the non-null parameter values.
@@ -335,7 +333,7 @@ abstract mixin class _$PauseDownloadRequestCopyWith<$Res>
       __$PauseDownloadRequestCopyWithImpl;
   @override
   @useResult
-  $Res call({String taskId});
+  $Res call({int taskId});
 }
 
 /// @nodoc
@@ -357,14 +355,14 @@ class __$PauseDownloadRequestCopyWithImpl<$Res>
       taskId: null == taskId
           ? _self.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
     ));
   }
 }
 
 /// @nodoc
 mixin _$ResumeDownloadRequest {
-  String get taskId;
+  int get taskId;
 
   /// Create a copy of ResumeDownloadRequest
   /// with the given fields replaced by the non-null parameter values.
@@ -401,7 +399,7 @@ abstract mixin class $ResumeDownloadRequestCopyWith<$Res> {
           $Res Function(ResumeDownloadRequest) _then) =
       _$ResumeDownloadRequestCopyWithImpl;
   @useResult
-  $Res call({String taskId});
+  $Res call({int taskId});
 }
 
 /// @nodoc
@@ -423,7 +421,7 @@ class _$ResumeDownloadRequestCopyWithImpl<$Res>
       taskId: null == taskId
           ? _self.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
     ));
   }
 }
@@ -436,7 +434,7 @@ class _ResumeDownloadRequest implements ResumeDownloadRequest {
       _$ResumeDownloadRequestFromJson(json);
 
   @override
-  final String taskId;
+  final int taskId;
 
   /// Create a copy of ResumeDownloadRequest
   /// with the given fields replaced by the non-null parameter values.
@@ -480,7 +478,7 @@ abstract mixin class _$ResumeDownloadRequestCopyWith<$Res>
       __$ResumeDownloadRequestCopyWithImpl;
   @override
   @useResult
-  $Res call({String taskId});
+  $Res call({int taskId});
 }
 
 /// @nodoc
@@ -502,14 +500,14 @@ class __$ResumeDownloadRequestCopyWithImpl<$Res>
       taskId: null == taskId
           ? _self.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
     ));
   }
 }
 
 /// @nodoc
 mixin _$StopDownloadRequest {
-  String get taskId;
+  int get taskId;
 
   /// Create a copy of StopDownloadRequest
   /// with the given fields replaced by the non-null parameter values.
@@ -546,7 +544,7 @@ abstract mixin class $StopDownloadRequestCopyWith<$Res> {
           StopDownloadRequest value, $Res Function(StopDownloadRequest) _then) =
       _$StopDownloadRequestCopyWithImpl;
   @useResult
-  $Res call({String taskId});
+  $Res call({int taskId});
 }
 
 /// @nodoc
@@ -568,7 +566,7 @@ class _$StopDownloadRequestCopyWithImpl<$Res>
       taskId: null == taskId
           ? _self.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
     ));
   }
 }
@@ -581,7 +579,7 @@ class _StopDownloadRequest implements StopDownloadRequest {
       _$StopDownloadRequestFromJson(json);
 
   @override
-  final String taskId;
+  final int taskId;
 
   /// Create a copy of StopDownloadRequest
   /// with the given fields replaced by the non-null parameter values.
@@ -625,7 +623,7 @@ abstract mixin class _$StopDownloadRequestCopyWith<$Res>
       __$StopDownloadRequestCopyWithImpl;
   @override
   @useResult
-  $Res call({String taskId});
+  $Res call({int taskId});
 }
 
 /// @nodoc
@@ -647,14 +645,14 @@ class __$StopDownloadRequestCopyWithImpl<$Res>
       taskId: null == taskId
           ? _self.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
     ));
   }
 }
 
 /// @nodoc
 mixin _$ProgressUpdate {
-  String get taskId;
+  int get taskId;
   DownloadStatusType get status;
   double get progress;
   int get downloadSpeed;
@@ -726,7 +724,7 @@ abstract mixin class $ProgressUpdateCopyWith<$Res> {
       _$ProgressUpdateCopyWithImpl;
   @useResult
   $Res call(
-      {String taskId,
+      {int taskId,
       DownloadStatusType status,
       double progress,
       int downloadSpeed,
@@ -766,7 +764,7 @@ class _$ProgressUpdateCopyWithImpl<$Res>
       taskId: null == taskId
           ? _self.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
       status: null == status
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable
@@ -825,7 +823,7 @@ class _ProgressUpdate implements ProgressUpdate {
       _$ProgressUpdateFromJson(json);
 
   @override
-  final String taskId;
+  final int taskId;
   @override
   final DownloadStatusType status;
   @override
@@ -919,7 +917,7 @@ abstract mixin class _$ProgressUpdateCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String taskId,
+      {int taskId,
       DownloadStatusType status,
       double progress,
       int downloadSpeed,
@@ -959,7 +957,7 @@ class __$ProgressUpdateCopyWithImpl<$Res>
       taskId: null == taskId
           ? _self.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
       status: null == status
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable

@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$DownloadTask {
   /// Unique task identifier
-  String get taskId;
+  int get taskId;
 
   /// Movie ID from YTS
   int get movieId;
@@ -170,7 +170,7 @@ abstract mixin class $DownloadTaskCopyWith<$Res> {
       _$DownloadTaskCopyWithImpl;
   @useResult
   $Res call(
-      {String taskId,
+      {int taskId,
       int movieId,
       String movieTitle,
       String torrentHash,
@@ -231,7 +231,7 @@ class _$DownloadTaskCopyWithImpl<$Res> implements $DownloadTaskCopyWith<$Res> {
       taskId: null == taskId
           ? _self.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
       movieId: null == movieId
           ? _self.movieId
           : movieId // ignore: cast_nullable_to_non_nullable
@@ -348,7 +348,7 @@ class _DownloadTask extends DownloadTask {
 
   /// Unique task identifier
   @override
-  final String taskId;
+  final int taskId;
 
   /// Movie ID from YTS
   @override
@@ -536,7 +536,7 @@ abstract mixin class _$DownloadTaskCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String taskId,
+      {int taskId,
       int movieId,
       String movieTitle,
       String torrentHash,
@@ -598,7 +598,7 @@ class __$DownloadTaskCopyWithImpl<$Res>
       taskId: null == taskId
           ? _self.taskId
           : taskId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
       movieId: null == movieId
           ? _self.movieId
           : movieId // ignore: cast_nullable_to_non_nullable

@@ -20,6 +20,7 @@ import 'package:ytsmovies/src/pages/download_settings.dart';
 
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/utils/index.dart';
+import 'package:ytsmovies/src/utils/urls.dart';
 import '../../models/movie.dart';
 import '../../models/torrent.dart' as m;
 

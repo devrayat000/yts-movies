@@ -7,7 +7,7 @@ part 'torrent_service_models.g.dart';
 @freezed
 sealed class StartDownloadRequest with _$StartDownloadRequest {
   const factory StartDownloadRequest({
-    required String taskId,
+    required int taskId,
     required String magnetUri,
     required String savePath,
     required String movieTitle,
@@ -21,7 +21,7 @@ sealed class StartDownloadRequest with _$StartDownloadRequest {
 @freezed
 sealed class PauseDownloadRequest with _$PauseDownloadRequest {
   const factory PauseDownloadRequest({
-    required String taskId,
+    required int taskId,
   }) = _PauseDownloadRequest;
 
   factory PauseDownloadRequest.fromJson(Map<String, dynamic> json) =>
@@ -32,7 +32,7 @@ sealed class PauseDownloadRequest with _$PauseDownloadRequest {
 @freezed
 sealed class ResumeDownloadRequest with _$ResumeDownloadRequest {
   const factory ResumeDownloadRequest({
-    required String taskId,
+    required int taskId,
   }) = _ResumeDownloadRequest;
 
   factory ResumeDownloadRequest.fromJson(Map<String, dynamic> json) =>
@@ -43,7 +43,7 @@ sealed class ResumeDownloadRequest with _$ResumeDownloadRequest {
 @freezed
 sealed class StopDownloadRequest with _$StopDownloadRequest {
   const factory StopDownloadRequest({
-    required String taskId,
+    required int taskId,
   }) = _StopDownloadRequest;
 
   factory StopDownloadRequest.fromJson(Map<String, dynamic> json) =>
@@ -70,7 +70,7 @@ enum DownloadStatusType {
 @freezed
 sealed class ProgressUpdate with _$ProgressUpdate {
   const factory ProgressUpdate({
-    required String taskId,
+    required int taskId,
     required DownloadStatusType status,
     @Default(0.0) double progress,
     @Default(0) int downloadSpeed,

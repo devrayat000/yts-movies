@@ -8,7 +8,7 @@ part of 'download_task.dart';
 
 _DownloadTask _$DownloadTaskFromJson(Map<String, dynamic> json) =>
     _DownloadTask(
-      taskId: json['task_id'] as String,
+      taskId: (json['task_id'] as num).toInt(),
       movieId: (json['movie_id'] as num).toInt(),
       movieTitle: json['movie_title'] as String,
       torrentHash: json['torrent_hash'] as String,

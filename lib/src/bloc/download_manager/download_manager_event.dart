@@ -21,28 +21,28 @@ class DownloadManagerAddDownload extends DownloadManagerEvent {
 
 /// Event to pause a download
 class DownloadManagerPauseDownload extends DownloadManagerEvent {
-  final String taskId;
+  final int taskId;
 
   DownloadManagerPauseDownload(this.taskId);
 }
 
 /// Event to resume a download
 class DownloadManagerResumeDownload extends DownloadManagerEvent {
-  final String taskId;
+  final int taskId;
 
   DownloadManagerResumeDownload(this.taskId);
 }
 
 /// Event to stop a download
 class DownloadManagerStopDownload extends DownloadManagerEvent {
-  final String taskId;
+  final int taskId;
 
   DownloadManagerStopDownload(this.taskId);
 }
 
 /// Event to delete a download
 class DownloadManagerDeleteDownload extends DownloadManagerEvent {
-  final String taskId;
+  final int taskId;
 
   DownloadManagerDeleteDownload(this.taskId);
 }

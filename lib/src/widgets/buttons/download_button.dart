@@ -101,7 +101,8 @@ class DownloadButton extends StatelessWidget {
         throw Exception('Movie information not available');
       }
 
-      final taskId = '${movie!.id}_${_torrent.hash}';
+      final magnetUri = _torrent.magnet(movie!.title).toString();
+      final taskId = urlToUniqueInt(magnetUri);
 
       // Check if already downloading
       final bloc = context.read<DownloadManagerBloc>();
@@ -125,7 +126,7 @@ class DownloadButton extends StatelessWidget {
         movieId: movie!.id,
         movieTitle: movie!.title,
         torrentHash: _torrent.hash,
-        magnetUri: _torrent.magnet(movie!.title).toString(),
+        magnetUri: magnetUri,
         quality: _torrent.quality,
         type: _torrent.type,
         size: _torrent.size,

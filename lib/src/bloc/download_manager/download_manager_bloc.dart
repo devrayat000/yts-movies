@@ -123,7 +123,7 @@ class DownloadManagerBloc
       }
 
       // Add task to state with queued status
-      final updatedDownloads = Map<String, DownloadTask>.from(state.downloads)
+      final updatedDownloads = Map<int, DownloadTask>.from(state.downloads)
         ..[event.task.taskId] = event.task.copyWith(
           status: DownloadStatus.queued,
         );
@@ -141,7 +141,7 @@ class DownloadManagerBloc
       log('Download started in foreground service: ${event.task.taskId}');
 
       // Update status to downloading
-      final startedDownloads = Map<String, DownloadTask>.from(state.downloads)
+      final startedDownloads = Map<int, DownloadTask>.from(state.downloads)
         ..[event.task.taskId] = event.task.copyWith(
           status: DownloadStatus.downloading,
         );
@@ -154,7 +154,7 @@ class DownloadManagerBloc
         status: DownloadStatus.failed,
         errorMessage: e.toString(),
       );
-      final errorDownloads = Map<String, DownloadTask>.from(state.downloads)
+      final errorDownloads = Map<int, DownloadTask>.from(state.downloads)
         ..[event.task.taskId] = errorTask;
 
       emit(state.copyWith(downloads: errorDownloads));
@@ -172,7 +172,7 @@ class DownloadManagerBloc
       final task = state.downloads[event.taskId];
       if (task != null) {
         final updatedTask = task.copyWith(status: DownloadStatus.paused);
-        final updatedDownloads = Map<String, DownloadTask>.from(state.downloads)
+        final updatedDownloads = Map<int, DownloadTask>.from(state.downloads)
           ..[event.taskId] = updatedTask;
 
         emit(state.copyWith(downloads: updatedDownloads));
@@ -193,7 +193,7 @@ class DownloadManagerBloc
         await _foregroundDownloadService.resumeDownload(event.taskId);
 
         final updatedTask = task.copyWith(status: DownloadStatus.downloading);
-        final updatedDownloads = Map<String, DownloadTask>.from(state.downloads)
+        final updatedDownloads = Map<int, DownloadTask>.from(state.downloads)
           ..[event.taskId] = updatedTask;
 
         emit(state.copyWith(downloads: updatedDownloads));
@@ -214,7 +214,7 @@ class DownloadManagerBloc
       final task = state.downloads[event.taskId];
       if (task != null) {
         final updatedTask = task.copyWith(status: DownloadStatus.stopped);
-        final updatedDownloads = Map<String, DownloadTask>.from(state.downloads)
+        final updatedDownloads = Map<int, DownloadTask>.from(state.downloads)
           ..[event.taskId] = updatedTask;
 
         emit(state.copyWith(downloads: updatedDownloads));
@@ -248,7 +248,7 @@ class DownloadManagerBloc
         }
       }
 
-      final updatedDownloads = Map<String, DownloadTask>.from(state.downloads)
+      final updatedDownloads = Map<int, DownloadTask>.from(state.downloads)
         ..remove(event.taskId);
 
       emit(state.copyWith(downloads: updatedDownloads));
@@ -262,7 +262,7 @@ class DownloadManagerBloc
     DownloadManagerUpdateProgress event,
     Emitter<DownloadManagerState> emit,
   ) {
-    final updatedDownloads = Map<String, DownloadTask>.from(state.downloads)
+    final updatedDownloads = Map<int, DownloadTask>.from(state.downloads)
       ..[event.task.taskId] = event.task;
 
     emit(state.copyWith(downloads: updatedDownloads));
@@ -273,7 +273,7 @@ class DownloadManagerBloc
     DownloadManagerClearCompleted event,
     Emitter<DownloadManagerState> emit,
   ) {
-    final updatedDownloads = Map<String, DownloadTask>.from(state.downloads)
+    final updatedDownloads = Map<int, DownloadTask>.from(state.downloads)
       ..removeWhere((key, value) => value.status == DownloadStatus.completed);
 
     emit(state.copyWith(downloads: updatedDownloads));

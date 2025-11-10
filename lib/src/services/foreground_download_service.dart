@@ -270,7 +270,7 @@ class ForegroundDownloadService {
 
   /// Send download command to background service
   Future<void> startDownload({
-    required String taskId,
+    required int taskId,
     required String magnetUri,
     required String savePath,
     required String movieTitle,
@@ -317,7 +317,7 @@ class ForegroundDownloadService {
   }
 
   /// Pause a download
-  Future<void> pauseDownload(String taskId) async {
+  Future<void> pauseDownload(int taskId) async {
     final service = FlutterBackgroundService();
     service.invoke(
       'pauseDownload',
@@ -326,7 +326,7 @@ class ForegroundDownloadService {
   }
 
   /// Resume a download
-  Future<void> resumeDownload(String taskId) async {
+  Future<void> resumeDownload(int taskId) async {
     final service = FlutterBackgroundService();
     service.invoke(
       'resumeDownload',
@@ -335,7 +335,7 @@ class ForegroundDownloadService {
   }
 
   /// Stop a download
-  Future<void> stopDownload(String taskId) async {
+  Future<void> stopDownload(int taskId) async {
     final service = FlutterBackgroundService();
     service.invoke(
       'stopDownload',

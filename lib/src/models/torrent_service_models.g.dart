@@ -9,7 +9,7 @@ part of 'torrent_service_models.dart';
 _StartDownloadRequest _$StartDownloadRequestFromJson(
         Map<String, dynamic> json) =>
     _StartDownloadRequest(
-      taskId: json['taskId'] as String,
+      taskId: (json['taskId'] as num).toInt(),
       magnetUri: json['magnetUri'] as String,
       savePath: json['savePath'] as String,
       movieTitle: json['movieTitle'] as String,
@@ -27,7 +27,7 @@ Map<String, dynamic> _$StartDownloadRequestToJson(
 _PauseDownloadRequest _$PauseDownloadRequestFromJson(
         Map<String, dynamic> json) =>
     _PauseDownloadRequest(
-      taskId: json['taskId'] as String,
+      taskId: (json['taskId'] as num).toInt(),
     );
 
 Map<String, dynamic> _$PauseDownloadRequestToJson(
@@ -39,7 +39,7 @@ Map<String, dynamic> _$PauseDownloadRequestToJson(
 _ResumeDownloadRequest _$ResumeDownloadRequestFromJson(
         Map<String, dynamic> json) =>
     _ResumeDownloadRequest(
-      taskId: json['taskId'] as String,
+      taskId: (json['taskId'] as num).toInt(),
     );
 
 Map<String, dynamic> _$ResumeDownloadRequestToJson(
@@ -50,7 +50,7 @@ Map<String, dynamic> _$ResumeDownloadRequestToJson(
 
 _StopDownloadRequest _$StopDownloadRequestFromJson(Map<String, dynamic> json) =>
     _StopDownloadRequest(
-      taskId: json['taskId'] as String,
+      taskId: (json['taskId'] as num).toInt(),
     );
 
 Map<String, dynamic> _$StopDownloadRequestToJson(
@@ -61,7 +61,7 @@ Map<String, dynamic> _$StopDownloadRequestToJson(
 
 _ProgressUpdate _$ProgressUpdateFromJson(Map<String, dynamic> json) =>
     _ProgressUpdate(
-      taskId: json['taskId'] as String,
+      taskId: (json['taskId'] as num).toInt(),
       status: $enumDecode(_$DownloadStatusTypeEnumMap, json['status']),
       progress: (json['progress'] as num?)?.toDouble() ?? 0.0,
       downloadSpeed: (json['downloadSpeed'] as num?)?.toInt() ?? 0,

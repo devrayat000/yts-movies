@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:typed_data';
 import 'dart:ui';
+import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:events_emitter2/src/events_emitter.dart' show EventsListener;
 import 'package:b_encode_decode/b_encode_decode.dart';
 import 'package:dtorrent_parser/dtorrent_parser.dart';
@@ -77,9 +79,9 @@ void onStartBackgroundService(ServiceInstance service) async {
   });
 
   // Periodic update for notification
-  Timer.periodic(const Duration(seconds: 5), (timer) {
-    handler.updateOverallNotification();
-  });
+  // Timer.periodic(const Duration(seconds: 5), (timer) {
+  //   handler.updateOverallNotification();
+  // });
 
   log('_TorrentTaskHandler: Service started');
 }
@@ -91,29 +93,37 @@ class _TorrentTaskHandler {
 
   // Map to manage multiple simultaneous downloads
   // Key: taskId, Value: TorrentTask
-  final Map<String, TorrentTask> _tasks = {};
-  final Map<String, MetadataDownloader> _metadataDownloaders = {};
-  final Map<String, EventsListener<TaskEvent>> _taskListeners = {};
+  final Map<int, TorrentTask> _tasks = {};
+  final Map<int, MetadataDownloader> _metadataDownloaders = {};
+  final Map<int, EventsListener<TaskEvent>> _taskListeners = {};
 
   _TorrentTaskHandler(this.service, this.notificationsPlugin);
 
-  void updateOverallNotification() {
-    if (_tasks.isEmpty) return;
+  // void updateOverallNotification() {
+  //   if (_tasks.isEmpty) return;
 
-    final totalProgress =
-        _tasks.values.map((task) => task.progress).reduce((a, b) => a + b) /
-            _tasks.length;
+  //   final totalProgress =
+  //       _tasks.values.map((task) => task.progress).reduce((a, b) => a + b) /
+  //           _tasks.length;
 
-    final activeCount = _tasks.length;
+  //   final activeCount = _tasks.length;
 
-    _showNotification(
-      notificationId,
-      'Torrent Downloads',
-      '$activeCount active download(s) • ${(totalProgress * 100).toStringAsFixed(1)}% complete',
-      progress: (totalProgress * 100).toInt(),
-      maxProgress: 100,
-    );
-  }
+  //   _showNotification(
+  //     notificationId,
+  //     'Torrent Downloads',
+  //     '$activeCount active download(s) • ${(totalProgress * 100).toStringAsFixed(1)}% complete',
+  //     progress: (totalProgress * 100).toInt(),
+  //     maxProgress: 100,
+  //   );
+  // }
+
+  // int _urlToUniqueInt(String url) {
+  //   var bytes = utf8.encode(url); // Convert URL string to bytes
+  //   var digest = sha256.convert(bytes); // Hash the bytes using SHA-256
+  //   // Take a portion of the hash and convert it to an integer
+  //   // This approach ensures a fixed-size integer representation.
+  //   return int.parse(digest.toString().substring(0, 8), radix: 16);
+  // }
 
   Future<void> startDownload(StartDownloadRequest request) async {
     final taskId = request.taskId;
@@ -150,7 +160,7 @@ class _TorrentTaskHandler {
 
       // Update notification
       _showNotification(
-        notificationId,
+        taskId,
         'Downloading Metadata',
         movieTitle,
       );
@@ -308,7 +318,7 @@ class _TorrentTaskHandler {
   }
 
   void _startProgressMonitoring(
-    String taskId,
+    int taskId,
     TorrentTask task,
     String movieTitle,
     int totalBytes,
@@ -340,7 +350,7 @@ class _TorrentTaskHandler {
 
         // Update notification with progress bar
         _showNotification(
-          notificationId,
+          taskId,
           movieTitle,
           '${(progress * 100).toStringAsFixed(1)}% • ${_formatSpeed(downloadSpeed)} ↓ ${_formatSpeed(uploadSpeed)} ↑',
           progress: (progress * 100).toInt(),
@@ -369,7 +379,7 @@ class _TorrentTaskHandler {
 
         // Update notification
         _showNotification(
-          notificationId,
+          taskId,
           movieTitle,
           'Download completed!',
           progress: 100,
