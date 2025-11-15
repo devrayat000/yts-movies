@@ -300,10 +300,10 @@ class _DownloadMethodDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: theme.colorScheme.secondaryContainer.withOpacity(0.3),
+              color: theme.colorScheme.secondaryContainer.withAlpha(77),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: theme.colorScheme.secondary.withOpacity(0.3),
+                color: theme.colorScheme.secondary.withAlpha(77),
               ),
             ),
             child: Row(

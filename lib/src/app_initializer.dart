@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:ytsmovies/src/app.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
@@ -36,8 +37,8 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> {
 
       // Initialize notification service and listen for taps
       final notificationService = getIt<NotificationService>();
-      _notificationSubscription =
-          notificationService.notificationTapStream.listen(_handleNotificationTap);
+      _notificationSubscription = notificationService.notificationTapStream
+          .listen(_handleNotificationTap);
 
       setState(() {
         _isInitializing = false;
