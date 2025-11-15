@@ -15,12 +15,16 @@ import 'package:ytsmovies/src/pages/favourites.dart';
 import 'package:ytsmovies/src/pages/app_info.dart';
 import 'package:ytsmovies/src/pages/search.dart';
 import 'package:ytsmovies/src/pages/downloads.dart';
+import 'package:ytsmovies/src/pages/download_details.dart';
 import 'package:ytsmovies/src/widgets.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 
 extension RouterExtension on YTSApp {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
   static final _shellNavigatorKey = GlobalKey<NavigatorState>();
+
+  // Public getter for root navigator key
+  static GlobalKey<NavigatorState> get rootNavigatorKey => _rootNavigatorKey;
 
   GoRouter get router => GoRouter(
         navigatorKey: _rootNavigatorKey,
@@ -89,6 +93,17 @@ extension RouterExtension on YTSApp {
                     path: 'downloads',
                     name: "downloads",
                     builder: (context, state) => const DownloadsPage(),
+                    routes: [
+                      GoRoute(
+                        path: 'details/:taskId',
+                        name: "download-details",
+                        builder: (context, state) {
+                          final taskIdStr = state.pathParameters['taskId']!;
+                          final taskId = int.parse(taskIdStr);
+                          return DownloadDetailsPage(taskId: taskId);
+                        },
+                      ),
+                    ],
                   ),
                   GoRoute(
                     path: 'app-info',

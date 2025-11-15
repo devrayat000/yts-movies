@@ -11,6 +11,7 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
 import 'package:ytsmovies/src/models/torrent_service_models.dart';
+import 'package:ytsmovies/src/services/sequential_download_queue.dart';
 
 /// Notification channel ID for torrent downloads
 const String notificationChannelId = 'torrent_downloads';
@@ -95,8 +96,16 @@ class _TorrentTaskHandler {
   final Map<int, TorrentTask> _tasks = {};
   final Map<int, MetadataDownloader> _metadataDownloaders = {};
   final Map<int, EventsListener<TaskEvent>> _taskListeners = {};
+  final Map<int, String> _taskTitles = {}; // Store movie titles
+  final Map<int, StartDownloadRequest> _pendingRequests = {}; // Store pending requests
 
-  _TorrentTaskHandler(this.service, this.notificationsPlugin);
+  // Sequential download queue
+  final SequentialDownloadQueue _downloadQueue = SequentialDownloadQueue();
+
+  _TorrentTaskHandler(this.service, this.notificationsPlugin) {
+    // Set up the callback for actually starting downloads
+    _downloadQueue.setStartCallback(_actuallyStartDownload);
+  }
 
   // void updateOverallNotification() {
   //   if (_tasks.isEmpty) return;
@@ -126,20 +135,66 @@ class _TorrentTaskHandler {
 
   Future<void> startDownload(StartDownloadRequest request) async {
     final taskId = request.taskId;
+    final movieTitle = request.movieTitle;
+
+    try {
+      log('=== Adding download to queue ===');
+      log('Task ID: $taskId');
+      log('Movie title: $movieTitle');
+
+      if (_tasks.containsKey(taskId) || _metadataDownloaders.containsKey(taskId)) {
+        log('Task $taskId already running');
+        return;
+      }
+
+      // Store the request and movie title
+      _pendingRequests[taskId] = request;
+      _taskTitles[taskId] = movieTitle;
+
+      // Add to queue (will start immediately if no active download)
+      final addedToQueue = _downloadQueue.addTask(taskId, movieTitle);
+
+      if (addedToQueue) {
+        // Task was added to queue, send queued status
+        _sendProgressUpdate(
+          ProgressUpdate(
+            taskId: taskId,
+            status: DownloadStatus.queued,
+          ),
+        );
+      }
+      // If not added to queue, it means it started immediately
+      // The _actuallyStartDownload will handle the status update
+    } catch (e, s) {
+      log('Error adding download to queue: $e', error: e, stackTrace: s);
+      _sendProgressUpdate(
+        ProgressUpdate(
+          taskId: taskId,
+          status: DownloadStatus.failed,
+          error: e.toString(),
+        ),
+      );
+    }
+  }
+
+  /// Actually start the download (called by queue manager)
+  Future<void> _actuallyStartDownload(int taskId) async {
+    final request = _pendingRequests[taskId];
+    if (request == null) {
+      log('ERROR: No pending request found for task $taskId');
+      _downloadQueue.markCurrentComplete(taskId);
+      return;
+    }
+
     final magnetUri = request.magnetUri;
     final savePath = request.savePath;
     final movieTitle = request.movieTitle;
 
     try {
-      log('=== Starting download for $taskId ===');
+      log('=== Actually starting download for $taskId ===');
       log('Magnet URI: $magnetUri');
       log('Save path: $savePath');
       log('Movie title: $movieTitle');
-
-      if (_tasks.containsKey(taskId)) {
-        log('Task $taskId already running');
-        return;
-      }
 
       // Parse magnet link
       final magnet = MagnetParser.parse(magnetUri);
@@ -273,6 +328,9 @@ class _TorrentTaskHandler {
                 error: e.toString(),
               ),
             );
+
+            // Mark as complete in queue to start next download
+            _downloadQueue.markCurrentComplete(taskId);
           }
         })
         ..on<MetaDataDownloadFailed>((event) {
@@ -285,6 +343,9 @@ class _TorrentTaskHandler {
               error: event.error,
             ),
           );
+
+          // Mark as complete in queue to start next download
+          _downloadQueue.markCurrentComplete(taskId);
         });
 
       metadata.startDownload();
@@ -313,6 +374,9 @@ class _TorrentTaskHandler {
           error: e.toString(),
         ),
       );
+
+      // Mark as complete in queue to start next download
+      _downloadQueue.markCurrentComplete(taskId);
     }
   }
 
@@ -397,9 +461,10 @@ class _TorrentTaskHandler {
         );
 
         // Clean up
-        _taskListeners[taskId]?.dispose();
-        _taskListeners.remove(taskId);
-        _tasks.remove(taskId);
+        _cleanupTask(taskId);
+
+        // Mark as complete in queue to start next download
+        _downloadQueue.markCurrentComplete(taskId);
       })
       ..on<TaskFileCompleted>((event) {
         log('File completed for $taskId: ${event.file.originalFileName}');
@@ -408,9 +473,7 @@ class _TorrentTaskHandler {
         log('Task stopped: $taskId');
 
         // Clean up
-        _taskListeners[taskId]?.dispose();
-        _taskListeners.remove(taskId);
-        _tasks.remove(taskId);
+        _cleanupTask(taskId);
 
         _sendProgressUpdate(
           ProgressUpdate(
@@ -418,6 +481,9 @@ class _TorrentTaskHandler {
             status: DownloadStatus.stopped,
           ),
         );
+
+        // Mark as complete in queue to start next download
+        _downloadQueue.markCurrentComplete(taskId);
       });
   }
 
@@ -433,14 +499,19 @@ class _TorrentTaskHandler {
         ),
       );
       log('Download paused: $taskId');
+
+      // When paused, move to next in queue
+      _downloadQueue.markCurrentComplete(taskId);
     }
   }
 
   void resumeDownload(DownloadControlRequest request) {
     final taskId = request.taskId;
-    print('=== Resuming download for $taskId ===');
+    log('=== Resuming download for $taskId ===');
+
     final task = _tasks[taskId];
     if (task != null) {
+      // Task already exists, just resume it
       task.start();
       _sendProgressUpdate(
         ProgressUpdate(
@@ -449,24 +520,59 @@ class _TorrentTaskHandler {
         ),
       );
       log('Download resumed: $taskId');
+    } else {
+      // Task doesn't exist, need to re-add to queue
+      log('Task $taskId not found, cannot resume directly');
+      // Re-add to queue if we have the request info
+      final pendingRequest = _pendingRequests[taskId];
+      if (pendingRequest != null) {
+        log('Re-adding task $taskId to queue');
+        startDownload(pendingRequest);
+      }
     }
   }
 
   Future<void> stopDownload(DownloadControlRequest request) async {
     final taskId = request.taskId;
+
+    // Remove from queue if it's waiting
+    _downloadQueue.removeTask(taskId);
+
+    // Stop metadata download if in progress
+    final metadata = _metadataDownloaders.remove(taskId);
+    if (metadata != null) {
+      metadata.stop();
+      log('Stopped metadata download for $taskId');
+    }
+
+    // Stop torrent task if exists
     final task = _tasks.remove(taskId);
     if (task != null) {
       await task.stop();
-      _taskListeners[taskId]?.dispose();
-      _taskListeners.remove(taskId);
-      _sendProgressUpdate(
-        ProgressUpdate(
-          taskId: taskId,
-          status: DownloadStatus.stopped,
-        ),
-      );
+      _cleanupTask(taskId);
       log('Download stopped: $taskId');
+
+      // Mark as complete in queue to start next download
+      _downloadQueue.markCurrentComplete(taskId);
     }
+
+    // Clean up pending request
+    _pendingRequests.remove(taskId);
+
+    _sendProgressUpdate(
+      ProgressUpdate(
+        taskId: taskId,
+        status: DownloadStatus.stopped,
+      ),
+    );
+  }
+
+  void _cleanupTask(int taskId) {
+    _taskListeners[taskId]?.dispose();
+    _taskListeners.remove(taskId);
+    _tasks.remove(taskId);
+    _taskTitles.remove(taskId);
+    _pendingRequests.remove(taskId);
   }
 
   void _sendProgressUpdate(ProgressUpdate update) {
@@ -501,11 +607,13 @@ class _TorrentTaskHandler {
 
     final notificationDetails = NotificationDetails(android: androidDetails);
 
+    // Include taskId as payload so we can handle taps
     await notificationsPlugin.show(
       id,
       title,
       body,
       notificationDetails,
+      payload: id.toString(), // Pass taskId as payload
     );
   }
 
@@ -536,5 +644,8 @@ class _TorrentTaskHandler {
     _taskListeners.clear();
     _metadataDownloaders.clear();
     _tasks.clear();
+    _taskTitles.clear();
+    _pendingRequests.clear();
+    _downloadQueue.clear();
   }
 }
