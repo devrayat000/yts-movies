@@ -1,9 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:ytsmovies/src/bloc/download_manager/index.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
 import 'package:ytsmovies/src/pages/download_settings.dart';
+import 'package:ytsmovies/src/pages/download_details.dart';
+import 'package:ytsmovies/src/services/foreground_download_service.dart';
+import 'package:ytsmovies/src/injection.dart';
+import 'package:open_filex/open_filex.dart';
 
 class DownloadsPage extends StatelessWidget {
   const DownloadsPage({super.key});
@@ -130,11 +135,13 @@ class _DownloadTaskCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: InkWell(
+        onTap: () => _onCardTap(context),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Movie cover image
             if (task.coverImage != null)
               ClipRRect(
@@ -263,12 +270,148 @@ class _DownloadTaskCard extends StatelessWidget {
                 ],
               ),
             ),
-            // Action buttons
-            _DownloadActionsMenu(task: task),
-          ],
+              // Action buttons
+              _DownloadActionsMenu(task: task),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Future<void> _onCardTap(BuildContext context) async {
+    // If downloading or paused, navigate to details page
+    if (task.status == DownloadStatus.downloading ||
+        task.status == DownloadStatus.paused ||
+        task.status == DownloadStatus.downloadingMetadata ||
+        task.status == DownloadStatus.queued) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DownloadDetailsPage(taskId: task.taskId),
+        ),
+      );
+    }
+    // If completed, open the file location
+    else if (task.status == DownloadStatus.completed) {
+      await _openDownloadLocation(context);
+    }
+  }
+
+  Future<void> _openDownloadLocation(BuildContext context) async {
+    try {
+      final downloadService = getIt<ForegroundDownloadService>();
+      final downloadPath = downloadService.downloadPath;
+
+      // Get the directory where the file is located
+      final directory = Directory(downloadPath);
+
+      if (!await directory.exists()) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Download directory not found'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Try to find the movie file
+      final files = await directory.list().toList();
+      File? movieFile;
+
+      // Look for files containing the movie title or torrent hash
+      for (var entity in files) {
+        if (entity is File) {
+          final fileName = entity.path.split('/').last.toLowerCase();
+          if (fileName.contains(task.movieTitle.toLowerCase()) ||
+              fileName.contains(task.torrentHash.toLowerCase())) {
+            movieFile = entity;
+            break;
+          }
+        }
+      }
+
+      if (movieFile != null && await movieFile.exists()) {
+        // Try to open the file with the default application
+        final result = await OpenFilex.open(movieFile.path);
+
+        if (context.mounted) {
+          if (result.type == ResultType.done) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Opening file...'),
+                duration: Duration(seconds: 1),
+              ),
+            );
+          } else if (result.type == ResultType.noAppToOpen) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No app found to open this file'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error opening file: ${result.message}'),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        }
+      } else {
+        // File not found, just show the directory path
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (dialogContext) => AlertDialog(
+              title: const Text('Download Location'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('File location:'),
+                  const SizedBox(height: 8),
+                  SelectableText(
+                    downloadPath,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Note: The exact file location may vary based on the torrent content.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 }
 
