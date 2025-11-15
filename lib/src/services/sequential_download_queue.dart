@@ -28,12 +28,14 @@ class SequentialDownloadQueue {
   bool addTask(int taskId, String title) {
     _taskTitles[taskId] = title;
 
+    log('=== SequentialDownloadQueue: All tasks $_pendingTasks ===');
+
     if (_activeTaskId == null) {
       // No active download, start immediately
       _activeTaskId = taskId;
       log('=== SequentialDownloadQueue: Starting task $taskId immediately ===');
       log('Title: $title');
-      _processNext();
+      _startActiveTask();
       return false; // Started immediately
     } else {
       // Add to queue
@@ -104,25 +106,40 @@ class SequentialDownloadQueue {
       log('Title: ${_taskTitles[nextTaskId]}');
       log('Remaining in queue: ${_pendingTasks.length}');
 
-      // Start the download using callback
-      _startDownloadCallback?.call(nextTaskId).catchError((e, s) {
-        log('Error starting download $nextTaskId: $e', error: e, stackTrace: s);
-        // Clear active task on error so queue can proceed
-        if (_activeTaskId == nextTaskId) {
-          _activeTaskId = null;
-          _processNext();
-        }
-      });
+      _startActiveTask();
     } finally {
       _isProcessing = false;
     }
+  }
+
+  void _startActiveTask() {
+    final taskId = _activeTaskId;
+    if (taskId == null) {
+      log('No active task to start');
+      return;
+    }
+
+    if (_startDownloadCallback == null) {
+      log('Start callback not set; cannot start task $taskId');
+      return;
+    }
+
+    _startDownloadCallback!(taskId).catchError((e, s) {
+      log('Error starting download $taskId: $e', error: e, stackTrace: s);
+      // Clear active task on error so queue can proceed
+      if (_activeTaskId == taskId) {
+        _activeTaskId = null;
+        _processNext();
+      }
+    });
   }
 
   /// Get current queue status
   Map<String, dynamic> getStats() {
     return {
       'activeTaskId': _activeTaskId,
-      'activeTaskTitle': _activeTaskId != null ? _taskTitles[_activeTaskId] : null,
+      'activeTaskTitle':
+          _activeTaskId != null ? _taskTitles[_activeTaskId] : null,
       'pendingCount': _pendingTasks.length,
       'pendingTaskIds': List.from(_pendingTasks),
     };

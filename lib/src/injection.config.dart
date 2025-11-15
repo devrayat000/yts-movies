@@ -21,6 +21,7 @@ import 'services/connectivity_service.dart' as _i807;
 import 'services/error_notification_service.dart' as _i382;
 import 'services/error_reporting_service.dart' as _i1043;
 import 'services/foreground_download_service.dart' as _i663;
+import 'services/notification_service.dart' as _i98;
 import 'services/preferences_service.dart' as _i701;
 import 'theme/index.dart' as _i1055;
 
@@ -37,6 +38,10 @@ extension GetItInjectableX on _i174.GetIt {
     );
     final apiModule = _$ApiModule();
     gh.singletonAsync<_i1000.MoviesClient>(() => apiModule.initClient());
+    gh.singletonAsync<_i98.NotificationService>(() {
+      final i = _i98.NotificationService();
+      return i.initialize().then((_) => i);
+    });
     gh.singletonAsync<_i701.PreferencesService>(() {
       final i = _i701.PreferencesService();
       return i.initialize().then((_) => i);
