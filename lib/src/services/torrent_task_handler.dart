@@ -607,11 +607,13 @@ class _TorrentTaskHandler {
 
     final notificationDetails = NotificationDetails(android: androidDetails);
 
+    // Include taskId as payload so we can handle taps
     await notificationsPlugin.show(
       id,
       title,
       body,
       notificationDetails,
+      payload: id.toString(), // Pass taskId as payload
     );
   }
 
