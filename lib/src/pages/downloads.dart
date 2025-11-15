@@ -8,7 +8,7 @@ import 'package:ytsmovies/src/pages/download_settings.dart';
 import 'package:ytsmovies/src/pages/download_details.dart';
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
 import 'package:ytsmovies/src/injection.dart';
-import 'package:open_filex/open_filex.dart';
+import 'package:open_file_manager/open_file_manager.dart';
 
 class DownloadsPage extends StatelessWidget {
   const DownloadsPage({super.key});
@@ -142,134 +142,134 @@ class _DownloadTaskCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-            // Movie cover image
-            if (task.coverImage != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
-                child: CachedNetworkImage(
-                  imageUrl: task.coverImage!,
-                  width: 60,
-                  height: 90,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
+              // Movie cover image
+              if (task.coverImage != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8.0),
+                  child: CachedNetworkImage(
+                    imageUrl: task.coverImage!,
                     width: 60,
                     height: 90,
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: CircularProgressIndicator(),
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      width: 60,
+                      height: 90,
+                      color: Colors.grey[300],
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
                     ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    width: 60,
-                    height: 90,
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.error),
+                    errorWidget: (context, url, error) => Container(
+                      width: 60,
+                      height: 90,
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.error),
+                    ),
                   ),
                 ),
-              ),
-            const SizedBox(width: 12),
-            // Download info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    task.movieTitle,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${task.quality}${task.type != null ? ' ${task.type!.toUpperCase()}' : ''} • ${task.size}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Progress bar
-                  if (task.status == DownloadStatus.downloading ||
-                      task.status == DownloadStatus.paused) ...[
-                    LinearProgressIndicator(
-                      value: task.progress,
-                      backgroundColor: Colors.grey[300],
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        task.status == DownloadStatus.paused
-                            ? Colors.orange
-                            : theme.colorScheme.primary,
+              const SizedBox(width: 12),
+              // Download info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      task.movieTitle,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          task.progressPercentage,
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        if (task.status == DownloadStatus.downloading)
-                          Text(
-                            '${task.formattedDownloadSpeed} ↓ ${task.formattedUploadSpeed} ↑',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.green,
-                            ),
-                          ),
-                      ],
+                    Text(
+                      '${task.quality}${task.type != null ? ' ${task.type!.toUpperCase()}' : ''} • ${task.size}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[600],
+                      ),
                     ),
-                    if (task.peers > 0 || task.seeders > 0)
-                      Text(
-                        'Peers: ${task.peers} • Seeders: ${task.seeders}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
+                    const SizedBox(height: 8),
+                    // Progress bar
+                    if (task.status == DownloadStatus.downloading ||
+                        task.status == DownloadStatus.paused) ...[
+                      LinearProgressIndicator(
+                        value: task.progress,
+                        backgroundColor: Colors.grey[300],
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          task.status == DownloadStatus.paused
+                              ? Colors.orange
+                              : theme.colorScheme.primary,
                         ),
                       ),
-                  ],
-                  if (task.status == DownloadStatus.completed) ...[
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          size: 16,
-                          color: Colors.green,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Completed',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.green,
-                            fontWeight: FontWeight.bold,
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            task.progressPercentage,
+                            style: theme.textTheme.bodySmall,
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  if (task.status == DownloadStatus.failed) ...[
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.error,
-                          size: 16,
-                          color: Colors.red,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            task.errorMessage ?? 'Download failed',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.red,
+                          if (task.status == DownloadStatus.downloading)
+                            Text(
+                              '${task.formattedDownloadSpeed} ↓ ${task.formattedUploadSpeed} ↑',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.green,
+                              ),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        ],
+                      ),
+                      if (task.peers > 0 || task.seeders > 0)
+                        Text(
+                          'Peers: ${task.peers} • Seeders: ${task.seeders}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
                           ),
                         ),
-                      ],
-                    ),
+                    ],
+                    if (task.status == DownloadStatus.completed) ...[
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            size: 16,
+                            color: Colors.green,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Completed',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (task.status == DownloadStatus.failed) ...[
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.error,
+                            size: 16,
+                            color: Colors.red,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              task.errorMessage ?? 'Download failed',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.red,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
               // Action buttons
               _DownloadActionsMenu(task: task),
             ],
@@ -319,89 +319,15 @@ class _DownloadTaskCard extends StatelessWidget {
       }
 
       // Try to find the movie file
-      final files = await directory.list().toList();
-      File? movieFile;
-
-      // Look for files containing the movie title or torrent hash
-      for (var entity in files) {
-        if (entity is File) {
-          final fileName = entity.path.split('/').last.toLowerCase();
-          if (fileName.contains(task.movieTitle.toLowerCase()) ||
-              fileName.contains(task.torrentHash.toLowerCase())) {
-            movieFile = entity;
-            break;
-          }
-        }
-      }
-
-      if (movieFile != null && await movieFile.exists()) {
-        // Try to open the file with the default application
-        final result = await OpenFilex.open(movieFile.path);
-
-        if (context.mounted) {
-          if (result.type == ResultType.done) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Opening file...'),
-                duration: Duration(seconds: 1),
-              ),
-            );
-          } else if (result.type == ResultType.noAppToOpen) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('No app found to open this file'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error opening file: ${result.message}'),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          }
-        }
-      } else {
-        // File not found, just show the directory path
-        if (context.mounted) {
-          showDialog(
-            context: context,
-            builder: (dialogContext) => AlertDialog(
-              title: const Text('Download Location'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('File location:'),
-                  const SizedBox(height: 8),
-                  SelectableText(
-                    downloadPath,
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Note: The exact file location may vary based on the torrent content.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          );
-        }
-      }
+      await openFileManager(
+        androidConfig: AndroidConfig(
+          folderType: AndroidFolderType.other,
+          folderPath: downloadPath,
+        ),
+        iosConfig: IosConfig(
+          folderPath: downloadPath,
+        ),
+      );
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
