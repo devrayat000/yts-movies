@@ -8,7 +8,7 @@ import 'package:ytsmovies/src/utils/index.dart' hide Query;
 part 'movies.g.dart';
 
 @RestApi(
-  baseUrl: "https://yts.mx/api/v2",
+  baseUrl: "https://movies-api.accel.li/api/v2",
   parser: Parser.FlutterCompute,
 )
 abstract class MoviesClient {
