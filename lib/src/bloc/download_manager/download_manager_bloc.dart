@@ -28,231 +28,236 @@ class DownloadManagerBloc
     on<DownloadManagerDeleteDownload>(_onDeleteDownload);
     on<DownloadManagerUpdateProgress>(_onUpdateProgress);
     on<DownloadManagerClearCompleted>(_onClearCompleted);
+    on<DownloadManagerSetSpeedLimit>(_onSetSpeedLimit);
+    on<DownloadManagerSetFilePriority>(_onSetFilePriority);
+    on<DownloadManagerApplyFileSelection>(_onApplyFileSelection);
+    on<DownloadManagerAddTracker>(_onAddTracker);
+    on<DownloadManagerRemoveTracker>(_onRemoveTracker);
   }
 
-  /// Handle initialization
   Future<void> _onStarted(
     DownloadManagerStarted event,
     Emitter<DownloadManagerState> emit,
   ) async {
-    try {
-      // Subscribe to progress updates from foreground service
-      _progressSubscription = _foregroundDownloadService.progressStream.listen(
-        (update) => _handleProgressUpdate(update),
-      );
-
-      log('DownloadManager started and listening to foreground service progress updates');
-    } catch (e, s) {
-      log('Error starting DownloadManager: $e', error: e, stackTrace: s);
-    }
+    _progressSubscription =
+        _foregroundDownloadService.progressStream.listen(_handleProgressUpdate);
   }
 
-  /// Handle progress updates from background service
   void _handleProgressUpdate(ProgressUpdate update) {
     try {
-      log('=== DownloadManager received progress update ===');
-      log('TaskId: ${update.taskId}, Status: ${update.status}');
-
-      // Get existing task or return if not found
-      final existingTask = state.downloads[update.taskId];
-      if (existingTask == null) {
-        log('WARNING: Received progress for unknown task: ${update.taskId}');
+      final existing = state.downloads[update.taskId];
+      if (existing == null) {
+        log('Progress for unknown task ${update.taskId}');
         return;
       }
-
-      log('Found existing task: ${existingTask.movieTitle}');
-      log('Status from background service: ${update.status}');
-
-      // Update task with new data - status is now unified
-      final updatedTask = existingTask.copyWith(
+      // Only overwrite fields that the update meaningfully carries.
+      final updated = existing.copyWith(
         status: update.status,
-        progress: update.progress,
+        progress: update.progress > 0 ? update.progress : existing.progress,
         downloadSpeed: update.downloadSpeed,
         uploadSpeed: update.uploadSpeed,
         peers: update.peers,
         seeders: update.seeders,
-        downloadedBytes: update.downloadedBytes,
-        totalBytes: update.totalBytes,
-        errorMessage: update.error,
+        downloadedBytes: update.downloadedBytes > 0
+            ? update.downloadedBytes
+            : existing.downloadedBytes,
+        totalBytes:
+            update.totalBytes > 0 ? update.totalBytes : existing.totalBytes,
+        errorMessage: update.error ?? existing.errorMessage,
+        files: update.files ?? existing.files,
+        trackers: update.trackers ?? existing.trackers,
+        downloadSpeedLimit:
+            update.downloadSpeedLimit ?? existing.downloadSpeedLimit,
+        uploadSpeedLimit:
+            update.uploadSpeedLimit ?? existing.uploadSpeedLimit,
+        filePath: update.savedFilePath ?? existing.filePath,
         completedAt: update.status == DownloadStatus.completed
             ? DateTime.now()
-            : existingTask.completedAt,
+            : existing.completedAt,
       );
-
-      log('Emitting DownloadManagerUpdateProgress event');
-      add(DownloadManagerUpdateProgress(updatedTask));
+      add(DownloadManagerUpdateProgress(updated));
     } catch (e, s) {
       log('ERROR in _handleProgressUpdate: $e', error: e, stackTrace: s);
     }
   }
 
-  /// Handle adding a new download
   Future<void> _onAddDownload(
     DownloadManagerAddDownload event,
     Emitter<DownloadManagerState> emit,
   ) async {
     try {
-      // Check if already downloading
-      if (state.downloads.containsKey(event.task.taskId)) {
-        log('Download already exists: ${event.task.taskId}');
-        return;
-      }
+      if (state.downloads.containsKey(event.task.taskId)) return;
 
-      // Add task to state with queued status
-      final updatedDownloads = Map<int, DownloadTask>.from(state.downloads)
-        ..[event.task.taskId] = event.task.copyWith(
-          status: DownloadStatus.queued,
-        );
+      final initial = event.task.copyWith(
+        status: DownloadStatus.queued,
+        startedAt: DateTime.now(),
+      );
+      emit(state.copyWith(
+        downloads: {...state.downloads, event.task.taskId: initial},
+      ));
 
-      emit(state.copyWith(downloads: updatedDownloads));
-
-      // Start download in foreground service
       await _foregroundDownloadService.startDownload(
         taskId: event.task.taskId,
         magnetUri: event.task.magnetUri,
         savePath: _foregroundDownloadService.downloadPath,
         movieTitle: event.task.movieTitle,
       );
-
-      log('Download started in foreground service: ${event.task.taskId}');
-
-      // Update status to downloading
-      final startedDownloads = Map<int, DownloadTask>.from(state.downloads)
-        ..[event.task.taskId] = event.task.copyWith(
-          status: DownloadStatus.downloading,
-        );
-
-      emit(state.copyWith(downloads: startedDownloads));
     } catch (e, s) {
       log('Error adding download: $e', error: e, stackTrace: s);
-      // Update task with error
       final errorTask = event.task.copyWith(
         status: DownloadStatus.failed,
         errorMessage: e.toString(),
       );
-      final errorDownloads = Map<int, DownloadTask>.from(state.downloads)
-        ..[event.task.taskId] = errorTask;
-
-      emit(state.copyWith(downloads: errorDownloads));
+      emit(state.copyWith(
+        downloads: {...state.downloads, event.task.taskId: errorTask},
+      ));
     }
   }
 
-  /// Handle pausing a download
   Future<void> _onPauseDownload(
     DownloadManagerPauseDownload event,
     Emitter<DownloadManagerState> emit,
   ) async {
-    try {
-      await _foregroundDownloadService.pauseDownload(event.taskId);
-
-      final task = state.downloads[event.taskId];
-      if (task != null) {
-        final updatedTask = task.copyWith(status: DownloadStatus.paused);
-        final updatedDownloads = Map<int, DownloadTask>.from(state.downloads)
-          ..[event.taskId] = updatedTask;
-
-        emit(state.copyWith(downloads: updatedDownloads));
-      }
-    } catch (e, s) {
-      log('Error pausing download: $e', error: e, stackTrace: s);
+    await _foregroundDownloadService.pauseDownload(event.taskId);
+    final task = state.downloads[event.taskId];
+    if (task != null) {
+      emit(state.copyWith(downloads: {
+        ...state.downloads,
+        event.taskId: task.copyWith(status: DownloadStatus.paused),
+      }));
     }
   }
 
-  /// Handle resuming a download
   Future<void> _onResumeDownload(
     DownloadManagerResumeDownload event,
     Emitter<DownloadManagerState> emit,
   ) async {
-    try {
-      final task = state.downloads[event.taskId];
-      if (task != null) {
-        await _foregroundDownloadService.resumeDownload(event.taskId);
-
-        final updatedTask = task.copyWith(status: DownloadStatus.downloading);
-        final updatedDownloads = Map<int, DownloadTask>.from(state.downloads)
-          ..[event.taskId] = updatedTask;
-
-        emit(state.copyWith(downloads: updatedDownloads));
-      }
-    } catch (e, s) {
-      log('Error resuming download: $e', error: e, stackTrace: s);
+    await _foregroundDownloadService.resumeDownload(event.taskId);
+    final task = state.downloads[event.taskId];
+    if (task != null) {
+      emit(state.copyWith(downloads: {
+        ...state.downloads,
+        event.taskId: task.copyWith(status: DownloadStatus.downloading),
+      }));
     }
   }
 
-  /// Handle stopping a download
   Future<void> _onStopDownload(
     DownloadManagerStopDownload event,
     Emitter<DownloadManagerState> emit,
   ) async {
-    try {
-      await _foregroundDownloadService.stopDownload(event.taskId);
-
-      final task = state.downloads[event.taskId];
-      if (task != null) {
-        final updatedTask = task.copyWith(status: DownloadStatus.stopped);
-        final updatedDownloads = Map<int, DownloadTask>.from(state.downloads)
-          ..[event.taskId] = updatedTask;
-
-        emit(state.copyWith(downloads: updatedDownloads));
-      }
-    } catch (e, s) {
-      log('Error stopping download: $e', error: e, stackTrace: s);
+    await _foregroundDownloadService.stopDownload(event.taskId);
+    final task = state.downloads[event.taskId];
+    if (task != null) {
+      emit(state.copyWith(downloads: {
+        ...state.downloads,
+        event.taskId: task.copyWith(status: DownloadStatus.stopped),
+      }));
     }
   }
 
-  /// Handle deleting a download
   Future<void> _onDeleteDownload(
     DownloadManagerDeleteDownload event,
     Emitter<DownloadManagerState> emit,
   ) async {
     try {
       final task = state.downloads[event.taskId];
-
-      // Stop the download first
       await _foregroundDownloadService.stopDownload(event.taskId);
-
-      // Delete the files if they exist
       if (task?.filePath != null) {
         try {
-          final file = File(task!.filePath!);
-          if (await file.exists()) {
-            await file.delete();
-            log('Deleted download file: ${task.filePath}');
-          }
+          final f = File(task!.filePath!);
+          if (await f.exists()) await f.delete();
         } catch (e) {
           log('Error deleting file: $e');
         }
       }
-
-      final updatedDownloads = Map<int, DownloadTask>.from(state.downloads)
+      final next = Map<int, DownloadTask>.from(state.downloads)
         ..remove(event.taskId);
-
-      emit(state.copyWith(downloads: updatedDownloads));
+      emit(state.copyWith(downloads: next));
     } catch (e, s) {
       log('Error deleting download: $e', error: e, stackTrace: s);
     }
   }
 
-  /// Handle progress updates
   void _onUpdateProgress(
     DownloadManagerUpdateProgress event,
     Emitter<DownloadManagerState> emit,
   ) {
-    final updatedDownloads = Map<int, DownloadTask>.from(state.downloads)
-      ..[event.task.taskId] = event.task;
-
-    emit(state.copyWith(downloads: updatedDownloads));
+    emit(state.copyWith(downloads: {
+      ...state.downloads,
+      event.task.taskId: event.task,
+    }));
   }
 
-  /// Handle clearing completed downloads
   void _onClearCompleted(
     DownloadManagerClearCompleted event,
     Emitter<DownloadManagerState> emit,
   ) {
-    final updatedDownloads = Map<int, DownloadTask>.from(state.downloads)
-      ..removeWhere((key, value) => value.status == DownloadStatus.completed);
+    final next = Map<int, DownloadTask>.from(state.downloads)
+      ..removeWhere((_, v) => v.status == DownloadStatus.completed);
+    emit(state.copyWith(downloads: next));
+  }
 
-    emit(state.copyWith(downloads: updatedDownloads));
+  Future<void> _onSetSpeedLimit(
+    DownloadManagerSetSpeedLimit event,
+    Emitter<DownloadManagerState> emit,
+  ) async {
+    await _foregroundDownloadService.setSpeedLimit(
+      taskId: event.taskId,
+      downloadLimit: event.downloadLimit,
+      uploadLimit: event.uploadLimit,
+    );
+    final task = state.downloads[event.taskId];
+    if (task != null) {
+      emit(state.copyWith(downloads: {
+        ...state.downloads,
+        event.taskId: task.copyWith(
+          downloadSpeedLimit: event.downloadLimit,
+          uploadSpeedLimit: event.uploadLimit,
+        ),
+      }));
+    }
+  }
+
+  Future<void> _onSetFilePriority(
+    DownloadManagerSetFilePriority event,
+    Emitter<DownloadManagerState> emit,
+  ) async {
+    await _foregroundDownloadService.setFilePriority(
+      taskId: event.taskId,
+      fileIndex: event.fileIndex,
+      priority: event.priority,
+    );
+  }
+
+  Future<void> _onApplyFileSelection(
+    DownloadManagerApplyFileSelection event,
+    Emitter<DownloadManagerState> emit,
+  ) async {
+    await _foregroundDownloadService.applyFileSelection(
+      taskId: event.taskId,
+      selectedIndices: event.selectedIndices,
+    );
+  }
+
+  Future<void> _onAddTracker(
+    DownloadManagerAddTracker event,
+    Emitter<DownloadManagerState> emit,
+  ) async {
+    await _foregroundDownloadService.addTracker(
+      taskId: event.taskId,
+      trackerUrl: event.trackerUrl,
+    );
+  }
+
+  Future<void> _onRemoveTracker(
+    DownloadManagerRemoveTracker event,
+    Emitter<DownloadManagerState> emit,
+  ) async {
+    await _foregroundDownloadService.removeTracker(
+      taskId: event.taskId,
+      trackerUrl: event.trackerUrl,
+    );
   }
 
   @override

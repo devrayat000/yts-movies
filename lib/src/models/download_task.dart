@@ -21,6 +21,71 @@ enum DownloadStatus {
   stopped,
 }
 
+/// Per-file download priority (maps to dtorrent_task_v2 FilePriority)
+enum FilePriorityLevel {
+  @JsonValue('skip')
+  skip,
+  @JsonValue('low')
+  low,
+  @JsonValue('normal')
+  normal,
+  @JsonValue('high')
+  high,
+}
+
+/// Tracker connection status
+enum TrackerStatus {
+  @JsonValue('unknown')
+  unknown,
+  @JsonValue('connecting')
+  connecting,
+  @JsonValue('working')
+  working,
+  @JsonValue('failed')
+  failed,
+}
+
+/// Per-file information for a torrent download
+@Freezed(equal: true, toStringOverride: true)
+sealed class TorrentFileInfo with _$TorrentFileInfo {
+  const TorrentFileInfo._();
+
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory TorrentFileInfo({
+    required int index,
+    required String name,
+    required int size,
+    @Default(0) int downloaded,
+    @Default(FilePriorityLevel.normal) FilePriorityLevel priority,
+    @Default(false) bool completed,
+  }) = _TorrentFileInfo;
+
+  factory TorrentFileInfo.fromJson(Map<String, dynamic> json) =>
+      _$TorrentFileInfoFromJson(json);
+
+  double get progress => size == 0 ? 0 : downloaded / size;
+  String get progressPercentage => '${(progress * 100).toStringAsFixed(1)}%';
+}
+
+/// Tracker information
+@Freezed(equal: true, toStringOverride: true)
+sealed class TrackerInfo with _$TrackerInfo {
+  const TrackerInfo._();
+
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory TrackerInfo({
+    required String url,
+    @Default(TrackerStatus.unknown) TrackerStatus status,
+    @Default(0) int seeders,
+    @Default(0) int leechers,
+    String? errorMessage,
+    @Default(false) bool userAdded,
+  }) = _TrackerInfo;
+
+  factory TrackerInfo.fromJson(Map<String, dynamic> json) =>
+      _$TrackerInfoFromJson(json);
+}
+
 /// Model representing a torrent download task
 @Freezed(equal: true, toStringOverride: true)
 sealed class DownloadTask with _$DownloadTask {
@@ -28,104 +93,88 @@ sealed class DownloadTask with _$DownloadTask {
 
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory DownloadTask({
-    /// Unique task identifier
     required int taskId,
-
-    /// Movie ID from YTS
     required int movieId,
-
-    /// Movie title
     required String movieTitle,
-
-    /// Torrent hash
     required String torrentHash,
-
-    /// Torrent magnet link
     required String magnetUri,
-
-    /// Quality (e.g., "720p", "1080p")
     required String quality,
-
-    /// File type (e.g., "web", "bluray")
     String? type,
-
-    /// File size
     required String size,
-
-    /// Download progress (0.0 to 1.0)
     @Default(0.0) double progress,
-
-    /// Download status
     @Default(DownloadStatus.queued) DownloadStatus status,
-
-    /// Download speed in bytes per second
     @Default(0) int downloadSpeed,
-
-    /// Upload speed in bytes per second
     @Default(0) int uploadSpeed,
-
-    /// Number of peers
     @Default(0) int peers,
-
-    /// Number of seeders
     @Default(0) int seeders,
-
-    /// Downloaded bytes
     @Default(0) int downloadedBytes,
-
-    /// Total bytes
     @Default(0) int totalBytes,
-
-    /// File path where the download is saved
     String? filePath,
-
-    /// Error message if download failed
     String? errorMessage,
-
-    /// Time when download was started
     DateTime? startedAt,
-
-    /// Time when download was completed
     DateTime? completedAt,
-
-    /// Movie cover image URL
     String? coverImage,
+
+    /// Per-task download speed limit in bytes/sec (null = unlimited)
+    int? downloadSpeedLimit,
+
+    /// Per-task upload speed limit in bytes/sec (null = unlimited)
+    int? uploadSpeedLimit,
+
+    /// File listing (populated after metadata is downloaded)
+    @Default(<TorrentFileInfo>[]) List<TorrentFileInfo> files,
+
+    /// Active trackers
+    @Default(<TrackerInfo>[]) List<TrackerInfo> trackers,
   }) = _DownloadTask;
 
   factory DownloadTask.fromJson(Map<String, dynamic> json) =>
       _$DownloadTaskFromJson(json);
 
-  /// Check if download is active
   bool get isActive =>
-      status == DownloadStatus.downloading || status == DownloadStatus.queued;
+      status == DownloadStatus.downloading ||
+      status == DownloadStatus.queued ||
+      status == DownloadStatus.downloadingMetadata;
 
-  /// Check if download can be resumed
   bool get canResume =>
       status == DownloadStatus.paused ||
       status == DownloadStatus.failed ||
       status == DownloadStatus.stopped;
 
-  /// Check if download can be paused
-  bool get canPause => status == DownloadStatus.downloading;
+  bool get canPause =>
+      status == DownloadStatus.downloading ||
+      status == DownloadStatus.downloadingMetadata;
 
-  /// Get formatted progress percentage
   String get progressPercentage => '${(progress * 100).toStringAsFixed(1)}%';
 
-  /// Get formatted download speed
-  String get formattedDownloadSpeed => _formatBytes(downloadSpeed) + '/s';
+  String get formattedDownloadSpeed => '${formatBytes(downloadSpeed)}/s';
+  String get formattedUploadSpeed => '${formatBytes(uploadSpeed)}/s';
+  String get formattedDownloadedSize => formatBytes(downloadedBytes);
+  String get formattedTotalSize => formatBytes(totalBytes);
 
-  /// Get formatted upload speed
-  String get formattedUploadSpeed => _formatBytes(uploadSpeed) + '/s';
+  String? get formattedDownloadLimit =>
+      downloadSpeedLimit == null ? null : '${formatBytes(downloadSpeedLimit!)}/s';
+  String? get formattedUploadLimit =>
+      uploadSpeedLimit == null ? null : '${formatBytes(uploadSpeedLimit!)}/s';
 
-  /// Get formatted downloaded size
-  String get formattedDownloadedSize => _formatBytes(downloadedBytes);
+  /// ETA in seconds, null if unknown / not downloading
+  int? get etaSeconds {
+    if (downloadSpeed <= 0 || totalBytes <= 0) return null;
+    final remaining = totalBytes - downloadedBytes;
+    if (remaining <= 0) return 0;
+    return remaining ~/ downloadSpeed;
+  }
 
-  /// Get formatted total size
-  String get formattedTotalSize => _formatBytes(totalBytes);
+  String get formattedEta {
+    final eta = etaSeconds;
+    if (eta == null) return '--';
+    if (eta < 60) return '${eta}s';
+    if (eta < 3600) return '${eta ~/ 60}m ${eta % 60}s';
+    if (eta < 86400) return '${eta ~/ 3600}h ${(eta % 3600) ~/ 60}m';
+    return '${eta ~/ 86400}d ${(eta % 86400) ~/ 3600}h';
+  }
 
-  /// Format bytes to human readable format
-  static String _formatBytes(int bytes) {
-    bytes = bytes * 1000;
+  static String formatBytes(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(2)} KB';
     if (bytes < 1024 * 1024 * 1024) {

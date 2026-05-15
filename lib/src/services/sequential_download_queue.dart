@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'dart:developer';
 
-/// Manages a sequential download queue where only one download runs at a time
+/// Multi-slot download queue. Up to [maxConcurrent] tasks may be running
+/// (downloading or paused) at the same time. Pausing a task does NOT free
+/// a slot — only stop / complete / fail does.
+///
+/// Class name kept for backwards compatibility with existing imports.
 class SequentialDownloadQueue {
-  /// Currently active task ID
-  int? _activeTaskId;
+  /// Currently running / paused task IDs (occupy a slot)
+  final Set<int> _activeTaskIds = <int>{};
 
-  /// Queue of pending task IDs
+  /// Queue of waiting task IDs (FIFO)
   final List<int> _pendingTasks = [];
 
   /// Task titles for logging
@@ -15,155 +19,121 @@ class SequentialDownloadQueue {
   /// Callback to actually start a download
   Future<void> Function(int taskId)? _startDownloadCallback;
 
-  /// Whether we're currently processing
+  /// Re-entrancy guard for `_processNext`
   bool _isProcessing = false;
 
-  /// Set the callback function that will be called to start a download
+  /// Maximum concurrent active tasks (running OR paused)
+  int _maxConcurrent = 3;
+
+  int get maxConcurrent => _maxConcurrent;
+
+  set maxConcurrent(int value) {
+    _maxConcurrent = value.clamp(1, 10);
+    log('=== Queue: maxConcurrent set to $_maxConcurrent ===');
+    _processNext();
+  }
+
   void setStartCallback(Future<void> Function(int taskId) callback) {
     _startDownloadCallback = callback;
   }
 
-  /// Add a task to the queue
-  /// Returns true if task was added to queue, false if it started immediately
+  /// Add a task. Returns true if it was queued (waiting), false if it started
+  /// immediately.
   bool addTask(int taskId, String title) {
     _taskTitles[taskId] = title;
 
-    log('=== SequentialDownloadQueue: All tasks $_pendingTasks ===');
-
-    if (_activeTaskId == null) {
-      // No active download, start immediately
-      _activeTaskId = taskId;
-      log('=== SequentialDownloadQueue: Starting task $taskId immediately ===');
-      log('Title: $title');
-      _startActiveTask();
-      return false; // Started immediately
-    } else {
-      // Add to queue
-      if (!_pendingTasks.contains(taskId)) {
-        _pendingTasks.add(taskId);
-        log('=== SequentialDownloadQueue: Added task $taskId to queue ===');
-        log('Title: $title');
-        log('Queue position: ${_pendingTasks.length}');
-        log('Active task: $_activeTaskId (${_taskTitles[_activeTaskId]})');
-      }
-      return true; // Added to queue
+    if (_activeTaskIds.contains(taskId) || _pendingTasks.contains(taskId)) {
+      log('Task $taskId already present in queue / active');
+      return _pendingTasks.contains(taskId);
     }
+
+    if (_activeTaskIds.length < _maxConcurrent) {
+      _activeTaskIds.add(taskId);
+      log('=== Queue: starting task $taskId immediately ($title) ===');
+      _startTask(taskId);
+      return false;
+    }
+
+    _pendingTasks.add(taskId);
+    log('=== Queue: task $taskId queued ($title), position ${_pendingTasks.length} ===');
+    return true;
   }
 
-  /// Mark the current download as complete and start the next one
+  /// Free a slot occupied by [taskId] and try to start the next pending task.
+  /// Call this on stop / complete / fail. Do NOT call on pause.
   void markCurrentComplete(int taskId) {
-    log('=== SequentialDownloadQueue: Marking task $taskId as complete ===');
+    final wasActive = _activeTaskIds.remove(taskId);
+    final wasPending = _pendingTasks.remove(taskId);
+    _taskTitles.remove(taskId);
 
-    if (_activeTaskId == taskId) {
-      _activeTaskId = null;
-      _taskTitles.remove(taskId);
-      log('Active task cleared');
-      _processNext();
-    } else if (_pendingTasks.contains(taskId)) {
-      // Task was in queue but never started
-      _pendingTasks.remove(taskId);
-      _taskTitles.remove(taskId);
-      log('Removed task from queue (never started)');
+    if (wasActive) {
+      log('=== Queue: slot freed for task $taskId ===');
+    } else if (wasPending) {
+      log('=== Queue: removed pending task $taskId before it started ===');
     }
+    _processNext();
   }
 
-  /// Remove a task from the queue (if it's waiting)
+  /// Remove a pending task (no-op for active tasks).
   void removeTask(int taskId) {
-    if (_pendingTasks.contains(taskId)) {
-      _pendingTasks.remove(taskId);
+    if (_pendingTasks.remove(taskId)) {
       _taskTitles.remove(taskId);
-      log('=== SequentialDownloadQueue: Removed task $taskId from queue ===');
+      log('=== Queue: removed pending task $taskId ===');
     }
   }
 
-  /// Process the next task in the queue
   void _processNext() {
-    // Prevent multiple simultaneous calls to _processNext
-    if (_isProcessing) {
-      log('Already processing, skipping _processNext');
-      return;
-    }
-
+    if (_isProcessing) return;
     _isProcessing = true;
-
     try {
-      if (_activeTaskId != null) {
-        log('Active task still running: $_activeTaskId, not starting next');
-        return;
+      while (_activeTaskIds.length < _maxConcurrent &&
+          _pendingTasks.isNotEmpty) {
+        final next = _pendingTasks.removeAt(0);
+        _activeTaskIds.add(next);
+        log('=== Queue: promoting task $next (${_taskTitles[next]}) ===');
+        _startTask(next);
       }
-
-      if (_pendingTasks.isEmpty) {
-        log('=== SequentialDownloadQueue: Queue is empty ===');
-        return;
-      }
-
-      // Get next task
-      final nextTaskId = _pendingTasks.removeAt(0);
-      _activeTaskId = nextTaskId;
-
-      log('=== SequentialDownloadQueue: Starting next task from queue ===');
-      log('Task ID: $nextTaskId');
-      log('Title: ${_taskTitles[nextTaskId]}');
-      log('Remaining in queue: ${_pendingTasks.length}');
-
-      _startActiveTask();
     } finally {
       _isProcessing = false;
     }
   }
 
-  void _startActiveTask() {
-    final taskId = _activeTaskId;
-    if (taskId == null) {
-      log('No active task to start');
-      return;
-    }
-
-    if (_startDownloadCallback == null) {
+  void _startTask(int taskId) {
+    final cb = _startDownloadCallback;
+    if (cb == null) {
       log('Start callback not set; cannot start task $taskId');
       return;
     }
-
-    _startDownloadCallback!(taskId).catchError((e, s) {
+    cb(taskId).catchError((e, s) {
       log('Error starting download $taskId: $e', error: e, stackTrace: s);
-      // Clear active task on error so queue can proceed
-      if (_activeTaskId == taskId) {
-        _activeTaskId = null;
-        _processNext();
-      }
+      // Free slot on failure so queue moves on
+      _activeTaskIds.remove(taskId);
+      _processNext();
     });
   }
 
-  /// Get current queue status
-  Map<String, dynamic> getStats() {
-    return {
-      'activeTaskId': _activeTaskId,
-      'activeTaskTitle':
-          _activeTaskId != null ? _taskTitles[_activeTaskId] : null,
-      'pendingCount': _pendingTasks.length,
-      'pendingTaskIds': List.from(_pendingTasks),
-    };
-  }
+  Map<String, dynamic> getStats() => {
+        'activeTaskIds': _activeTaskIds.toList(),
+        'pendingCount': _pendingTasks.length,
+        'pendingTaskIds': List<int>.from(_pendingTasks),
+        'maxConcurrent': _maxConcurrent,
+      };
 
-  /// Get queue position for a task (0 if active, 1+ if in queue, -1 if not found)
+  /// 0 if active, 1+ if pending, -1 if not found
   int getQueuePosition(int taskId) {
-    if (_activeTaskId == taskId) return 0;
-    final index = _pendingTasks.indexOf(taskId);
-    return index >= 0 ? index + 1 : -1;
+    if (_activeTaskIds.contains(taskId)) return 0;
+    final i = _pendingTasks.indexOf(taskId);
+    return i >= 0 ? i + 1 : -1;
   }
 
-  /// Check if a task is active
-  bool isActive(int taskId) => _activeTaskId == taskId;
-
-  /// Check if a task is in queue
+  bool isActive(int taskId) => _activeTaskIds.contains(taskId);
   bool isInQueue(int taskId) => _pendingTasks.contains(taskId);
 
-  /// Clear all tasks
   void clear() {
-    _activeTaskId = null;
+    _activeTaskIds.clear();
     _pendingTasks.clear();
     _taskTitles.clear();
     _isProcessing = false;
-    log('=== SequentialDownloadQueue: Cleared ===');
+    log('=== Queue: cleared ===');
   }
 }
