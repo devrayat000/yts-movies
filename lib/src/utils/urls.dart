@@ -1,5 +1,15 @@
 // import 'enums.dart';
 // import 'lists.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
+
+int urlToUniqueInt(String url) {
+  var bytes = utf8.encode(url); // Convert URL string to bytes
+  var digest = sha256.convert(bytes); // Hash the bytes using SHA-256
+  // Take a portion of the hash and convert it to an integer
+  // This approach ensures a fixed-size integer representation.
+  return int.parse(digest.toString().substring(0, 8), radix: 16);
+}
 
 // class Urls {
 //   String get baseUrl => 'yts.mx';

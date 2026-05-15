@@ -217,7 +217,11 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
   }
 
   void _onMovieTap(Movie movie) {
-    context.push('/movie/${movie.id}');
+    context.pushNamed(
+      "details",
+      pathParameters: {'id': movie.id.toString()},
+      extra: movie,
+    );
   }
 
   void _resetSearch() {

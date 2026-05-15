@@ -34,14 +34,14 @@ class FavouriteButtonState extends State<FavouriteButton>
 
   void _favHandler() async {
     final isLiked =
-        await FavouritesService.instance.isFavourite(widget._movie.id);
+        await context.favouritesService.isFavourite(widget._movie.id);
     if (isLiked) {
       _controller.forward();
     }
   }
 
   void _addToFavourite() async {
-    final isLiked = await FavouritesService.instance
+    final isLiked = await context.favouritesService
         .toggleAddOrRemoveFavourite(widget._movie);
     try {
       if (!isLiked) {

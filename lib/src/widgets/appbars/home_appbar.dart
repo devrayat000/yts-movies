@@ -8,7 +8,7 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
   final Size preferredSize;
   void _handleSearchTap(BuildContext context) async {
     try {
-      await context.pushNamed("search");
+      context.pushNamed("search");
     } catch (error) {
       if (context.mounted) {
         // Use ScaffoldMessenger for showing errors in appbar context
@@ -27,18 +27,13 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AppBar(
-      title: Row(
-        children: [
-          Image.asset(
-            'images/logo-YTS.png',
-            height: 32,
-          ),
-        ],
+      title: Image.asset(
+        'images/logo-YTS.png',
+        height: 32,
       ),
       centerTitle: false, // Align logo to the left
       elevation: 0,
-      backgroundColor: Colors.transparent,
-      flexibleSpace: Container(
+      flexibleSpace: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -82,11 +77,12 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
           ),
           tooltip: 'Toggle theme',
           iconSize: 24,
-        ), // Favourites action
+        ),
+        // Favourites action
         IconButton(
           onPressed: () async {
             try {
-              await context.pushNamed("favourites");
+              context.pushNamed("favourites");
             } catch (e, s) {
               log(e.toString(), error: e, stackTrace: s);
             }
@@ -98,11 +94,27 @@ class HomeAppbar extends StatelessWidget implements PreferredSizeWidget {
           tooltip: 'Favourites',
           iconSize: 24,
         ),
+        // Downloads action
+        IconButton(
+          onPressed: () async {
+            try {
+              context.pushNamed("downloads");
+            } catch (e, s) {
+              log(e.toString(), error: e, stackTrace: s);
+            }
+          },
+          icon: const Icon(
+            Icons.download_outlined,
+            color: Colors.blueAccent,
+          ),
+          tooltip: 'Downloads',
+          iconSize: 24,
+        ),
         // App info action
         IconButton(
           onPressed: () async {
             try {
-              await context.pushNamed("app-info");
+              context.pushNamed("app-info");
             } catch (e, s) {
               log(e.toString(), error: e, stackTrace: s);
             }

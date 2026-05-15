@@ -104,6 +104,7 @@ class IntroItem extends StatelessWidget {
                   bottomLeft: Radius.circular(12),
                   bottomRight: Radius.circular(12),
                 ),
+                color: isDark ? Colors.grey[850] : Theme.of(context).cardColor,
               ),
               child: MyFutureBuilder<MovieListResponse>(
                 future: future,

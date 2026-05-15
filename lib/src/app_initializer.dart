@@ -1,35 +1,17 @@
 import 'dart:async';
-import 'dart:developer';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hive_ce_flutter/hive_flutter.dart';
-import 'package:hydrated_bloc/hydrated_bloc.dart';
-import 'package:provider/provider.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:ytsmovies/hive/hive_registrar.g.dart';
+import 'package:go_router/go_router.dart';
 
-import 'package:ytsmovies/src/api/client.dart';
-import 'package:ytsmovies/src/api/movies.dart';
 import 'package:ytsmovies/src/app.dart';
-import 'package:ytsmovies/src/bloc/filter/index.dart';
-import 'package:ytsmovies/src/widgets/splash/splash_wrapper.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
-import 'package:ytsmovies/src/models/index.dart';
-import 'package:ytsmovies/src/utils/index.dart';
-import 'package:ytsmovies/src/theme/index.dart';
-import 'package:ytsmovies/src/services/connectivity_service.dart';
+import 'package:ytsmovies/src/bloc/download_manager/index.dart';
+import 'package:ytsmovies/src/injection.dart';
+import 'package:ytsmovies/src/services/notification_service.dart';
+import 'package:ytsmovies/src/models/download_task.dart';
+import 'package:ytsmovies/src/router.dart';
 
-/// App initialization states
-enum AppInitState {
-  initializing,
-  ready,
-  error,
-}
-
-/// Main app widget that handles initialization with splash screen
+/// Main app widget that handles initialization and provides dependencies
 class YTSAppInitializer extends StatefulWidget {
   const YTSAppInitializer({super.key});
 
@@ -38,163 +20,103 @@ class YTSAppInitializer extends StatefulWidget {
 }
 
 class _YTSAppInitializerState extends State<YTSAppInitializer> {
-  AppInitState _initState = AppInitState.initializing;
-  MoviesClient? _client;
-  String? _errorMessage;
-  final List<String> _initSteps = [];
-  String _currentStep = 'Starting initialization...';
+  bool _isInitializing = true;
+  String? _error;
+  StreamSubscription<int>? _notificationSubscription;
 
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    _initializeServices();
   }
 
-  Future<void> _initializeApp() async {
+  Future<void> _initializeServices() async {
     try {
-      Timeline.startSync('init');
+      // Initialize dependency injection
+      await configureDependencies();
 
-      await _updateStep('Initializing Flutter engine...');
-      await Future.delayed(const Duration(milliseconds: 300));
+      // Initialize notification service and listen for taps
+      final notificationService = getIt<NotificationService>();
+      _notificationSubscription = notificationService.notificationTapStream
+          .listen(_handleNotificationTap);
 
-      await _updateStep('Setting up system UI...');
-      SystemChrome.setSystemUIOverlayStyle(
-        const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarBrightness: Brightness.dark,
-        ),
-      );
-      await Future.delayed(const Duration(milliseconds: 200));
-
-      await _updateStep('Initializing local storage...');
-      await _initializeHive();
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      await _updateStep('Setting up data persistence...');
-      await _initializeHydratedStorage();
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      await _updateStep('Opening data stores...');
-      await Future.wait([
-        Hive.openBox<Movie>(MyBoxs.favouriteBox),
-        Hive.openBox<String>(MyBoxs.searchHistoryBox),
-      ]);
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      await _updateStep('Checking network connectivity...');
-      await ConnectivityService.instance.initialize();
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      await _updateStep('Initializing API client...');
-      final client = await initClient();
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      Timeline.finishSync();
-
-      await _updateStep('Finalizing setup...');
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      if (mounted) {
-        setState(() {
-          _client = client;
-          _initState = AppInitState.ready;
-        });
-      }
-    } catch (e, s) {
-      log(e.toString(), error: e, stackTrace: s);
-      if (mounted) {
-        setState(() {
-          _initState = AppInitState.error;
-          _errorMessage = e.toString();
-        });
-      }
-    }
-  }
-
-  Future<void> _updateStep(String step) async {
-    if (mounted) {
       setState(() {
-        _currentStep = step;
-        _initSteps.add(step);
+        _isInitializing = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isInitializing = false;
       });
     }
   }
 
-  Future<void> _initializeHive() async {
-    await Hive.initFlutter();
-    Hive.registerAdapters();
+  void _handleNotificationTap(int taskId) {
+    // Get the download task to determine its status
+    final downloadBloc = getIt<DownloadManagerBloc>();
+    final task = downloadBloc.state.downloads[taskId];
+
+    if (task == null) return;
+
+    // Navigate based on download status
+    final context = RouterExtension.rootNavigatorKey.currentContext;
+    if (context == null || !context.mounted) return;
+
+    if (task.status == DownloadStatus.downloading ||
+        task.status == DownloadStatus.paused ||
+        task.status == DownloadStatus.downloadingMetadata ||
+        task.status == DownloadStatus.queued) {
+      // Navigate to download details page
+      context.pushNamed(
+        'download-details',
+        pathParameters: {'taskId': taskId.toString()},
+      );
+    } else if (task.status == DownloadStatus.completed) {
+      // Navigate to downloads page (user can tap there to open file)
+      context.pushNamed('downloads');
+    }
   }
 
-  Future<void> _initializeHydratedStorage() async {
-    HydratedBloc.storage = await HydratedStorage.build(
-      storageDirectory: kIsWeb
-          ? HydratedStorageDirectory.web
-          : HydratedStorageDirectory((await getTemporaryDirectory()).path),
-    );
-  }
-
-  Widget _buildApp(MoviesClient client) {
-    return MultiProvider(
-      providers: [
-        RepositoryProvider<MoviesClient>(
-          create: (_) => client,
-        ),
-        Provider<Filter>(
-          create: (_) => Filter(),
-          dispose: (_, filter) => filter.reset(),
-        ),
-        BlocProvider<ThemeCubit>(
-          create: (_) => ThemeCubit(theme: AppTheme()),
-        ),
-      ],
-      child: const YTSApp(),
-    );
-  }
-
-  Widget _buildInitializationSplash() {
-    return MaterialApp(
-      title: 'YTS Movies',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.light().copyWith(
-        colorScheme: const ColorScheme.light(
-          primary: Color(0xFF6366F1),
-          secondary: Color(0xFF8B5CF6),
-        ),
-      ),
-      darkTheme: ThemeData.dark().copyWith(
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF818CF8),
-          secondary: Color(0xFFA855F7),
-        ),
-      ),
-      home: InitializationSplashScreen(
-        currentStep: _currentStep,
-        onRetry: _initState == AppInitState.error
-            ? () {
-                setState(() {
-                  _initState = AppInitState.initializing;
-                  _errorMessage = null;
-                  _initSteps.clear();
-                });
-                _initializeApp();
-              }
-            : null,
-        errorMessage: _errorMessage,
-      ),
-    );
+  @override
+  void dispose() {
+    _notificationSubscription?.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    switch (_initState) {
-      case AppInitState.initializing:
-        return _buildInitializationSplash();
-      case AppInitState.ready:
-        return _client != null
-            ? _buildApp(_client!)
-            : _buildInitializationSplash();
-      case AppInitState.error:
-        return _buildInitializationSplash();
+    if (_isInitializing) {
+      return const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
     }
+
+    if (_error != null) {
+      return MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Text('Initialization error: $_error'),
+          ),
+        ),
+      );
+    }
+
+    // Always provide the theme cubit and download manager since storage is now initialized
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<ThemeCubit>(
+          create: (_) => getIt<ThemeCubit>(),
+        ),
+        BlocProvider<DownloadManagerBloc>(
+          create: (_) =>
+              getIt<DownloadManagerBloc>()..add(DownloadManagerStarted()),
+        ),
+      ],
+      child: const YTSApp(),
+    );
   }
 }

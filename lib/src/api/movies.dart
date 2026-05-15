@@ -8,14 +8,14 @@ import 'package:ytsmovies/src/utils/index.dart' hide Query;
 part 'movies.g.dart';
 
 @RestApi(
-  baseUrl: "https://yts.mx/api/v2",
+  baseUrl: "https://movies-api.accel.li/api/v2",
   parser: Parser.FlutterCompute,
 )
 abstract class MoviesClient {
   factory MoviesClient(Dio dio, {String baseUrl}) = _MoviesClient;
 
   @GET('/list_movies.json')
-  @CancelRequest()
+  @CacheControl(maxAge: 86400) // 1 day
   Future<MovieListResponse> getMovieList({
     @Query("limit") int? limit = 10,
     @Query("page") int? page = 1,
@@ -31,7 +31,7 @@ abstract class MoviesClient {
   });
 
   @GET('/movie_details.json')
-  @CacheControl(maxAge: 864000) // 10 days
+  @CacheControl(maxAge: 2592000) // 30 days
   Future<MovieResponse> getMovieByid(
     @Query('movie_id') String id, {
     @Query('with_image') bool? image,
@@ -40,6 +40,7 @@ abstract class MoviesClient {
   });
 
   @GET('/movie_suggestions.json')
+  @CacheControl(maxAge: 604800) // 7 days
   Future<MovieSuggestionResponse> getMovieSuggestions(
       @Query('movie_id') String id,
       {@CancelRequest() CancelToken? token});

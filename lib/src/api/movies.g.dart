@@ -9,7 +9,6 @@ part of 'movies.dart';
 // ignore_for_file: unnecessary_brace_in_string_interps,no_leading_underscores_for_local_identifiers,unused_element,unnecessary_string_interpolations
 
 class _MoviesClient implements MoviesClient {
-  // ignore: unused_element_parameter
   _MoviesClient(this._dio, {this.baseUrl, this.errorLogger}) {
     baseUrl ??= 'https://yts.mx/api/v2';
   }
@@ -48,7 +47,8 @@ class _MoviesClient implements MoviesClient {
     };
     queryParameters.addAll(queries ?? <String, dynamic>{});
     queryParameters.removeWhere((k, v) => v == null);
-    final _headers = <String, dynamic>{};
+    final _headers = <String, dynamic>{r'cache-control': 'max-age=86400'};
+    _headers.removeWhere((k, v) => v == null);
     const Map<String, dynamic>? _data = null;
     final _options = _setStreamType<MovieListResponse>(
       Options(method: 'GET', headers: _headers, extra: _extra)
@@ -86,7 +86,7 @@ class _MoviesClient implements MoviesClient {
       r'with_cast': cast,
     };
     queryParameters.removeWhere((k, v) => v == null);
-    final _headers = <String, dynamic>{r'cache-control': 'max-age=864000'};
+    final _headers = <String, dynamic>{r'cache-control': 'max-age=2592000'};
     _headers.removeWhere((k, v) => v == null);
     const Map<String, dynamic>? _data = null;
     final _options = _setStreamType<MovieResponse>(
@@ -119,7 +119,8 @@ class _MoviesClient implements MoviesClient {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{r'movie_id': id};
     queryParameters.removeWhere((k, v) => v == null);
-    final _headers = <String, dynamic>{};
+    final _headers = <String, dynamic>{r'cache-control': 'max-age=604800'};
+    _headers.removeWhere((k, v) => v == null);
     const Map<String, dynamic>? _data = null;
     final _options = _setStreamType<MovieSuggestionResponse>(
       Options(method: 'GET', headers: _headers, extra: _extra)

@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:ytsmovies/src/utils/exceptions.dart';
 import 'package:ytsmovies/src/services/connectivity_service.dart';
+import 'package:ytsmovies/src/injection.dart';
 
 /// Interceptor for handling API errors and network issues
 class ErrorInterceptor extends Interceptor {
@@ -25,7 +26,7 @@ class ErrorInterceptor extends Interceptor {
 
   CustomException _parseError(DioException error) {
     // Check connectivity status for network-related errors
-    final isConnected = ConnectivityService.instance.isConnected;
+    final isConnected = getIt<ConnectivityService>().isConnected;
 
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
