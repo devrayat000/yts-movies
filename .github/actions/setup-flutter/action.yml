@@ -1,0 +1,87 @@
+name: Setup Flutter Build
+description: Checkout, Java, Flutter, deps, signing, codegen, analyze, version+tag
+
+outputs:
+  version:
+    description: App version
+    value: ${{ steps.version.outputs.version }}
+  tag:
+    description: App tag
+    value: ${{ steps.tag.outputs.tag }}
+
+runs:
+  using: composite
+  steps:
+    - name: 🚀 Cache pub deps
+      uses: actions/cache@v3
+      with:
+        path: ~/.pub-cache
+        key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
+        restore-keys: ${{ runner.os }}-pub-
+
+    - name: ☕️ Setup Java (Temurin 17)
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: "17"
+
+    - name: 🦋 Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: "3.32.1"
+        channel: "stable"
+        cache: true
+
+    - name: 📥 Get dependencies
+      shell: bash
+      run: flutter pub get
+
+    - name: 📋 Extract version
+      id: version
+      shell: bash
+      run: |
+        VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Extracted version: $VERSION"
+
+    - name: 🔐 Setup app signing
+      shell: bash
+      run: |
+        if [ -n "$KEYSTORE_BASE64" ]; then
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/upload-keystore.jks
+          echo "✅ Keystore created successfully"
+        else
+          echo "⚠️ No keystore found in secrets, using debug signing"
+        fi
+
+        if [ -n "$KEY_PROPERTIES" ]; then
+          echo "$KEY_PROPERTIES" > android/key.properties
+          echo "✅ Key properties created successfully"
+        else
+          echo "⚠️ No key properties found in secrets, using debug signing"
+          cat > android/key.properties << EOF
+        storePassword=android
+        keyPassword=android
+        keyAlias=androiddebugkey
+        storeFile=debug.keystore
+        EOF
+        fi
+
+    - name: 📂 Generate files
+      shell: bash
+      run: |
+        if grep -q "build_runner" pubspec.yaml; then
+          flutter packages pub run build_runner build --delete-conflicting-outputs
+        fi
+
+    - name: 🔍 Analyze code
+      shell: bash
+      run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+    - name: 🏷️ Create tag
+      id: tag
+      shell: bash
+      run: |
+        TAG="v${{ steps.version.outputs.version }}-pr${{ github.event.pull_request.number }}"
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+        echo "Created tag: $TAG"
