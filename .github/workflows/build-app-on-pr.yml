@@ -1,4 +1,4 @@
-name: Build APK on Pull Request to Prod
+name: Build APK + AAB on Pull Request to Prod
 
 on:
   pull_request:
@@ -127,6 +127,100 @@ jobs:
             3. Install on your Android device (enable "Unknown sources" if needed)
 
             *This is a preview release created from PR #${context.payload.pull_request.number}*`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment,
+            });
+
+  build-aab:
+    name: Build AAB
+    runs-on: ubuntu-latest
+    # Serialized after build-apk to avoid racing on the same Release tag.
+    # Build itself reruns setup-flutter (cache hit) — minimal overhead.
+    # Future store-publish workflows will read this AAB from the Release.
+    needs: build-apk
+
+    steps:
+      - name: 📂 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🛠️ Setup Flutter
+        id: setup
+        uses: ./.github/actions/setup-flutter
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
+
+      - name: 🏗️ Build signed AAB
+        run: flutter build appbundle --release
+
+      - name: 📦 Rename AAB file
+        run: |
+          AAB_PATH="build/app/outputs/bundle/release/app-release.aab"
+          if [ -f "$AAB_PATH" ]; then
+            mv "$AAB_PATH" "build/app/outputs/bundle/release/yts-movies-v${{ steps.setup.outputs.version }}.aab"
+            echo "AAB renamed to yts-movies-v${{ steps.setup.outputs.version }}.aab"
+          else
+            echo "AAB file not found, failing"
+            exit 1
+          fi
+
+      - name: 📊 Get AAB info
+        id: aab_info
+        run: |
+          sudo apt-get update && sudo apt-get install -y bc
+
+          AAB_PATH="build/app/outputs/bundle/release/yts-movies-v${{ steps.setup.outputs.version }}.aab"
+          SIZE_BYTES=$(stat -c%s "$AAB_PATH")
+          SIZE_MB=$(echo "scale=2; $SIZE_BYTES / 1024 / 1024" | bc)
+          echo "size_mb=$SIZE_MB" >> $GITHUB_OUTPUT
+          echo "AAB size: ${SIZE_MB} MB"
+
+      - name: 🚀 Upload AAB to existing Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.setup.outputs.tag }}
+          # Release already created by build-apk; this appends the AAB asset.
+          append_body: false
+          draft: false
+          prerelease: true
+          files: |
+            build/app/outputs/bundle/release/yts-movies-v${{ steps.setup.outputs.version }}.aab
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 💬 Comment PR with AAB info
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ steps.setup.outputs.version }}';
+            const size = '${{ steps.aab_info.outputs.size_mb }}';
+            const tag = '${{ steps.setup.outputs.tag }}';
+            const releaseUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${tag}`;
+
+            const keystoreUsed = '${{ secrets.KEYSTORE_BASE64 }}'
+              ? '🔐 Signed with release keystore'
+              : '⚠️ Signed with debug keystore';
+
+            const comment = `📦 **AAB Build Successful — Attached to Release!**
+
+            📱 **Download AAB:** [${tag} Release](${releaseUrl})
+            📊 **Size:** ${size} MB
+            ${keystoreUsed}
+
+            **Build Details:**
+            - Version: ${version}
+            - Commit: ${context.sha.substring(0, 7)}
+            - Flutter Version: 3.32.1
+            - Build Type: Release AAB (Android App Bundle)
+
+            **🏪 Store upload:**
+            This AAB is the format required by Google Play, Samsung Galaxy Store and Huawei AppGallery. Future workflows will auto-publish via each store's API.
+
+            *Attached to release from PR #${context.payload.pull_request.number}*`;
 
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
