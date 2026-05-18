@@ -169,7 +169,7 @@ class MovieDetailsState extends State<MovieDetails> with RouteAware {
       _wasPlaying = true;
       _controller?.pause();
     }
-    debugPrint('pushed next');
+    log('pushed next');
     super.didPushNext();
   }
 
@@ -178,7 +178,7 @@ class MovieDetailsState extends State<MovieDetails> with RouteAware {
     if (_wasPlaying) {
       _controller?.play();
     }
-    debugPrint('popped next');
+    log('popped next');
     super.didPopNext();
   }
 
@@ -304,7 +304,6 @@ class _Screen extends StatelessWidget {
         },
         child: CustomScrollView(
           slivers: [
-            // TODO: Implement flexible image
             SliverAppBar(
               stretch: true,
               pinned: true,
@@ -371,7 +370,7 @@ class _Screen extends StatelessWidget {
                           Colors.black54,
                           BlendMode.overlay,
                         ),
-                        onError: (e, s) => debugPrint(e.toString()),
+                        onError: (e, s) => log('backdrop image failed', error: e, stackTrace: s),
                       ),
                       borderRadius: BorderRadius.circular(12.0),
                     ),

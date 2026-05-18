@@ -101,10 +101,21 @@ class DownloadButton extends StatelessWidget {
         throw Exception('Movie information not available');
       }
 
+      // Default save path is public Downloads (Android). Needs MANAGE_EXTERNAL_STORAGE.
+      // Prompt before starting the download so failure mode is clear.
+      if (!await ensurePublicStorageWrite()) {
+        if (context.mounted) {
+          await showStoragePermissionDeniedDialog(context);
+        }
+        return;
+      }
+      await getIt<ForegroundDownloadService>().ensureSavePathExists();
+
       final magnetUri = _torrent.magnet(movie!.title).toString();
       final taskId = urlToUniqueInt(magnetUri);
 
       // Check if already downloading
+      if (!context.mounted) return;
       final bloc = context.read<DownloadManagerBloc>();
       if (bloc.state.downloads.containsKey(taskId)) {
         if (context.mounted) {

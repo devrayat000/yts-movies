@@ -45,8 +45,8 @@ class MovieCard extends StatelessWidget {
         pathParameters: {'id': _movie.id.toString()},
         extra: _movie,
       );
-    } catch (e) {
-      debugPrint(e.toString());
+    } catch (e, s) {
+      log('movie card details navigation failed', error: e, stackTrace: s);
     }
   }
 

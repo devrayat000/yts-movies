@@ -96,7 +96,8 @@ class ErrorReportingService {
     // - Sentry: Sentry.captureException(...)
     // - Custom analytics endpoint
 
-    debugPrint('Analytics: Error reported - ${report.error.runtimeType}');
+    log('Analytics: Error reported - ${report.error.runtimeType}',
+        name: 'YTSMovies');
   }
 
   /// Get error statistics
