@@ -385,7 +385,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
       builder: (_, data, __) => SizedBox(
         height: 40,
         child: DropdownButtonFormField<String>(
-          initialValue: data,
+          value: data,
           items: items,
           onChanged: bloc.changeHandler,
           hint: Text(
@@ -438,7 +438,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet>
           child: Switch.adaptive(
             value: value,
             onChanged: filter.order.changeHandler,
-            activeThumbColor: colorScheme.primary,
+            activeColor: colorScheme.primary,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ),
