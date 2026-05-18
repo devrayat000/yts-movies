@@ -10,6 +10,7 @@ import 'package:ytsmovies/src/models/download_task.dart';
 import 'package:ytsmovies/src/models/torrent_service_models.dart';
 import 'package:ytsmovies/src/services/torrent_task_handler.dart';
 import 'package:ytsmovies/src/services/preferences_service.dart';
+import 'package:ytsmovies/src/utils/storage_permission.dart';
 
 /// Service to manage foreground torrent downloads
 @singleton
@@ -25,9 +26,15 @@ class ForegroundDownloadService {
 
   Stream<ProgressUpdate> get progressStream => _progressController.stream;
 
+  /// Resolved download directory. Always app-scoped (no MANAGE_EXTERNAL_STORAGE
+  /// required) unless the user picked a custom path via SAF.
+  /// Callers must await [initialize] before reading.
   String get downloadPath {
-    if (_downloadPath != null) return _downloadPath!;
-    return '/storage/emulated/0/Download/Movies';
+    final p = _downloadPath;
+    if (p == null) {
+      throw StateError('ForegroundDownloadService not initialized');
+    }
+    return p;
   }
 
   @postConstruct
@@ -36,7 +43,6 @@ class ForegroundDownloadService {
 
     await _initDownloadPath();
     await _requestPermissions();
-    await checkPermissions();
 
     final notificationsPlugin = FlutterLocalNotificationsPlugin();
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -83,27 +89,48 @@ class ForegroundDownloadService {
   @pragma('vm:entry-point')
   static Future<bool> _onIosBackground(ServiceInstance service) async => true;
 
+  /// Resolves the default save location:
+  ///   Android  -> /storage/emulated/0/Download/Movies (public Downloads,
+  ///              matches Chrome / 1DM / ADM). Requires
+  ///              MANAGE_EXTERNAL_STORAGE; the directory is created lazily
+  ///              once the user grants it at the first download attempt.
+  ///   iOS      -> app documents/Downloads/Movies (no public Downloads on iOS)
+  /// A user-picked [customDownloadPath] from preferences always wins.
   Future<void> _initDownloadPath() async {
     try {
       final customPath = _preferencesService.customDownloadPath;
       if (customPath != null && await Directory(customPath).exists()) {
         _downloadPath = customPath;
-      } else {
-        final downloadsDir = await getDownloadsDirectory();
-        if (downloadsDir != null) {
-          _downloadPath = '${downloadsDir.path}/Movies';
-        } else {
-          final appDir = await getApplicationDocumentsDirectory();
-          _downloadPath = '${appDir.path}/downloads';
-        }
+        return;
       }
-      await Directory(_downloadPath!).create(recursive: true);
+      _downloadPath = await _defaultPath();
+      // Don't create directory here — requires storage permission on Android
+      // and we don't want to prompt at app startup. Created on first write
+      // (see `ensureSavePathExists`).
     } catch (e, s) {
       log('Error initializing download path: $e', error: e, stackTrace: s);
       final appDir = await getApplicationDocumentsDirectory();
       _downloadPath = '${appDir.path}/downloads';
       await Directory(_downloadPath!).create(recursive: true);
     }
+  }
+
+  Future<String> _defaultPath() async {
+    if (Platform.isAndroid) {
+      return '$kAndroidPublicDownloadsRoot/$kDefaultDownloadSubdir';
+    }
+    final appDir = await getApplicationDocumentsDirectory();
+    return '${appDir.path}/Downloads/$kDefaultDownloadSubdir';
+  }
+
+  /// Creates the save directory if missing. Must be called after the user
+  /// has granted MANAGE_EXTERNAL_STORAGE (Android 11+) — see
+  /// [ensurePublicStorageWrite].
+  Future<void> ensureSavePathExists() async {
+    final p = _downloadPath;
+    if (p == null) return;
+    final dir = Directory(p);
+    if (!await dir.exists()) await dir.create(recursive: true);
   }
 
   Future<void> updateDownloadPath(String newPath) async {
@@ -114,34 +141,23 @@ class ForegroundDownloadService {
   }
 
   Future<void> resetToDefaultPath() async {
-    final downloadsDir = await getDownloadsDirectory();
-    String defaultPath;
-    if (downloadsDir != null) {
-      defaultPath = '${downloadsDir.path}/Movies';
-    } else {
-      final appDir = await getApplicationDocumentsDirectory();
-      defaultPath = '${appDir.path}/downloads';
-    }
     await _preferencesService.setCustomDownloadPath(null);
-    _downloadPath = defaultPath;
-    await Directory(_downloadPath!).create(recursive: true);
+    _downloadPath = await _defaultPath();
+    // Directory created lazily on first write — see [ensureSavePathExists].
   }
 
+  /// Only POST_NOTIFICATIONS is required at runtime — the foreground service
+  /// notification channel needs it on Android 13+. Downloads write to
+  /// app-scoped external storage (no storage perm) or to a SAF-granted
+  /// directory chosen by the user (perm is the URI grant itself).
   Future<void> _requestPermissions() async {
     await Permission.notification.request();
-    if (await Permission.videos.isDenied) {
-      await Permission.videos.request();
-    }
   }
 
   Future<bool> checkPermissions() async {
     try {
       if (await Permission.notification.isDenied) {
         final status = await Permission.notification.request();
-        if (!status.isGranted) return false;
-      }
-      if (await Permission.videos.isDenied) {
-        final status = await Permission.videos.request();
         if (!status.isGranted) return false;
       }
       return true;

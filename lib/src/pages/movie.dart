@@ -370,7 +370,7 @@ class _Screen extends StatelessWidget {
                           Colors.black54,
                           BlendMode.overlay,
                         ),
-                        onError: (e, s) => debugPrint(e.toString()),
+                        onError: (e, s) => log('backdrop image failed', error: e, stackTrace: s),
                       ),
                       borderRadius: BorderRadius.circular(12.0),
                     ),

@@ -1,9 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:permission_handler/permission_handler.dart' show openAppSettings;
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
 import 'package:ytsmovies/src/services/preferences_service.dart';
+import 'package:ytsmovies/src/utils/storage_permission.dart';
 import 'package:ytsmovies/src/injection.dart';
 
 class DownloadSettingsPage extends StatefulWidget {
@@ -54,8 +54,8 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
   Future<void> _selectDownloadLocation() async {
     setState(() => _isLoading = true);
     try {
-      if (!await _requestPermissions()) {
-        if (mounted) _showPermissionDeniedDialog();
+      if (!await ensurePublicStorageWrite()) {
+        if (mounted) await showStoragePermissionDeniedDialog(context);
         return;
       }
       final selected = await FilePicker.platform.getDirectoryPath();
@@ -80,47 +80,6 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  Future<bool> _requestPermissions() async {
-    if (Platform.isAndroid) {
-      if (await Permission.manageExternalStorage.isDenied) {
-        final status = await Permission.manageExternalStorage.request();
-        if (status.isDenied) {
-          return (await Permission.storage.request()).isGranted;
-        }
-        return status.isGranted;
-      }
-      return true;
-    } else if (Platform.isIOS) {
-      return (await Permission.photos.request()).isGranted;
-    }
-    return true;
-  }
-
-  void _showPermissionDeniedDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Permission Required'),
-        content: const Text(
-          'Storage permission is required to choose a download location.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              openAppSettings();
-            },
-            child: const Text('Open Settings'),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _resetToDefault() async {
