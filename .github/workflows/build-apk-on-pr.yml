@@ -21,98 +21,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository
       - name: 📂 Checkout code
         uses: actions/checkout@v3
 
-      - name: 🚀 Cache pub deps
-        uses: actions/cache@v3
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
-          restore-keys: ${{ runner.os }}-pub-
-
-      - name: ☕️ Setup Java (Temurin 17)
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      # Setup Flutter
-      - name: 🦋 Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.32.1"
-          channel: "stable"
-          cache: true
-
-      # Get Flutter dependencies
-      - name: 📥 Get dependencies
-        run: flutter pub get
-
-      # Extract version from pubspec.yaml
-      - name: 📋 Extract version
-        id: version
-        run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Extracted version: $VERSION"
-
-      # Setup app signing
-      - name: 🔐 Setup app signing
+      - name: 🛠️ Setup Flutter
+        id: setup
+        uses: ./.github/actions/setup-flutter
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
-        run: |
-          # Create keystore from base64
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 --decode > android/upload-keystore.jks
-            echo "✅ Keystore created successfully"
-          else
-            echo "⚠️ No keystore found in secrets, using debug signing"
-          fi
 
-          # Create key.properties file
-          if [ -n "$KEY_PROPERTIES" ]; then
-            echo "$KEY_PROPERTIES" > android/key.properties
-            echo "✅ Key properties created successfully"
-          else
-            echo "⚠️ No key properties found in secrets, using debug signing"
-            # Create a default key.properties that falls back to debug
-            cat > android/key.properties << EOF
-          storePassword=android
-          keyPassword=android
-          keyAlias=androiddebugkey
-          storeFile=debug.keystore
-          EOF
-          fi
-
-      # Generate any needed files (if using build_runner)
-      - name: 📂 Generate files
-        run: |
-          if grep -q "build_runner" pubspec.yaml; then
-            flutter packages pub run build_runner build --delete-conflicting-outputs
-          fi
-
-      # Analyze code
-      - name: 🔍 Analyze code
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
-
-      # Run tests (optional - comment out if no tests)
-      # - name: 🧪 Run tests
-      #   run: flutter test
-      #   continue-on-error: true
-
-      # Build APK
       - name: 🏗️ Build signed APK
-        run: flutter build apk --release # Get APK file size for release notes
+        run: flutter build apk --release
 
       - name: 📦 Rename APK file
         run: |
           APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
           if [ -f "$APK_PATH" ]; then
-            mv "$APK_PATH" "build/app/outputs/flutter-apk/yts-movies-v${{ steps.version.outputs.version }}.apk"
-            echo "APK renamed to yts-movies-v${{ steps.version.outputs.version }}.apk"
+            mv "$APK_PATH" "build/app/outputs/flutter-apk/yts-movies-v${{ steps.setup.outputs.version }}.apk"
+            echo "APK renamed to yts-movies-v${{ steps.setup.outputs.version }}.apk"
           else
             echo "APK file not found, skipping rename"
           fi
@@ -120,10 +47,9 @@ jobs:
       - name: 📊 Get APK info
         id: apk_info
         run: |
-          # Install bc for calculations
           sudo apt-get update && sudo apt-get install -y bc
 
-          APK_PATH="build/app/outputs/flutter-apk/yts-movies-v${{ steps.version.outputs.version }}.apk"
+          APK_PATH="build/app/outputs/flutter-apk/yts-movies-v${{ steps.setup.outputs.version }}.apk"
           if [ -f "$APK_PATH" ]; then
             SIZE_BYTES=$(stat -c%s "$APK_PATH")
             SIZE_MB=$(echo "scale=2; $SIZE_BYTES / 1024 / 1024" | bc)
@@ -134,25 +60,17 @@ jobs:
             echo "APK file not found"
           fi
 
-      # Create a tag for the release
-      - name: 🏷️ Create tag
-        id: tag
-        run: |
-          TAG="v${{ steps.version.outputs.version }}-pr${{ github.event.pull_request.number }}"
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "Created tag: $TAG"      # Create GitHub Release
-
       - name: 🚀 Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.tag.outputs.tag }}
-          name: "YTS Movies v${{ steps.version.outputs.version }} - PR #${{ github.event.pull_request.number }}"
+          tag_name: ${{ steps.setup.outputs.tag }}
+          name: "YTS Movies v${{ steps.setup.outputs.version }} - PR #${{ github.event.pull_request.number }}"
           body: |
             🚀 **YTS Movies APK Build from Pull Request #${{ github.event.pull_request.number }}**
 
             **📱 App Details:**
-            - Version: ${{ steps.version.outputs.version }}
+            - Version: ${{ steps.setup.outputs.version }}
             - Size: ${{ steps.apk_info.outputs.size_mb }} MB
             - Build Type: Release APK
             - Flutter Version: 3.32.1
@@ -174,20 +92,20 @@ jobs:
           draft: false
           prerelease: true
           files: |
-            build/app/outputs/flutter-apk/yts-movies-v${{ steps.version.outputs.version }}.apk
-          token: ${{ secrets.GITHUB_TOKEN }} # Add comment to PR with release link
+            build/app/outputs/flutter-apk/yts-movies-v${{ steps.setup.outputs.version }}.apk
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 💬 Comment PR with Release Link
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@v7
         with:
           script: |
-            const version = '${{ steps.version.outputs.version }}';
+            const version = '${{ steps.setup.outputs.version }}';
             const size = '${{ steps.apk_info.outputs.size_mb }}';
-            const tag = '${{ steps.tag.outputs.tag }}';
+            const tag = '${{ steps.setup.outputs.tag }}';
             const releaseUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${tag}`;
 
-            const keystoreUsed = '${{ secrets.KEYSTORE_BASE64 }}' 
+            const keystoreUsed = '${{ secrets.KEYSTORE_BASE64 }}'
               ? '🔐 Signed with release keystore'
               : '⚠️ Signed with debug keystore';
 
