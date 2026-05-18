@@ -41,7 +41,7 @@ sealed class Filter with _$Filter {
   }
 
   Map<String, dynamic> get values {
-    debugPrint('getting filter values');
+    log('getting filter values');
     final params = {
       'order_by': order.state ? 'desc' : null,
       'sort_by': sort.state,
@@ -49,7 +49,7 @@ sealed class Filter with _$Filter {
       'quality': quality.state,
       'minimum_rating': rating.state.round().toString(),
     };
-    debugPrint('mapping filter values');
+    log('mapping filter values');
     return params..removeWhere((_, value) => value == null || value == '0');
   }
 }

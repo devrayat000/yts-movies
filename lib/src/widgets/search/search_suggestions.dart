@@ -261,22 +261,6 @@ class SearchSuggestions extends StatelessWidget {
                 ],
               ),
             ),
-            // More options button
-            IconButton(
-              onPressed: () {
-                // TODO: Show movie options menu
-              },
-              icon: Icon(
-                Icons.more_vert,
-                color: Colors.grey[600],
-                size: 20,
-              ),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(
-                minWidth: 24,
-                minHeight: 24,
-              ),
-            ),
           ],
         ),
       ),

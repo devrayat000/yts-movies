@@ -142,13 +142,7 @@ class ForegroundDownloadService {
       }
       if (await Permission.videos.isDenied) {
         final status = await Permission.videos.request();
-        if (!status.isGranted) {
-          if (await Permission.manageExternalStorage.isDenied) {
-            final manageStatus =
-                await Permission.manageExternalStorage.request();
-            if (!manageStatus.isGranted) return false;
-          }
-        }
+        if (!status.isGranted) return false;
       }
       return true;
     } catch (e, s) {
