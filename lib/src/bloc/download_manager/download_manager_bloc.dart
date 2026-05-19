@@ -292,16 +292,36 @@ class DownloadManagerBloc
     DownloadManagerMoveDownloadTask event,
     Emitter<DownloadManagerState> emit,
   ) async {
-    await _foregroundDownloadService.moveDownloadTask(
-      taskId: event.taskId,
-      newSavePath: event.newSavePath,
-    );
-    final task = state.downloads[event.taskId];
-    if (task != null) {
+    final current = state.downloads[event.taskId];
+    final running = await _foregroundDownloadService.isServiceRunning();
+    if (running) {
+      await _foregroundDownloadService.moveDownloadTask(
+        taskId: event.taskId,
+        newSavePath: event.newSavePath,
+      );
+    } else if (current != null) {
+      await _moveTaskFilesLocal(current, event.newSavePath);
+    }
+    if (current != null) {
       emit(state.copyWith(downloads: {
         ...state.downloads,
-        event.taskId: task.copyWith(filePath: event.newSavePath),
+        event.taskId: current.copyWith(filePath: event.newSavePath),
       }));
+    }
+  }
+
+  Future<void> _moveTaskFilesLocal(
+      DownloadTask task, String newSavePath) async {
+    final basePath = task.filePath ?? _foregroundDownloadService.downloadPath;
+    for (final file in task.files) {
+      final fromPath = '$basePath${Platform.pathSeparator}${file.name}';
+      final toPath = '$newSavePath${Platform.pathSeparator}${file.name}';
+      final src = File(fromPath);
+      if (!await src.exists()) continue;
+      try {
+        await Directory(File(toPath).parent.path).create(recursive: true);
+      } catch (_) {}
+      await src.rename(toPath);
     }
   }
 
