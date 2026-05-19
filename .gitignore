@@ -70,4 +70,7 @@ ios/.symlinks/
 
 
 # example
-dtorrent_task_v2/
+dtorrent_task_v2/*
+dtorrent_task_v2/example/*
+.claude/*
+# !dtorrent_task_v2/example/metadata_example.dart
