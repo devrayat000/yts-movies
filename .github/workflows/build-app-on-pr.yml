@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: 📂 Checkout code
         uses: actions/checkout@v5
+        with:
+          submodules: true # ensure submodules are available
 
       - name: 🛠️ Setup Flutter
         id: setup
@@ -146,6 +148,8 @@ jobs:
     steps:
       - name: 📂 Checkout code
         uses: actions/checkout@v5
+        with:
+          submodules: true # ensure submodules are available
 
       - name: 🛠️ Setup Flutter
         id: setup
