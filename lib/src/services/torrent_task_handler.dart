@@ -215,7 +215,15 @@ class _TorrentTaskHandler {
 
   Timer? _periodicTimer;
   Timer? _scrapeTimer;
+  Timer? _idleStopTimer;
+  Timer? _foregroundNotifTimer;
+  bool _stopping = false;
   final Map<int, Timer> _emitDebounce = {};
+
+  /// Grace period after the last active download finishes before the
+  /// background service is allowed to stop. Gives the user a window to
+  /// trigger post-completion file moves through the live task instance.
+  static const Duration _idleStopGrace = Duration(seconds: 30);
 
   _TorrentTaskHandler(this.service, this.notificationsPlugin) {
     _wireQueueEvents();
@@ -230,6 +238,11 @@ class _TorrentTaskHandler {
     // BEP 48 scrape on a slow interval.
     _scrapeTimer = Timer.periodic(const Duration(seconds: 60), (_) {
       unawaited(_scrapeAllTrackers());
+    });
+    // Aggregate foreground notification — single source of truth so the
+    // persistent notification doesn't flicker between concurrent tasks.
+    _foregroundNotifTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      _updateAggregateForegroundNotification();
     });
   }
 
@@ -261,8 +274,10 @@ class _TorrentTaskHandler {
           downloadedBytes: rec.totalBytes,
           totalBytes: rec.totalBytes,
         ));
-        // Keep the record to allow post-completion file moves.
-        _maybeStopService();
+        // Record is kept so in-handler post-completion moves (via
+        // `task.moveDownloadedFile`) remain reachable until the idle-stop
+        // grace expires. After that, moves go through the bloc local path.
+        _scheduleIdleStop();
       } else if (event is QueueItemStopped) {
         final rec = _recordForQueueId(event.queueItemId);
         if (rec == null) return;
@@ -271,7 +286,7 @@ class _TorrentTaskHandler {
           status: DownloadStatus.stopped,
         ));
         _disposeRecord(rec, removeFromMap: true);
-        _maybeStopService();
+        _scheduleIdleStop();
       } else if (event is QueueItemPaused) {
         final rec = _recordForQueueId(event.queueItemId);
         if (rec == null) return;
@@ -297,7 +312,7 @@ class _TorrentTaskHandler {
           error: event.error,
         ));
         _disposeRecord(rec, removeFromMap: true);
-        _maybeStopService();
+        _scheduleIdleStop();
       }
     });
   }
@@ -346,6 +361,7 @@ class _TorrentTaskHandler {
       ..sequentialDownload = request.sequentialDownload
       ..selectedIndices = request.selectedIndices;
     _records[taskId] = rec;
+    _cancelIdleStop();
     await _beginMetadataPhase(rec);
   }
 
@@ -382,10 +398,6 @@ class _TorrentTaskHandler {
       }
 
       _showNotification(rec.taskId, 'Downloading Metadata', rec.movieTitle);
-      _updateForegroundNotification(
-        'Downloading Metadata',
-        rec.movieTitle,
-      );
       _send(ProgressUpdate(
         taskId: rec.taskId,
         status: DownloadStatus.downloadingMetadata,
@@ -402,10 +414,6 @@ class _TorrentTaskHandler {
             status: DownloadStatus.downloadingMetadata,
             progress: event.progress.toDouble(),
           ));
-          _updateForegroundNotification(
-            'Downloading Metadata',
-            '${(event.progress * 100).toStringAsFixed(0)}% • ${rec.movieTitle}',
-          );
         })
         ..on<MetaDataDownloadComplete>((event) async {
           await _enqueue(rec, event.data);
@@ -537,10 +545,6 @@ class _TorrentTaskHandler {
       savedFilePath: rec.savePath,
       sequentialDownload: rec.sequentialDownload,
     ));
-    _updateForegroundNotification(
-      rec.movieTitle,
-      'Preparing download…',
-    );
   }
 
   void pauseDownload(DownloadControlRequest request) {
@@ -565,6 +569,9 @@ class _TorrentTaskHandler {
   void resumeDownload(DownloadControlRequest request) {
     final rec = _records[request.taskId];
     if (rec == null) return;
+    // Resume re-arms work; kill any pending idle-stop so the service doesn't
+    // shut down mid-resume.
+    _cancelIdleStop();
     rec.pausedByUser = false;
     final qid = rec.queueItemId;
     if (qid != null && rec.task != null) {
@@ -755,7 +762,13 @@ class _TorrentTaskHandler {
 
   Future<void> moveDownloadTask(MoveDownloadTaskRequest request) async {
     final rec = _records[request.taskId];
-    if (rec == null) return;
+    if (rec == null) {
+      // Record was disposed before the IPC arrived. Tell the main isolate to
+      // fall back to local file rename — handler has no source state to act
+      // on without `rec`.
+      _sendMoveAck(request.taskId, success: false, reason: 'record_missing');
+      return;
+    }
     final task = rec.task;
     try {
       if (task != null && rec.model != null) {
@@ -777,10 +790,27 @@ class _TorrentTaskHandler {
         status: rec.lastStatus,
         savedFilePath: rec.savePath,
       ));
+      _sendMoveAck(rec.taskId,
+          success: true, newSavePath: request.newSavePath);
     } catch (e) {
       log('moveDownloadTask failed: $e');
+      _sendMoveAck(rec.taskId, success: false, reason: e.toString());
     }
     _emitDebounced(rec);
+  }
+
+  void _sendMoveAck(
+    int taskId, {
+    required bool success,
+    String? newSavePath,
+    String? reason,
+  }) {
+    service.invoke('moveDownloadTaskAck', {
+      'taskId': taskId,
+      'success': success,
+      if (newSavePath != null) 'newSavePath': newSavePath,
+      if (reason != null) 'reason': reason,
+    });
   }
 
   Future<void> _moveTaskDirectly(_Record rec, String newSavePath) async {
@@ -862,11 +892,6 @@ class _TorrentTaskHandler {
       progress: (progress * 100).toInt(),
       maxProgress: 100,
     );
-    _updateForegroundNotification(
-      rec.movieTitle,
-      '${(progress * 100).toStringAsFixed(0)}% • '
-      '${_fmtSpeed(dl)} ↓ ${_fmtSpeed(ul)} ↑',
-    );
 
     _send(ProgressUpdate(
       taskId: rec.taskId,
@@ -911,7 +936,7 @@ class _TorrentTaskHandler {
       error: error,
     ));
     _disposeRecord(rec, removeFromMap: true);
-    _maybeStopService();
+    _scheduleIdleStop();
   }
 
   void _disposeRecord(_Record rec, {required bool removeFromMap}) {
@@ -933,7 +958,7 @@ class _TorrentTaskHandler {
     service.invoke('progressUpdate', update.toJson());
   }
 
-  void _updateForegroundNotification(String title, String content) {
+  void _setForegroundNotification(String title, String content) {
     try {
       if (service is AndroidServiceInstance) {
         (service as AndroidServiceInstance).setForegroundNotificationInfo(
@@ -944,8 +969,56 @@ class _TorrentTaskHandler {
     } catch (_) {}
   }
 
-  void _maybeStopService() {
-    final hasActive = _records.values.any((rec) {
+  /// Aggregate persistent-notification updater. Picks one source of truth
+  /// across all records so concurrent downloads don't make the system
+  /// notification flip titles.
+  void _updateAggregateForegroundNotification() {
+    if (_stopping) return;
+    if (_records.isEmpty) {
+      _setForegroundNotification('YTS Movies', 'Torrent service running');
+      return;
+    }
+    var active = 0, meta = 0, paused = 0, completed = 0;
+    var totalDl = 0, totalUl = 0;
+    for (final rec in _records.values) {
+      final task = rec.task;
+      if (task != null) {
+        totalDl += task.currentDownloadSpeed.toInt();
+        totalUl += task.uploadSpeed.toInt();
+      }
+      switch (rec.lastStatus) {
+        case DownloadStatus.downloading:
+          active++;
+          break;
+        case DownloadStatus.paused:
+          paused++;
+          break;
+        case DownloadStatus.downloadingMetadata:
+        case DownloadStatus.queued:
+          meta++;
+          break;
+        case DownloadStatus.completed:
+          completed++;
+          break;
+        case DownloadStatus.failed:
+        case DownloadStatus.stopped:
+          break;
+      }
+    }
+    final parts = <String>[];
+    if (active > 0) parts.add('$active downloading');
+    if (meta > 0) parts.add('$meta queued');
+    if (paused > 0) parts.add('$paused paused');
+    if (completed > 0) parts.add('$completed done');
+    final title = parts.isEmpty ? 'YTS Movies' : parts.join(' • ');
+    final body = active > 0 || paused > 0
+        ? '${_fmtSpeed(totalDl)} ↓ ${_fmtSpeed(totalUl)} ↑'
+        : 'Torrent service running';
+    _setForegroundNotification(title, body);
+  }
+
+  bool _hasActiveWork() {
+    return _records.values.any((rec) {
       if (rec.metadata != null) return true;
       switch (rec.lastStatus) {
         case DownloadStatus.queued:
@@ -959,9 +1032,33 @@ class _TorrentTaskHandler {
           return false;
       }
     });
-    if (!hasActive) {
-      cleanup().then((_) => service.stopSelf());
+  }
+
+  void _cancelIdleStop() {
+    _idleStopTimer?.cancel();
+    _idleStopTimer = null;
+  }
+
+  void _scheduleIdleStop() {
+    if (_stopping) return;
+    if (_hasActiveWork()) {
+      _cancelIdleStop();
+      return;
     }
+    _idleStopTimer?.cancel();
+    _idleStopTimer = Timer(_idleStopGrace, () {
+      _idleStopTimer = null;
+      if (_stopping) return;
+      if (_hasActiveWork()) return;
+      _stopping = true;
+      cleanup().then((_) {
+        try {
+          service.stopSelf();
+        } catch (e) {
+          log('service.stopSelf failed: $e');
+        }
+      });
+    });
   }
 
   Future<void> _showNotification(
@@ -1012,9 +1109,15 @@ class _TorrentTaskHandler {
     ));
   }
 
+  bool _cleanedUp = false;
+
   Future<void> cleanup() async {
+    if (_cleanedUp) return;
+    _cleanedUp = true;
     _periodicTimer?.cancel();
     _scrapeTimer?.cancel();
+    _foregroundNotifTimer?.cancel();
+    _idleStopTimer?.cancel();
     for (final t in _emitDebounce.values) {
       t.cancel();
     }

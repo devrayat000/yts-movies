@@ -313,17 +313,47 @@ class ForegroundDownloadService {
     );
   }
 
-  Future<void> moveDownloadTask({
+  /// Asks the background handler to move a task's files. Returns the ack —
+  /// callers should fall back to a local rename if `success` is false.
+  /// Times out (treated as failure) if the service doesn't ack within
+  /// [ackTimeout]; this covers crashes mid-flight and dead-service edge cases.
+  Future<MoveDownloadTaskAck> moveDownloadTask({
     required int taskId,
     required String newSavePath,
+    Duration ackTimeout = const Duration(seconds: 10),
   }) async {
-    FlutterBackgroundService().invoke(
+    final service = FlutterBackgroundService();
+    final completer = Completer<MoveDownloadTaskAck>();
+    late StreamSubscription<Map<String, dynamic>?> sub;
+    sub = service.on('moveDownloadTaskAck').listen((event) {
+      if (event == null) return;
+      if (event['taskId'] != taskId) return;
+      if (completer.isCompleted) return;
+      completer.complete(MoveDownloadTaskAck(
+        taskId: taskId,
+        success: event['success'] == true,
+        newSavePath: event['newSavePath'] as String?,
+        reason: event['reason'] as String?,
+      ));
+      unawaited(sub.cancel());
+    });
+    service.invoke(
       'moveDownloadTask',
       MoveDownloadTaskRequest(
         taskId: taskId,
         newSavePath: newSavePath,
       ).toJson(),
     );
+    try {
+      return await completer.future.timeout(ackTimeout);
+    } on TimeoutException {
+      await sub.cancel();
+      return MoveDownloadTaskAck(
+        taskId: taskId,
+        success: false,
+        reason: 'ack_timeout',
+      );
+    }
   }
 
   Future<void> removeTracker({

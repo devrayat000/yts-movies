@@ -173,19 +173,45 @@ class DownloadManagerBloc
     try {
       final task = state.downloads[event.taskId];
       await _foregroundDownloadService.stopDownload(event.taskId);
-      if (task?.filePath != null) {
-        try {
-          final f = File(task!.filePath!);
-          if (await f.exists()) await f.delete();
-        } catch (e) {
-          log('Error deleting file: $e');
-        }
-      }
+      await _deleteDownloadArtifacts(task);
       final next = Map<int, DownloadTask>.from(state.downloads)
         ..remove(event.taskId);
       emit(state.copyWith(downloads: next));
     } catch (e, s) {
       log('Error deleting download: $e', error: e, stackTrace: s);
+    }
+  }
+
+  /// `filePath` is the save **directory**. Delete each known file plus the
+  /// directory itself if empty. Best-effort — swallow per-entry errors so
+  /// one stuck file doesn't block removing the rest.
+  Future<void> _deleteDownloadArtifacts(DownloadTask? task) async {
+    if (task == null) return;
+    final basePath = task.filePath;
+    if (basePath == null) return;
+    for (final file in task.files) {
+      try {
+        final normalized = file.name.replaceAll('/', Platform.pathSeparator);
+        final f = File('$basePath${Platform.pathSeparator}$normalized');
+        if (await f.exists()) await f.delete();
+      } catch (e) {
+        log('Delete file failed: $e');
+      }
+    }
+    try {
+      final dir = Directory(basePath);
+      if (await dir.exists()) {
+        final remaining = await dir.list().toList();
+        if (remaining.isEmpty) {
+          await dir.delete();
+        } else if (task.files.isEmpty) {
+          // No file metadata recorded (e.g. download failed before metadata).
+          // Wipe the per-task dir wholesale to clean up state files.
+          await dir.delete(recursive: true);
+        }
+      }
+    } catch (e) {
+      log('Delete dir failed: $e');
     }
   }
 
@@ -293,16 +319,22 @@ class DownloadManagerBloc
     Emitter<DownloadManagerState> emit,
   ) async {
     final current = state.downloads[event.taskId];
+    if (current == null) return;
     final running = await _foregroundDownloadService.isServiceRunning();
     if (running) {
-      await _foregroundDownloadService.moveDownloadTask(
+      final ack = await _foregroundDownloadService.moveDownloadTask(
         taskId: event.taskId,
         newSavePath: event.newSavePath,
       );
-    } else if (current != null) {
-      await _moveTaskFilesLocal(current, event.newSavePath);
+      if (ack.success) {
+        // Handler also sends a ProgressUpdate with `savedFilePath` —
+        // `_handleProgressUpdate` applies it to state. Nothing to do here.
+        return;
+      }
+      log('Move via service failed (${ack.reason}); falling back to local');
     }
-    if (current != null) {
+    final moved = await _moveTaskFilesLocal(current, event.newSavePath);
+    if (moved) {
       emit(state.copyWith(downloads: {
         ...state.downloads,
         event.taskId: current.copyWith(filePath: event.newSavePath),
@@ -310,18 +342,37 @@ class DownloadManagerBloc
     }
   }
 
-  Future<void> _moveTaskFilesLocal(
+  Future<bool> _moveTaskFilesLocal(
       DownloadTask task, String newSavePath) async {
     final basePath = task.filePath ?? _foregroundDownloadService.downloadPath;
-    for (final file in task.files) {
-      final fromPath = '$basePath${Platform.pathSeparator}${file.name}';
-      final toPath = '$newSavePath${Platform.pathSeparator}${file.name}';
-      final src = File(fromPath);
-      if (!await src.exists()) continue;
-      try {
+    try {
+      await Directory(newSavePath).create(recursive: true);
+      var moved = 0;
+      for (final file in task.files) {
+        final normalized =
+            file.name.replaceAll('/', Platform.pathSeparator);
+        final fromPath = '$basePath${Platform.pathSeparator}$normalized';
+        final toPath = '$newSavePath${Platform.pathSeparator}$normalized';
+        final src = File(fromPath);
+        if (!await src.exists()) continue;
         await Directory(File(toPath).parent.path).create(recursive: true);
+        await src.rename(toPath);
+        moved++;
+      }
+      // If the source basePath itself is now empty and is a subdir of the
+      // legacy default, tidy it up. Best-effort only.
+      try {
+        final srcDir = Directory(basePath);
+        if (await srcDir.exists() &&
+            await srcDir.list().isEmpty &&
+            basePath != newSavePath) {
+          await srcDir.delete();
+        }
       } catch (_) {}
-      await src.rename(toPath);
+      return moved > 0 || task.files.isEmpty;
+    } catch (e, s) {
+      log('Local move failed: $e', error: e, stackTrace: s);
+      return false;
     }
   }
 

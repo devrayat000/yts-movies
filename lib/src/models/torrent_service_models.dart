@@ -96,6 +96,21 @@ sealed class MoveDownloadTaskRequest with _$MoveDownloadTaskRequest {
       _$MoveDownloadTaskRequestFromJson(json);
 }
 
+/// Ack returned from the background handler after a move attempt.
+/// `success: false` is the cue for the bloc to fall back to local file rename.
+@freezed
+sealed class MoveDownloadTaskAck with _$MoveDownloadTaskAck {
+  const factory MoveDownloadTaskAck({
+    required int taskId,
+    required bool success,
+    String? newSavePath,
+    String? reason,
+  }) = _MoveDownloadTaskAck;
+
+  factory MoveDownloadTaskAck.fromJson(Map<String, dynamic> json) =>
+      _$MoveDownloadTaskAckFromJson(json);
+}
+
 /// Add a custom tracker URL
 @freezed
 sealed class AddTrackerRequest with _$AddTrackerRequest {
