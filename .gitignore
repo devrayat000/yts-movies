@@ -53,6 +53,7 @@ android/*.jks
 android/*.keystore
 android/app/*.jks
 android/app/*.keystore
+*.pem
 
 # JVM / native crash dumps
 hs_err_pid*.log
@@ -66,3 +67,7 @@ ios/Flutter/Generated.xcconfig
 ios/Flutter/flutter_export_environment.sh
 ios/Pods/
 ios/.symlinks/
+
+
+# example
+dtorrent_task_v2/

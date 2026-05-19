@@ -1,8 +1,13 @@
+import 'dart:typed_data';
+
+import 'package:b_encode_decode/b_encode_decode.dart';
+import 'package:dtorrent_task_v2/dtorrent_task_v2.dart';
+import 'package:events_emitter2/src/events_emitter.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:ytsmovies/src/injection.dart';
 import 'package:ytsmovies/src/models/torrent.dart' as m;
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
-import 'package:ytsmovies/src/injection.dart';
-import 'package:file_picker/file_picker.dart';
 
 class AdvancedDownloadDialog extends StatefulWidget {
   final m.Torrent torrent;
@@ -30,12 +35,26 @@ class _AdvancedDownloadDialogState extends State<AdvancedDownloadDialog> {
   double _downloadSpeedLimit = 0; // 0 = MAX
   double _uploadSpeedLimit = 0; // 0 = MAX
   final List<String> _trackers = [];
+  MetadataDownloader? _metadataDownloader;
+  EventsListener? _metadataListener;
+  TorrentModel? _model;
+  String? _metadataError;
+  double _metadataProgress = 0;
+  final Set<int> _selectedIndices = <int>{};
 
   @override
   void initState() {
     super.initState();
     _savePath = getIt<ForegroundDownloadService>().downloadPath;
     _loadTrackers();
+    _loadMetadata();
+  }
+
+  @override
+  void dispose() {
+    _metadataListener?.dispose();
+    _metadataDownloader?.stop();
+    super.dispose();
   }
 
   void _loadTrackers() {
@@ -43,6 +62,48 @@ class _AdvancedDownloadDialogState extends State<AdvancedDownloadDialog> {
     final uri = Uri.parse(widget.magnetUri);
     final trParams = uri.queryParametersAll['tr'] ?? [];
     _trackers.addAll(trParams);
+  }
+
+  void _loadMetadata() {
+    final magnet = MagnetParser.parse(widget.magnetUri);
+    if (magnet == null) {
+      setState(() => _metadataError = 'Invalid magnet link');
+      return;
+    }
+
+    final downloader = MetadataDownloader.fromMagnet(widget.magnetUri);
+    _metadataDownloader = downloader;
+    final listener = downloader.createListener();
+    _metadataListener = listener;
+    listener
+      ..on<MetaDataDownloadProgress>((event) {
+        if (!mounted) return;
+        setState(() => _metadataProgress = event.progress.toDouble());
+      })
+      ..on<MetaDataDownloadComplete>((event) {
+        try {
+          final decoded = decode(Uint8List.fromList(event.data));
+          final torrentMap = <String, dynamic>{'info': decoded};
+          final model = TorrentParser.parseFromMap(torrentMap);
+          if (!mounted) return;
+          _selectedIndices
+            ..clear()
+            ..addAll(List<int>.generate(model.files.length, (i) => i));
+          setState(() {
+            _model = model;
+            _metadataError = null;
+            _metadataProgress = 1;
+          });
+        } catch (e) {
+          if (!mounted) return;
+          setState(() => _metadataError = 'Failed to parse metadata');
+        }
+      })
+      ..on<MetaDataDownloadFailed>((event) {
+        if (!mounted) return;
+        setState(() => _metadataError = event.error);
+      });
+    downloader.startDownload();
   }
 
   @override
@@ -156,14 +217,14 @@ class _AdvancedDownloadDialogState extends State<AdvancedDownloadDialog> {
                     children: [
                       Expanded(
                         child: _buildInfoChip(
-                          'Files: 8/8',
+                          'Files: ${_model?.files.length ?? '--'}',
                           icon: Icons.folder_outlined,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: _buildInfoChip(
-                          'Size: ${widget.torrent.size}',
+                          'Size: ${_formatBytes(_totalSize())}',
                           icon: Icons.storage_outlined,
                         ),
                       ),
@@ -171,16 +232,45 @@ class _AdvancedDownloadDialogState extends State<AdvancedDownloadDialog> {
                   ),
                   const SizedBox(height: 12),
 
+                  if (_metadataError != null) ...[
+                    Text(
+                      _metadataError!,
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: Colors.red),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: _retryMetadata,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry metadata'),
+                    ),
+                    const SizedBox(height: 12),
+                  ] else if (_model == null) ...[
+                    Row(
+                      children: [
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Loading metadata ${(_metadataProgress * 100).toStringAsFixed(0)}%',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                  ] else ...[
+                    _buildFileSelection(theme),
+                    const SizedBox(height: 12),
+                  ],
+
                   // Action Buttons
                   Row(
                     children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _selectFiles,
-                          child: const Text('SELECT FILES'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
                       Expanded(
                         child: OutlinedButton(
                           onPressed: _editTrackers,
@@ -298,7 +388,7 @@ class _AdvancedDownloadDialogState extends State<AdvancedDownloadDialog> {
                     child: const Text('CANCEL'),
                   ),
                   FilledButton(
-                    onPressed: _startDownload,
+                    onPressed: _model == null ? null : _startDownload,
                     child: const Text('START'),
                   ),
                 ],
@@ -402,32 +492,113 @@ class _AdvancedDownloadDialogState extends State<AdvancedDownloadDialog> {
     return '7.60GB/103.56GB, 7.3% free';
   }
 
+  int _totalSize() {
+    final model = _model;
+    if (model == null) return 0;
+    return model.length ?? model.files.fold<int>(0, (sum, f) => sum + f.length);
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(2)} KB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB';
+    }
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
+  }
+
+  void _retryMetadata() {
+    _metadataListener?.dispose();
+    _metadataDownloader?.stop();
+    setState(() {
+      _metadataError = null;
+      _metadataProgress = 0;
+      _model = null;
+      _selectedIndices.clear();
+    });
+    _loadMetadata();
+  }
+
+  Widget _buildFileSelection(ThemeData theme) {
+    final model = _model;
+    if (model == null) return const SizedBox.shrink();
+    final total = model.files.length;
+    final selectedCount = _selectedIndices.length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '$selectedCount / $total selected',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _selectedIndices
+                    ..clear()
+                    ..addAll(List<int>.generate(total, (i) => i));
+                });
+              },
+              child: const Text('Select all'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(_selectedIndices.clear);
+              },
+              child: const Text('Select none'),
+            ),
+          ],
+        ),
+        const Divider(height: 1),
+        SizedBox(
+          height: 220,
+          child: ListView.separated(
+            itemCount: total,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final file = model.files[index];
+              final name = file.path.isEmpty ? file.name : file.path;
+              final selected = _selectedIndices.contains(index);
+              return CheckboxListTile(
+                value: selected,
+                onChanged: (v) {
+                  setState(() {
+                    if (v == true) {
+                      _selectedIndices.add(index);
+                    } else {
+                      _selectedIndices.remove(index);
+                    }
+                  });
+                },
+                title: Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall,
+                ),
+                subtitle: Text(
+                  _formatBytes(file.length),
+                  style: theme.textTheme.labelSmall,
+                ),
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   Future<void> _changeSavePath() async {
     final path = await FilePicker.platform.getDirectoryPath();
     if (path != null) {
       setState(() => _savePath = path);
     }
-  }
-
-  Future<void> _selectFiles() async {
-    // Show file selection dialog
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select files!'),
-        content: const Text('File selection will be implemented here'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _editTrackers() async {
@@ -472,6 +643,9 @@ class _AdvancedDownloadDialogState extends State<AdvancedDownloadDialog> {
   }
 
   void _startDownload() {
+    final model = _model;
+    if (model == null) return;
+    final selected = _selectedIndices.toList()..sort();
     widget.onDownloadStart?.call();
     Navigator.of(context).pop({
       'savePath': _savePath,
@@ -480,6 +654,7 @@ class _AdvancedDownloadDialogState extends State<AdvancedDownloadDialog> {
       'downloadSpeedLimit': _downloadSpeedLimit,
       'uploadSpeedLimit': _uploadSpeedLimit,
       'trackers': _trackers,
+      'selectedIndices': selected,
     });
   }
 }

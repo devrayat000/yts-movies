@@ -7,7 +7,8 @@ class DownloadManagerStarted extends DownloadManagerEvent {}
 
 class DownloadManagerAddDownload extends DownloadManagerEvent {
   final DownloadTask task;
-  DownloadManagerAddDownload({required this.task});
+  final List<int>? selectedIndices;
+  DownloadManagerAddDownload({required this.task, this.selectedIndices});
 }
 
 class DownloadManagerPauseDownload extends DownloadManagerEvent {
@@ -49,6 +50,16 @@ class DownloadManagerSetSpeedLimit extends DownloadManagerEvent {
   });
 }
 
+/// Toggle sequential download for a task
+class DownloadManagerSetSequentialDownload extends DownloadManagerEvent {
+  final int taskId;
+  final bool sequentialDownload;
+  DownloadManagerSetSequentialDownload({
+    required this.taskId,
+    required this.sequentialDownload,
+  });
+}
+
 /// Set priority for a single file in a task
 class DownloadManagerSetFilePriority extends DownloadManagerEvent {
   final int taskId;
@@ -83,5 +94,15 @@ class DownloadManagerRemoveTracker extends DownloadManagerEvent {
   DownloadManagerRemoveTracker({
     required this.taskId,
     required this.trackerUrl,
+  });
+}
+
+/// Move all files for a download task to a new directory
+class DownloadManagerMoveDownloadTask extends DownloadManagerEvent {
+  final int taskId;
+  final String newSavePath;
+  DownloadManagerMoveDownloadTask({
+    required this.taskId,
+    required this.newSavePath,
   });
 }

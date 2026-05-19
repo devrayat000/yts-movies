@@ -180,6 +180,11 @@ class ForegroundDownloadService {
     required String magnetUri,
     required String savePath,
     required String movieTitle,
+    int? downloadLimit,
+    int? uploadLimit,
+    bool sequentialDownload = false,
+    List<String>? extraTrackers,
+    List<int>? selectedIndices,
   }) async {
     final service = FlutterBackgroundService();
     if (!await service.isRunning()) {
@@ -198,6 +203,11 @@ class ForegroundDownloadService {
       'value': _preferencesService.maxConcurrentDownloads,
     });
 
+    final trackers = <String>{
+      ..._preferencesService.defaultTrackers,
+      if (extraTrackers != null) ...extraTrackers,
+    }.toList();
+
     service.invoke(
       'startDownload',
       StartDownloadRequest(
@@ -205,9 +215,13 @@ class ForegroundDownloadService {
         magnetUri: magnetUri,
         savePath: savePath,
         movieTitle: movieTitle,
-        extraTrackers: _preferencesService.defaultTrackers,
-        initialDownloadLimit: _preferencesService.globalDownloadLimit,
-        initialUploadLimit: _preferencesService.globalUploadLimit,
+        extraTrackers: trackers,
+        initialDownloadLimit:
+            downloadLimit ?? _preferencesService.globalDownloadLimit,
+        initialUploadLimit:
+            uploadLimit ?? _preferencesService.globalUploadLimit,
+        sequentialDownload: sequentialDownload,
+        selectedIndices: selectedIndices,
       ).toJson(),
     );
   }
@@ -248,6 +262,19 @@ class ForegroundDownloadService {
     );
   }
 
+  Future<void> setSequentialDownload({
+    required int taskId,
+    required bool sequentialDownload,
+  }) async {
+    FlutterBackgroundService().invoke(
+      'setSequentialDownload',
+      SetSequentialDownloadRequest(
+        taskId: taskId,
+        sequentialDownload: sequentialDownload,
+      ).toJson(),
+    );
+  }
+
   Future<void> setFilePriority({
     required int taskId,
     required int fileIndex,
@@ -283,6 +310,19 @@ class ForegroundDownloadService {
     FlutterBackgroundService().invoke(
       'addTracker',
       AddTrackerRequest(taskId: taskId, trackerUrl: trackerUrl).toJson(),
+    );
+  }
+
+  Future<void> moveDownloadTask({
+    required int taskId,
+    required String newSavePath,
+  }) async {
+    FlutterBackgroundService().invoke(
+      'moveDownloadTask',
+      MoveDownloadTaskRequest(
+        taskId: taskId,
+        newSavePath: newSavePath,
+      ).toJson(),
     );
   }
 

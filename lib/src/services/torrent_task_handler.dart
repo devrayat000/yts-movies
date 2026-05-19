@@ -1,27 +1,24 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:events_emitter2/src/events_emitter.dart' show EventsListener;
 import 'package:b_encode_decode/b_encode_decode.dart';
-import 'package:dtorrent_parser/dtorrent_parser.dart';
+import 'package:events_emitter2/src/events_emitter.dart' show EventsListener;
 import 'package:dtorrent_task_v2/dtorrent_task_v2.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
 import 'package:ytsmovies/src/models/torrent_service_models.dart';
-import 'package:ytsmovies/src/services/sequential_download_queue.dart';
 
-/// Notification channel ID for torrent downloads
 const String notificationChannelId = 'torrent_downloads';
 const int notificationId = 888;
 
-/// Entry point for the background isolate
+/// Entry point for the background isolate.
 @pragma('vm:entry-point')
 void onStartBackgroundService(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
-
   final notificationsPlugin = FlutterLocalNotificationsPlugin();
   final handler = _TorrentTaskHandler(service, notificationsPlugin);
 
@@ -30,169 +27,179 @@ void onStartBackgroundService(ServiceInstance service) async {
     try {
       handler.startDownload(StartDownloadRequest.fromJson(event));
     } catch (e) {
-      log('Error parsing startDownload event: $e');
+      log('startDownload parse error: $e');
     }
   });
-
   service.on('pauseDownload').listen((event) {
     if (event == null) return;
-    try {
-      handler.pauseDownload(DownloadControlRequest.fromJson(event));
-    } catch (e) {
-      log('Error parsing pauseDownload event: $e');
-    }
+    handler.pauseDownload(DownloadControlRequest.fromJson(event));
   });
-
   service.on('resumeDownload').listen((event) {
     if (event == null) return;
-    try {
-      handler.resumeDownload(DownloadControlRequest.fromJson(event));
-    } catch (e) {
-      log('Error parsing resumeDownload event: $e');
-    }
+    handler.resumeDownload(DownloadControlRequest.fromJson(event));
   });
-
   service.on('stopDownload').listen((event) {
     if (event == null) return;
-    try {
-      handler.stopDownload(DownloadControlRequest.fromJson(event));
-    } catch (e) {
-      log('Error parsing stopDownload event: $e');
-    }
+    handler.stopDownload(DownloadControlRequest.fromJson(event));
   });
-
   service.on('setSpeedLimit').listen((event) {
     if (event == null) return;
-    try {
-      handler.setSpeedLimit(SetSpeedLimitRequest.fromJson(event));
-    } catch (e) {
-      log('Error parsing setSpeedLimit event: $e');
-    }
+    handler.setSpeedLimit(SetSpeedLimitRequest.fromJson(event));
   });
-
   service.on('setFilePriority').listen((event) {
     if (event == null) return;
-    try {
-      handler.setFilePriority(SetFilePriorityRequest.fromJson(event));
-    } catch (e) {
-      log('Error parsing setFilePriority event: $e');
-    }
+    handler.setFilePriority(SetFilePriorityRequest.fromJson(event));
   });
-
   service.on('applyFileSelection').listen((event) {
     if (event == null) return;
-    try {
-      handler.applyFileSelection(ApplyFileSelectionRequest.fromJson(event));
-    } catch (e) {
-      log('Error parsing applyFileSelection event: $e');
-    }
+    handler.applyFileSelection(ApplyFileSelectionRequest.fromJson(event));
   });
-
   service.on('addTracker').listen((event) {
     if (event == null) return;
-    try {
-      handler.addTracker(AddTrackerRequest.fromJson(event));
-    } catch (e) {
-      log('Error parsing addTracker event: $e');
-    }
+    handler.addTracker(AddTrackerRequest.fromJson(event));
   });
-
   service.on('removeTracker').listen((event) {
     if (event == null) return;
-    try {
-      handler.removeTracker(RemoveTrackerRequest.fromJson(event));
-    } catch (e) {
-      log('Error parsing removeTracker event: $e');
-    }
+    handler.removeTracker(RemoveTrackerRequest.fromJson(event));
   });
-
   service.on('setMaxConcurrent').listen((event) {
     if (event == null) return;
     final v = event['value'];
     if (v is int) handler.setMaxConcurrent(v);
   });
-
-  service.on('stopService').listen((event) {
-    handler.cleanup();
+  service.on('setSequentialDownload').listen((event) {
+    if (event == null) return;
+    handler.setSequentialDownload(SetSequentialDownloadRequest.fromJson(event));
+  });
+  service.on('moveDownloadTask').listen((event) {
+    if (event == null) return;
+    unawaited(
+        handler.moveDownloadTask(MoveDownloadTaskRequest.fromJson(event)));
+  });
+  service.on('autoPrioritize').listen((event) {
+    if (event == null) return;
+    final v = event['taskId'];
+    if (v is int) handler.autoPrioritize(v);
+  });
+  service.on('stopService').listen((event) async {
+    await handler.cleanup();
     service.stopSelf();
   });
-
-  log('_TorrentTaskHandler: Service started');
+  log('TorrentTaskHandler: service started');
 }
 
-/// Per-task bookkeeping kept in the background isolate
-class _TaskRecord {
+/// Internal per-task bookkeeping. Lives only in the background isolate.
+class _Record {
   final int taskId;
   final String movieTitle;
-  final String savePath;
+  String savePath;
   StartDownloadRequest request;
 
+  /// Set once metadata is in hand and we've called QueueManager.addToQueue.
+  String? queueItemId;
+
+  /// Live task — populated once QueueItemStarted fires.
   TorrentTask? task;
+  EventsListener<TaskEvent>? taskListener;
+
+  /// Active during the metadata-download phase only.
   MetadataDownloader? metadata;
-  EventsListener<TaskEvent>? listener;
 
-  Uint8List? infoHashBuffer;
-  Torrent? torrentModel;
-  int totalBytes = 0;
+  /// Trackers from the magnet (canonicalized strings).
+  final List<String> magnetTrackers = [];
 
-  /// Track user-added trackers separately so we can persist/expose them
+  /// User-added trackers (the originals so we can re-inject after re-start).
   final Set<String> userTrackers = <String>{};
 
-  /// Track all trackers we know about (magnet + user-added)
+  /// All trackers we know about (magnet + user-added) with status.
   final Map<String, TrackerInfo> trackers = <String, TrackerInfo>{};
 
-  /// File priorities (index -> level). Persisted so we can re-apply on resume.
-  final Map<int, FilePriorityLevel> filePriorities = <int, FilePriorityLevel>{};
+  /// User-set per-file priorities. Re-applied on (re)start.
+  final Map<int, FilePriorityLevel> filePriorities = {};
+
+  /// Per-file download progress snapshots (bytes).
+  final Map<int, int> fileDownloaded = {};
+
+  /// Completed file indices.
+  final Set<int> completedFiles = {};
+
+  /// Webseeds + acceptable sources captured from the magnet.
+  List<Uri> webSeeds = const [];
+  List<Uri> acceptableSources = const [];
+
+  /// Hex (lowercase) infoHash, set as soon as metadata is parsed.
+  String? infoHashHex;
+
+  /// 20-byte raw infoHash (for `startAnnounceUrl` calls).
+  Uint8List? infoHashBuffer;
+
+  /// Parsed model. Stored so we can read file count/size for UI.
+  TorrentModel? model;
+  int totalBytes = 0;
 
   int? downloadSpeedLimit;
   int? uploadSpeedLimit;
 
-  bool isPaused = false;
+  bool sequentialDownload = false;
+  List<int>? selectedIndices;
 
-  _TaskRecord({
+  bool pausedByUser = false;
+  DownloadStatus lastStatus = DownloadStatus.queued;
+
+  _Record({
     required this.taskId,
     required this.movieTitle,
     required this.savePath,
     required this.request,
   });
 
+  String get scheduleWindowId => 'user_limit_$taskId';
+
   List<TorrentFileInfo> buildFileInfos() {
-    final t = torrentModel;
-    if (t == null) return const [];
-    final dynamic files = (t as dynamic).files;
-    if (files == null) return const [];
-    final List<TorrentFileInfo> out = [];
-    for (var i = 0; i < (files as List).length; i++) {
-      final dynamic f = files[i];
-      String name;
-      int size = 0;
-      try {
-        final dynamic p = f.path;
-        if (p is List) {
-          name = p.join('/');
-        } else if (p is String && p.isNotEmpty) {
-          name = p;
-        } else {
-          name = (f.name ?? 'file_$i').toString();
-        }
-      } catch (_) {
-        name = 'file_$i';
-      }
-      try {
-        size = (f.length as int?) ?? 0;
-      } catch (_) {
-        try {
-          size = (f.size as int?) ?? 0;
-        } catch (_) {}
-      }
+    final m = model;
+    if (m == null) return const [];
+    final out = <TorrentFileInfo>[];
+    for (var i = 0; i < m.files.length; i++) {
+      final f = m.files[i];
+      final p = filePriorities[i] ?? FilePriorityLevel.normal;
+      final downloaded = fileDownloaded[i] ?? 0;
+      final completed = completedFiles.contains(i) || downloaded >= f.length;
       out.add(TorrentFileInfo(
         index: i,
-        name: name,
-        size: size,
-        priority: filePriorities[i] ?? FilePriorityLevel.normal,
+        name: f.path.isEmpty ? f.name : f.path,
+        size: f.length,
+        downloaded: downloaded,
+        completed: completed,
+        priority: p,
       ));
     }
     return out;
+  }
+}
+
+FilePriority _toNativePriority(FilePriorityLevel level) {
+  switch (level) {
+    case FilePriorityLevel.skip:
+      return FilePriority.skip;
+    case FilePriorityLevel.low:
+      return FilePriority.low;
+    case FilePriorityLevel.normal:
+      return FilePriority.normal;
+    case FilePriorityLevel.high:
+      return FilePriority.high;
+  }
+}
+
+FilePriorityLevel _fromNativePriority(FilePriority p) {
+  switch (p) {
+    case FilePriority.skip:
+      return FilePriorityLevel.skip;
+    case FilePriority.low:
+      return FilePriorityLevel.low;
+    case FilePriority.normal:
+      return FilePriorityLevel.normal;
+    case FilePriority.high:
+      return FilePriorityLevel.high;
   }
 }
 
@@ -200,92 +207,165 @@ class _TorrentTaskHandler {
   final ServiceInstance service;
   final FlutterLocalNotificationsPlugin notificationsPlugin;
 
-  final Map<int, _TaskRecord> _records = {};
-  final SequentialDownloadQueue _queue = SequentialDownloadQueue();
+  /// The single QueueManager that owns task lifecycle.
+  final QueueManager _qm = QueueManager(maxConcurrentDownloads: 3);
+
+  final Map<int, _Record> _records = {};
+  final Map<String, int> _byQueueId = {}; // queueItemId -> taskId
 
   Timer? _periodicTimer;
+  Timer? _scrapeTimer;
+  final Map<int, Timer> _emitDebounce = {};
 
   _TorrentTaskHandler(this.service, this.notificationsPlugin) {
-    _queue.setStartCallback(_actuallyStartDownload);
-
-    // Periodic emit of progress/stats for currently active tasks
+    _wireQueueEvents();
+    // Coarse periodic snapshot tick (UI heartbeat).
     _periodicTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-      _emitPeriodicUpdates();
+      for (final rec in _records.values) {
+        if (rec.task != null && !rec.pausedByUser) {
+          _emitFromTask(rec);
+        }
+      }
+    });
+    // BEP 48 scrape on a slow interval.
+    _scrapeTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      unawaited(_scrapeAllTrackers());
     });
   }
 
+  void _wireQueueEvents() {
+    _qm.events.listen((event) {
+      if (event is QueueItemAdded) {
+        final rec = _recordForQueueId(event.item.id);
+        if (rec != null) {
+          _send(ProgressUpdate(
+            taskId: rec.taskId,
+            status: DownloadStatus.queued,
+          ));
+        }
+      } else if (event is QueueItemStarted) {
+        final rec = _recordForQueueId(event.queueItemId);
+        if (rec == null) return;
+        rec.task = event.task;
+        _onTaskReady(rec);
+      } else if (event is QueueItemCompleted) {
+        final rec = _recordForQueueId(event.queueItemId);
+        if (rec == null) return;
+        _showNotification(rec.taskId, rec.movieTitle, 'Download completed!',
+            progress: 100, maxProgress: 100);
+        rec.lastStatus = DownloadStatus.completed;
+        _send(ProgressUpdate(
+          taskId: rec.taskId,
+          status: DownloadStatus.completed,
+          progress: 1.0,
+          downloadedBytes: rec.totalBytes,
+          totalBytes: rec.totalBytes,
+        ));
+        // Keep the record to allow post-completion file moves.
+      } else if (event is QueueItemStopped) {
+        final rec = _recordForQueueId(event.queueItemId);
+        if (rec == null) return;
+        _send(ProgressUpdate(
+          taskId: rec.taskId,
+          status: DownloadStatus.stopped,
+        ));
+        _disposeRecord(rec, removeFromMap: true);
+      } else if (event is QueueItemPaused) {
+        final rec = _recordForQueueId(event.queueItemId);
+        if (rec == null) return;
+        rec.pausedByUser = true;
+        _send(ProgressUpdate(
+          taskId: rec.taskId,
+          status: DownloadStatus.paused,
+        ));
+      } else if (event is QueueItemResumed) {
+        final rec = _recordForQueueId(event.queueItemId);
+        if (rec == null) return;
+        rec.pausedByUser = false;
+        _send(ProgressUpdate(
+          taskId: rec.taskId,
+          status: DownloadStatus.downloading,
+        ));
+      } else if (event is QueueItemFailed) {
+        final rec = _recordForQueueId(event.queueItemId);
+        if (rec == null) return;
+        _send(ProgressUpdate(
+          taskId: rec.taskId,
+          status: DownloadStatus.failed,
+          error: event.error,
+        ));
+        _disposeRecord(rec, removeFromMap: true);
+      }
+    });
+  }
+
+  _Record? _recordForQueueId(String qid) {
+    final taskId = _byQueueId[qid];
+    if (taskId == null) return null;
+    return _records[taskId];
+  }
+
+  // ---- public commands ----
+
   void setMaxConcurrent(int value) {
-    _queue.maxConcurrent = value;
+    try {
+      _qm.maxConcurrentDownloads = value;
+    } catch (e) {
+      log('setMaxConcurrent failed: $e');
+    }
+  }
+
+  void setSequentialDownload(SetSequentialDownloadRequest request) {
+    final rec = _records[request.taskId];
+    if (rec == null) return;
+    rec.sequentialDownload = request.sequentialDownload;
+    _send(ProgressUpdate(
+      taskId: rec.taskId,
+      status: rec.lastStatus,
+      sequentialDownload: rec.sequentialDownload,
+    ));
   }
 
   Future<void> startDownload(StartDownloadRequest request) async {
     final taskId = request.taskId;
-    final movieTitle = request.movieTitle;
-
-    try {
-      if (_records.containsKey(taskId)) {
-        log('Task $taskId already known');
-        return;
-      }
-
-      _records[taskId] = _TaskRecord(
-        taskId: taskId,
-        movieTitle: movieTitle,
-        savePath: request.savePath,
-        request: request,
-      )
-        ..downloadSpeedLimit = request.initialDownloadLimit
-        ..uploadSpeedLimit = request.initialUploadLimit;
-
-      final queued = _queue.addTask(taskId, movieTitle);
-      if (queued) {
-        _sendProgressUpdate(
-          ProgressUpdate(taskId: taskId, status: DownloadStatus.queued),
-        );
-      }
-    } catch (e, s) {
-      log('Error adding download to queue: $e', error: e, stackTrace: s);
-      _sendProgressUpdate(
-        ProgressUpdate(
-          taskId: taskId,
-          status: DownloadStatus.failed,
-          error: e.toString(),
-        ),
-      );
-    }
-  }
-
-  Future<void> _actuallyStartDownload(int taskId) async {
-    final rec = _records[taskId];
-    if (rec == null) {
-      log('ERROR: no record for task $taskId');
-      _queue.markCurrentComplete(taskId);
+    if (_records.containsKey(taskId)) {
+      log('startDownload: task $taskId already known');
       return;
     }
+    final rec = _Record(
+      taskId: taskId,
+      movieTitle: request.movieTitle,
+      savePath: request.savePath,
+      request: request,
+    )
+      ..downloadSpeedLimit = request.initialDownloadLimit
+      ..uploadSpeedLimit = request.initialUploadLimit
+      ..sequentialDownload = request.sequentialDownload
+      ..selectedIndices = request.selectedIndices;
+    _records[taskId] = rec;
+    await _beginMetadataPhase(rec);
+  }
 
+  /// Phase 1: download metadata from the magnet so we can build a TorrentModel.
+  /// Phase 2 (`_enqueue`) hands the model to the package's QueueManager.
+  Future<void> _beginMetadataPhase(_Record rec) async {
     try {
       final magnet = MagnetParser.parse(rec.request.magnetUri);
       if (magnet == null) {
-        _sendProgressUpdate(ProgressUpdate(
-          taskId: taskId,
-          status: DownloadStatus.failed,
-          error: 'Invalid magnet URI',
-        ));
-        _queue.markCurrentComplete(taskId);
+        _fail(rec, 'Invalid magnet URI');
         return;
       }
-
       rec.infoHashBuffer = _hexToBytes(magnet.infoHashString);
+      rec.infoHashHex = magnet.infoHashString.toLowerCase();
+      rec.webSeeds = List.of(magnet.webSeeds);
+      rec.acceptableSources = List.of(magnet.acceptableSources);
 
-      // Initialize tracker map from magnet trackers (List<Uri> -> String keys)
       for (final uri in magnet.trackers) {
         final url = uri.toString();
-        rec.trackers[url] = TrackerInfo(
-          url: url,
-          status: TrackerStatus.connecting,
-        );
+        rec.magnetTrackers.add(url);
+        rec.trackers[url] =
+            TrackerInfo(url: url, status: TrackerStatus.connecting);
       }
-      // Plus any extras supplied with the request (default trackers)
       for (final url in rec.request.extraTrackers) {
         rec.trackers.putIfAbsent(
           url,
@@ -295,311 +375,212 @@ class _TorrentTaskHandler {
             userAdded: true,
           ),
         );
+        rec.userTrackers.add(url);
       }
 
-      _showNotification(taskId, 'Downloading Metadata', rec.movieTitle);
-      _sendProgressUpdate(ProgressUpdate(
-        taskId: taskId,
+      _showNotification(rec.taskId, 'Downloading Metadata', rec.movieTitle);
+      _send(ProgressUpdate(
+        taskId: rec.taskId,
         status: DownloadStatus.downloadingMetadata,
         trackers: rec.trackers.values.toList(),
       ));
 
-      final metadata = MetadataDownloader.fromMagnet(rec.request.magnetUri);
-      rec.metadata = metadata;
-      final metaListener = metadata.createListener();
-
-      metaListener
+      final md = MetadataDownloader.fromMagnet(rec.request.magnetUri);
+      rec.metadata = md;
+      final mdL = md.createListener();
+      mdL
         ..on<MetaDataDownloadProgress>((event) {
-          _sendProgressUpdate(ProgressUpdate(
-            taskId: taskId,
+          _send(ProgressUpdate(
+            taskId: rec.taskId,
             status: DownloadStatus.downloadingMetadata,
             progress: event.progress.toDouble(),
           ));
         })
         ..on<MetaDataDownloadComplete>((event) async {
-          await _onMetadataReady(rec, magnet, event.data);
+          await _enqueue(rec, event.data);
         })
         ..on<MetaDataDownloadFailed>((event) {
-          log('Metadata failed for $taskId: ${event.error}');
-          rec.metadata = null;
-          _sendProgressUpdate(ProgressUpdate(
-            taskId: taskId,
-            status: DownloadStatus.failed,
-            error: event.error,
-          ));
-          _queue.markCurrentComplete(taskId);
+          _fail(rec, event.error);
         });
-
-      metadata.startDownload();
+      md.startDownload();
     } catch (e, s) {
-      log('Error starting download $taskId: $e', error: e, stackTrace: s);
-      _sendProgressUpdate(ProgressUpdate(
-        taskId: taskId,
-        status: DownloadStatus.failed,
-        error: e.toString(),
-      ));
-      _queue.markCurrentComplete(taskId);
+      log('beginMetadataPhase failed: $e', error: e, stackTrace: s);
+      _fail(rec, e.toString());
     }
   }
 
-  Future<void> _onMetadataReady(
-    _TaskRecord rec,
-    dynamic magnet,
-    List<int> data,
-  ) async {
-    final taskId = rec.taskId;
+  Future<void> _enqueue(_Record rec, List<int> metadataBytes) async {
     try {
-      final msg = decode(Uint8List.fromList(data));
-      final torrentMap = <String, dynamic>{'info': msg};
-      final torrentModel = parseTorrentFileContent(torrentMap);
-      if (torrentModel == null) {
-        throw Exception('Failed to parse torrent metadata');
-      }
-      rec.torrentModel = torrentModel;
-      rec.totalBytes = torrentModel.length;
+      final decoded = decode(Uint8List.fromList(metadataBytes));
+      final torrentMap = <String, dynamic>{'info': decoded};
+      final model = TorrentParser.parseFromMap(torrentMap);
+      rec.model = model;
+      rec.totalBytes =
+          model.length ?? model.files.fold<int>(0, (s, f) => s + f.length);
 
-      final torrentTask = TorrentTask.newTask(
-        torrentModel,
-        rec.savePath,
-        false,
-        magnet.webSeeds.isNotEmpty ? magnet.webSeeds : null,
-        magnet.acceptableSources.isNotEmpty ? magnet.acceptableSources : null,
-      );
-
-      if (magnet.selectedFileIndices != null &&
-          magnet.selectedFileIndices!.isNotEmpty) {
-        torrentTask.applySelectedFiles(magnet.selectedFileIndices!);
-      }
-
-      await torrentTask.start();
-      rec.task = torrentTask;
-      rec.metadata = null;
-
-      // Re-apply any previously-set file selection (e.g. on resume)
-      if (rec.filePriorities.isNotEmpty) {
-        _reapplySelection(rec);
-      }
-
-      // Apply pending speed limits
-      _applySpeedLimits(rec);
-
-      // Hand peers over from metadata downloader
-      final activePeers = rec.metadata?.activePeers ?? const [];
-      for (final peer in activePeers) {
-        torrentTask.addPeer(peer.address, PeerSource.manual, type: peer.type);
-      }
-
-      // Re-add trackers (magnet + extras + user-added previously)
-      final infoHash = rec.infoHashBuffer!;
-      for (final url in rec.trackers.keys.toList()) {
-        try {
-          torrentTask.startAnnounceUrl(Uri.parse(url), infoHash);
-        } catch (e) {
-          log('addTracker failed for $url: $e');
-          rec.trackers[url] = rec.trackers[url]!.copyWith(
-            status: TrackerStatus.failed,
-            errorMessage: e.toString(),
-          );
+      final selected = rec.selectedIndices;
+      if (selected != null) {
+        final total = model.files.length;
+        final selectedSet = selected.toSet();
+        for (var i = 0; i < total; i++) {
+          rec.filePriorities[i] = selectedSet.contains(i)
+              ? FilePriorityLevel.normal
+              : FilePriorityLevel.skip;
         }
       }
 
-      _attachTaskListener(rec);
+      final item = TorrentQueueItem(
+        metaInfo: model,
+        savePath: rec.savePath,
+        priority: QueuePriority.normal,
+        stream: rec.sequentialDownload,
+        webSeeds: rec.webSeeds.isEmpty ? null : rec.webSeeds,
+        acceptableSources:
+            rec.acceptableSources.isEmpty ? null : rec.acceptableSources,
+      );
+      rec.queueItemId = item.id;
+      _byQueueId[item.id] = rec.taskId;
 
-      _sendProgressUpdate(ProgressUpdate(
-        taskId: taskId,
-        status: DownloadStatus.downloading,
-        progress: 0.0,
+      _qm.addToQueue(item);
+      // QueueItemStarted will fire (sync or near-sync) and we'll wire the task.
+      _send(ProgressUpdate(
+        taskId: rec.taskId,
+        status: DownloadStatus.queued,
         totalBytes: rec.totalBytes,
         files: rec.buildFileInfos(),
         trackers: rec.trackers.values.toList(),
         downloadSpeedLimit: rec.downloadSpeedLimit,
         uploadSpeedLimit: rec.uploadSpeedLimit,
         savedFilePath: rec.savePath,
+        sequentialDownload: rec.sequentialDownload,
       ));
     } catch (e, s) {
-      log('Error processing metadata $taskId: $e', error: e, stackTrace: s);
-      rec.metadata = null;
-      _sendProgressUpdate(ProgressUpdate(
-        taskId: taskId,
-        status: DownloadStatus.failed,
-        error: e.toString(),
-      ));
-      _queue.markCurrentComplete(taskId);
+      log('enqueue failed: $e', error: e, stackTrace: s);
+      _fail(rec, e.toString());
     }
   }
 
-  void _attachTaskListener(_TaskRecord rec) {
-    final task = rec.task!;
-    final taskId = rec.taskId;
-    final listener = task.createListener();
-    rec.listener = listener;
-
-    listener
-      ..on<StateFileUpdated>((event) {
-        _emitFromTask(rec);
-      })
-      ..on<TaskCompleted>((event) {
-        _showNotification(
-          taskId,
-          rec.movieTitle,
-          'Download completed!',
-          progress: 100,
-          maxProgress: 100,
-        );
-        _sendProgressUpdate(ProgressUpdate(
-          taskId: taskId,
-          status: DownloadStatus.completed,
-          progress: 1.0,
-          downloadedBytes: rec.totalBytes,
-          totalBytes: rec.totalBytes,
-        ));
-        _cleanupTask(taskId);
-        _queue.markCurrentComplete(taskId);
-      })
-      ..on<TaskFileCompleted>((event) {
-        log('File completed for $taskId: ${event.file.originalFileName}');
-        // Re-emit so UI updates per-file progress
-        _emitFromTask(rec);
-      })
-      ..on<TaskStopped>((event) {
-        log('Task stopped: $taskId');
-        _sendProgressUpdate(ProgressUpdate(
-          taskId: taskId,
-          status: DownloadStatus.stopped,
-        ));
-        _cleanupTask(taskId);
-        _queue.markCurrentComplete(taskId);
-      });
-  }
-
-  void _emitFromTask(_TaskRecord rec) {
+  /// Called from QueueItemStarted — wire listeners, hand over peers and
+  /// trackers from the metadata phase, apply pending priorities/limits.
+  void _onTaskReady(_Record rec) {
     final task = rec.task;
     if (task == null) return;
-    final progress = task.progress;
-    final dlSpeed = task.currentDownloadSpeed.toInt();
-    final ulSpeed = task.uploadSpeed.toInt();
-    final peers = task.connectedPeersNumber;
-    final seeders = task.seederNumber;
-    final downloaded = (task.downloaded ?? 0).toInt();
 
-    _showNotification(
-      rec.taskId,
-      rec.movieTitle,
-      '${(progress * 100).toStringAsFixed(1)}% • '
-      '${_formatSpeed(dlSpeed)} ↓ ${_formatSpeed(ulSpeed)} ↑',
-      progress: (progress * 100).toInt(),
-      maxProgress: 100,
-    );
+    rec.taskListener = task.createListener();
+    rec.taskListener!
+      ..on<StateFileUpdated>((event) {
+        _emitDebounced(rec);
+      })
+      ..on<TaskFileCompleted>((event) {
+        _markFileCompleted(rec, event);
+        _emitDebounced(rec);
+      })
+      ..on<TaskCompleted>((event) {
+        // QueueManager will fire QueueItemCompleted too; nothing extra here.
+      })
+      ..on<TaskStopped>((event) {
+        // Same.
+      });
 
-    _sendProgressUpdate(ProgressUpdate(
+    // Transfer peers from the metadata downloader to avoid cold reconnect.
+    final md = rec.metadata;
+    if (md != null) {
+      for (final peer in md.activePeers) {
+        try {
+          task.addPeer(peer.address, PeerSource.manual, type: peer.type);
+        } catch (_) {}
+      }
+      md.stop();
+      rec.metadata = null;
+    }
+
+    // Magnet + user-added trackers (the model's own announces are wired by
+    // the task itself; this adds the extras).
+    final infoHash = rec.infoHashBuffer;
+    if (infoHash != null) {
+      for (final url in rec.trackers.keys) {
+        try {
+          task.startAnnounceUrl(Uri.parse(url), infoHash);
+          rec.trackers[url] =
+              rec.trackers[url]!.copyWith(status: TrackerStatus.working);
+        } catch (e) {
+          rec.trackers[url] = rec.trackers[url]!.copyWith(
+            status: TrackerStatus.failed,
+            errorMessage: e.toString(),
+          );
+        }
+      }
+    }
+
+    if (rec.filePriorities.isNotEmpty) _applyAllPriorities(rec);
+    _applySpeedLimits(rec);
+
+    _send(ProgressUpdate(
       taskId: rec.taskId,
-      status: rec.isPaused ? DownloadStatus.paused : DownloadStatus.downloading,
-      progress: progress,
-      downloadSpeed: dlSpeed,
-      uploadSpeed: ulSpeed,
-      peers: peers,
-      seeders: seeders,
-      downloadedBytes: downloaded,
+      status: DownloadStatus.downloading,
       totalBytes: rec.totalBytes,
       files: rec.buildFileInfos(),
       trackers: rec.trackers.values.toList(),
       downloadSpeedLimit: rec.downloadSpeedLimit,
       uploadSpeedLimit: rec.uploadSpeedLimit,
+      savedFilePath: rec.savePath,
+      sequentialDownload: rec.sequentialDownload,
     ));
   }
-
-  void _emitPeriodicUpdates() {
-    for (final rec in _records.values) {
-      if (rec.task != null && !rec.isPaused) {
-        try {
-          _emitFromTask(rec);
-        } catch (e) {
-          log('periodic emit failed for ${rec.taskId}: $e');
-        }
-      }
-    }
-  }
-
-  // ---- Control ops ----
 
   void pauseDownload(DownloadControlRequest request) {
     final rec = _records[request.taskId];
     if (rec == null) return;
-    final task = rec.task;
-    if (task != null) {
-      try {
-        task.pause();
-      } catch (e) {
-        log('task.pause threw: $e — falling back to stop');
-      }
+    final qid = rec.queueItemId;
+    if (qid != null) {
+      // Active or queued — let QueueManager handle the state transition.
+      _qm.pauseDownload(qid);
+      rec.pausedByUser = true;
     } else {
-      // Pause during metadata download — stop metadata, keep slot for resume
+      // Still in metadata phase.
       rec.metadata?.stop();
+      rec.pausedByUser = true;
     }
-    rec.isPaused = true;
-    _sendProgressUpdate(ProgressUpdate(
-      taskId: request.taskId,
+    _send(ProgressUpdate(
+      taskId: rec.taskId,
       status: DownloadStatus.paused,
     ));
   }
 
   void resumeDownload(DownloadControlRequest request) {
     final rec = _records[request.taskId];
-    if (rec == null) {
-      log('resume: unknown task ${request.taskId}');
-      return;
-    }
-    rec.isPaused = false;
-
-    final task = rec.task;
-    if (task != null) {
-      try {
-        task.resume();
-      } catch (_) {
-        try {
-          task.start();
-        } catch (e) {
-          log('resume failed: $e');
-        }
-      }
-      _sendProgressUpdate(ProgressUpdate(
-        taskId: request.taskId,
+    if (rec == null) return;
+    rec.pausedByUser = false;
+    final qid = rec.queueItemId;
+    if (qid != null && rec.task != null) {
+      _qm.resumeDownload(qid);
+      _send(ProgressUpdate(
+        taskId: rec.taskId,
         status: DownloadStatus.downloading,
       ));
-    } else if (rec.metadata != null) {
-      rec.metadata!.startDownload();
-      _sendProgressUpdate(ProgressUpdate(
-        taskId: request.taskId,
-        status: DownloadStatus.downloadingMetadata,
-      ));
     } else {
-      // No live task — restart from scratch
-      _actuallyStartDownload(request.taskId);
+      // Metadata phase pause → restart metadata.
+      unawaited(_beginMetadataPhase(rec));
     }
   }
 
   Future<void> stopDownload(DownloadControlRequest request) async {
-    final taskId = request.taskId;
-    _queue.removeTask(taskId);
-
-    final rec = _records.remove(taskId);
-    if (rec != null) {
-      rec.metadata?.stop();
-      try {
-        await rec.task?.stop();
-      } catch (e) {
-        log('task.stop threw: $e');
-      }
-      rec.listener?.dispose();
+    final rec = _records[request.taskId];
+    if (rec == null) return;
+    final qid = rec.queueItemId;
+    if (qid != null) {
+      await _qm.stopDownload(qid);
+      await _qm.removeFromQueue(qid);
     }
-    _sendProgressUpdate(ProgressUpdate(
-      taskId: taskId,
+    rec.metadata?.stop();
+    _send(ProgressUpdate(
+      taskId: rec.taskId,
       status: DownloadStatus.stopped,
     ));
-    _queue.markCurrentComplete(taskId);
+    _disposeRecord(rec, removeFromMap: true);
   }
 
-  // ---- Advanced ops ----
+  // ---- speed limits via ScheduleWindow ----
 
   void setSpeedLimit(SetSpeedLimitRequest request) {
     final rec = _records[request.taskId];
@@ -607,87 +588,117 @@ class _TorrentTaskHandler {
     rec.downloadSpeedLimit = request.downloadLimit;
     rec.uploadSpeedLimit = request.uploadLimit;
     _applySpeedLimits(rec);
-    _sendProgressUpdate(ProgressUpdate(
-      taskId: request.taskId,
-      status: rec.isPaused
-          ? DownloadStatus.paused
-          : (rec.task != null
-              ? DownloadStatus.downloading
-              : DownloadStatus.downloadingMetadata),
+    _send(ProgressUpdate(
+      taskId: rec.taskId,
+      status: rec.lastStatus,
       downloadSpeedLimit: rec.downloadSpeedLimit,
       uploadSpeedLimit: rec.uploadSpeedLimit,
     ));
   }
 
-  /// dtorrent_task_v2 0.4.4 does not expose speed-limit setters. We persist
-  /// the user's intent on the record so the UI shows what was requested;
-  /// once the library gains setters, wire them in here.
-  void _applySpeedLimits(_TaskRecord rec) {
-    if (rec.task == null) return;
-    if (rec.downloadSpeedLimit != null || rec.uploadSpeedLimit != null) {
-      log('speed limits requested but not supported by dtorrent_task_v2 0.4.4');
+  /// Register a 24/7 ScheduleWindow that never auto-pauses the task. This is
+  /// how dtorrent_task_v2 exposes per-task speed caps.
+  void _applySpeedLimits(_Record rec) {
+    final task = rec.task;
+    if (task == null) return;
+    try {
+      task.removeScheduleWindow(rec.scheduleWindowId);
+    } catch (_) {}
+    if (rec.downloadSpeedLimit == null && rec.uploadSpeedLimit == null) return;
+    try {
+      task.addScheduleWindow(ScheduleWindow(
+        id: rec.scheduleWindowId,
+        weekdays: const {1, 2, 3, 4, 5, 6, 7},
+        start: Duration.zero,
+        end: const Duration(hours: 23, minutes: 59, seconds: 59),
+        maxDownloadRate: rec.downloadSpeedLimit,
+        maxUploadRate: rec.uploadSpeedLimit,
+        pauseOutsideWindow: false,
+      ));
+      task.startScheduling(tick: const Duration(seconds: 30));
+    } catch (e) {
+      log('addScheduleWindow failed: $e');
     }
   }
 
-  /// File priority in v0.4.4 collapses to "selected" or "skip". We keep the
-  /// 4-level enum on the model so the UI is futureproof, but anything that
-  /// isn't `skip` is treated as selected when re-applying.
+  // ---- file priority ----
+
   void setFilePriority(SetFilePriorityRequest request) {
     final rec = _records[request.taskId];
     if (rec == null) return;
     rec.filePriorities[request.fileIndex] = request.priority;
-    _reapplySelection(rec);
-    _sendProgressUpdate(ProgressUpdate(
-      taskId: request.taskId,
-      status: rec.isPaused ? DownloadStatus.paused : DownloadStatus.downloading,
-      files: rec.buildFileInfos(),
-    ));
+    final task = rec.task;
+    if (task != null) {
+      try {
+        task.setFilePriority(
+            request.fileIndex, _toNativePriority(request.priority));
+      } catch (e) {
+        log('setFilePriority failed: $e');
+      }
+    }
+    _emitDebounced(rec);
   }
 
   void applyFileSelection(ApplyFileSelectionRequest request) {
     final rec = _records[request.taskId];
     if (rec == null) return;
-    final total = rec.torrentModel == null
-        ? 0
-        : ((rec.torrentModel as dynamic).files as List).length;
+    final total = rec.model?.files.length ?? 0;
+    final selected = request.selectedIndices.toSet();
     for (var i = 0; i < total; i++) {
-      rec.filePriorities[i] = request.selectedIndices.contains(i)
+      rec.filePriorities[i] = selected.contains(i)
           ? FilePriorityLevel.normal
           : FilePriorityLevel.skip;
     }
-    _reapplySelection(rec);
-    _sendProgressUpdate(ProgressUpdate(
-      taskId: request.taskId,
-      status: rec.isPaused ? DownloadStatus.paused : DownloadStatus.downloading,
-      files: rec.buildFileInfos(),
-    ));
+    _applyAllPriorities(rec);
+    _emitDebounced(rec);
   }
 
-  void _reapplySelection(_TaskRecord rec) {
+  void autoPrioritize(int taskId) {
+    final rec = _records[taskId];
+    final task = rec?.task;
+    if (rec == null || task == null) return;
+    try {
+      task.autoPrioritizeFiles();
+      // Pull back the priorities the task chose so the UI reflects them.
+      final total = rec.model?.files.length ?? 0;
+      for (var i = 0; i < total; i++) {
+        try {
+          rec.filePriorities[i] = _fromNativePriority(task.getFilePriority(i));
+        } catch (_) {}
+      }
+    } catch (e) {
+      log('autoPrioritizeFiles failed: $e');
+    }
+    _emitDebounced(rec);
+  }
+
+  void _applyAllPriorities(_Record rec) {
     final task = rec.task;
     if (task == null) return;
-    final total = rec.torrentModel == null
-        ? 0
-        : ((rec.torrentModel as dynamic).files as List).length;
-    if (total == 0) return;
-    final indices = <int>[];
-    for (var i = 0; i < total; i++) {
-      final p = rec.filePriorities[i] ?? FilePriorityLevel.normal;
-      if (p != FilePriorityLevel.skip) indices.add(i);
-    }
+    final native = <int, FilePriority>{};
+    rec.filePriorities.forEach((idx, lvl) {
+      native[idx] = _toNativePriority(lvl);
+    });
+    if (native.isEmpty) return;
     try {
-      task.applySelectedFiles(indices);
+      task.setFilePriorities(native);
     } catch (e) {
-      log('applySelectedFiles failed: $e');
+      log('setFilePriorities failed: $e — falling back to per-file');
+      for (final entry in native.entries) {
+        try {
+          task.setFilePriority(entry.key, entry.value);
+        } catch (_) {}
+      }
     }
   }
+
+  // ---- trackers ----
 
   void addTracker(AddTrackerRequest request) {
     final rec = _records[request.taskId];
     if (rec == null) return;
     final url = request.trackerUrl.trim();
     if (url.isEmpty) return;
-
     rec.userTrackers.add(url);
     rec.trackers.putIfAbsent(
       url,
@@ -697,53 +708,207 @@ class _TorrentTaskHandler {
         userAdded: true,
       ),
     );
-
     final task = rec.task;
     final infoHash = rec.infoHashBuffer;
     if (task != null && infoHash != null) {
       try {
         task.startAnnounceUrl(Uri.parse(url), infoHash);
-        rec.trackers[url] = rec.trackers[url]!.copyWith(
-          status: TrackerStatus.working,
-        );
+        rec.trackers[url] =
+            rec.trackers[url]!.copyWith(status: TrackerStatus.working);
       } catch (e) {
-        log('startAnnounceUrl failed for $url: $e');
         rec.trackers[url] = rec.trackers[url]!.copyWith(
           status: TrackerStatus.failed,
           errorMessage: e.toString(),
         );
       }
     }
-    _sendProgressUpdate(ProgressUpdate(
-      taskId: request.taskId,
-      status: rec.isPaused ? DownloadStatus.paused : DownloadStatus.downloading,
-      trackers: rec.trackers.values.toList(),
-    ));
+    _emitDebounced(rec);
   }
 
-  /// dtorrent_task_v2 0.4.4 has no stopAnnounceUrl. We drop the tracker from
-  /// our bookkeeping so the UI reflects the change; the live tracker will
-  /// remain attached until the task is stopped and restarted.
+  /// dtorrent_task_v2 has no public removeTracker on TorrentTask; we drop it
+  /// from our bookkeeping (UI reflects). The live tracker connection stays
+  /// until the task is fully stopped and restarted.
   void removeTracker(RemoveTrackerRequest request) {
     final rec = _records[request.taskId];
     if (rec == null) return;
     rec.userTrackers.remove(request.trackerUrl);
     rec.trackers.remove(request.trackerUrl);
-    _sendProgressUpdate(ProgressUpdate(
-      taskId: request.taskId,
-      status: rec.isPaused ? DownloadStatus.paused : DownloadStatus.downloading,
+    _emitDebounced(rec);
+  }
+
+  // ---- task move ----
+
+  Future<void> moveDownloadTask(MoveDownloadTaskRequest request) async {
+    final rec = _records[request.taskId];
+    if (rec == null) return;
+    final task = rec.task;
+    try {
+      if (task != null && rec.model != null) {
+        final model = rec.model!;
+        for (final file in model.files) {
+          final relative = file.path.isEmpty ? file.name : file.path;
+          final normalized = relative.replaceAll('/', Platform.pathSeparator);
+          final target =
+              '${request.newSavePath}${Platform.pathSeparator}$normalized';
+          await task.moveDownloadedFile(relative, target);
+        }
+        await task.detectMovedFiles();
+      } else {
+        await _moveTaskDirectly(rec, request.newSavePath);
+      }
+      rec.savePath = request.newSavePath;
+      _send(ProgressUpdate(
+        taskId: rec.taskId,
+        status: rec.lastStatus,
+        savedFilePath: rec.savePath,
+      ));
+    } catch (e) {
+      log('moveDownloadTask failed: $e');
+    }
+    _emitDebounced(rec);
+  }
+
+  Future<void> _moveTaskDirectly(_Record rec, String newSavePath) async {
+    final model = rec.model;
+    if (model == null) return;
+    for (final file in model.files) {
+      final relative = file.path.isEmpty ? file.name : file.path;
+      final normalized = relative.replaceAll('/', Platform.pathSeparator);
+      final fromPath = '${rec.savePath}${Platform.pathSeparator}$normalized';
+      final toPath = '$newSavePath${Platform.pathSeparator}$normalized';
+      final src = File(fromPath);
+      if (!await src.exists()) continue;
+      try {
+        await Directory(File(toPath).parent.path).create(recursive: true);
+      } catch (_) {}
+      await src.rename(toPath);
+    }
+  }
+
+  Future<void> _scrapeAllTrackers() async {
+    for (final rec in _records.values) {
+      final task = rec.task;
+      final hex = rec.infoHashHex;
+      if (task == null || hex == null) continue;
+      for (final url in rec.trackers.keys.toList()) {
+        try {
+          final result = await task.scrapeTracker(Uri.parse(url));
+          if (!result.isSuccess) continue;
+          final stats = result.getStatsForInfoHash(hex);
+          if (stats != null) {
+            rec.trackers[url] =
+                (rec.trackers[url] ?? TrackerInfo(url: url)).copyWith(
+              status: TrackerStatus.working,
+              seeders: stats.complete,
+              leechers: stats.incomplete,
+            );
+          }
+        } catch (e) {
+          if (rec.trackers.containsKey(url)) {
+            rec.trackers[url] = rec.trackers[url]!.copyWith(
+              status: TrackerStatus.failed,
+              errorMessage: e.toString(),
+            );
+          }
+        }
+      }
+      _emitDebounced(rec);
+    }
+  }
+
+  // ---- snapshot emission ----
+
+  void _emitDebounced(_Record rec) {
+    _emitDebounce[rec.taskId]?.cancel();
+    _emitDebounce[rec.taskId] = Timer(const Duration(milliseconds: 500), () {
+      _emitDebounce.remove(rec.taskId);
+      _emitFromTask(rec);
+    });
+  }
+
+  void _emitFromTask(_Record rec) {
+    final task = rec.task;
+    if (task == null) return;
+    final progress = task.progress;
+    final dl = task.currentDownloadSpeed.toInt();
+    final ul = task.uploadSpeed.toInt();
+    final peers = task.connectedPeersNumber;
+    final seeders = task.seederNumber;
+    final downloaded = (task.downloaded ?? 0).toInt();
+
+    rec.lastStatus =
+        rec.pausedByUser ? DownloadStatus.paused : DownloadStatus.downloading;
+
+    _showNotification(
+      rec.taskId,
+      rec.movieTitle,
+      '${(progress * 100).toStringAsFixed(1)}% • '
+      '${_fmtSpeed(dl)} ↓ ${_fmtSpeed(ul)} ↑',
+      progress: (progress * 100).toInt(),
+      maxProgress: 100,
+    );
+
+    _send(ProgressUpdate(
+      taskId: rec.taskId,
+      status: rec.lastStatus,
+      progress: progress,
+      downloadSpeed: dl,
+      uploadSpeed: ul,
+      peers: peers,
+      seeders: seeders,
+      downloadedBytes: downloaded,
+      totalBytes: rec.totalBytes,
+      files: rec.buildFileInfos(),
       trackers: rec.trackers.values.toList(),
+      downloadSpeedLimit: rec.downloadSpeedLimit,
+      uploadSpeedLimit: rec.uploadSpeedLimit,
+      sequentialDownload: rec.sequentialDownload,
     ));
   }
 
-  // ---- Helpers ----
-
-  void _cleanupTask(int taskId) {
-    final rec = _records.remove(taskId);
-    rec?.listener?.dispose();
+  void _markFileCompleted(_Record rec, TaskFileCompleted event) {
+    final m = rec.model;
+    if (m == null) return;
+    try {
+      final name = event.file.originalFileName;
+      final idx = m.files.indexWhere(
+        (f) => f.path == name || f.name == name,
+      );
+      if (idx >= 0) {
+        final size = m.files[idx].length;
+        rec.fileDownloaded[idx] = size;
+        rec.completedFiles.add(idx);
+      }
+    } catch (_) {}
   }
 
-  void _sendProgressUpdate(ProgressUpdate update) {
+  // ---- helpers ----
+
+  void _fail(_Record rec, String error) {
+    _send(ProgressUpdate(
+      taskId: rec.taskId,
+      status: DownloadStatus.failed,
+      error: error,
+    ));
+    _disposeRecord(rec, removeFromMap: true);
+  }
+
+  void _disposeRecord(_Record rec, {required bool removeFromMap}) {
+    rec.taskListener?.dispose();
+    rec.taskListener = null;
+    try {
+      rec.metadata?.stop();
+    } catch (_) {}
+    rec.metadata = null;
+    _emitDebounce.remove(rec.taskId)?.cancel();
+    if (removeFromMap) {
+      _records.remove(rec.taskId);
+      final qid = rec.queueItemId;
+      if (qid != null) _byQueueId.remove(qid);
+    }
+  }
+
+  void _send(ProgressUpdate update) {
     service.invoke('progressUpdate', update.toJson());
   }
 
@@ -769,7 +934,6 @@ class _TorrentTaskHandler {
       enableVibration: false,
       icon: '@mipmap/ic_launcher',
     );
-
     await notificationsPlugin.show(
       id,
       title,
@@ -779,7 +943,7 @@ class _TorrentTaskHandler {
     );
   }
 
-  String _formatSpeed(int bytes) {
+  String _fmtSpeed(int bytes) {
     if (bytes < 1024) return '$bytes B/s';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(2)} KB/s';
     if (bytes < 1024 * 1024 * 1024) {
@@ -796,17 +960,22 @@ class _TorrentTaskHandler {
     ));
   }
 
-  void cleanup() {
+  Future<void> cleanup() async {
     _periodicTimer?.cancel();
-    _periodicTimer = null;
-    for (final rec in _records.values) {
-      rec.listener?.dispose();
-      rec.metadata?.stop();
-      try {
-        rec.task?.stop();
-      } catch (_) {}
+    _scrapeTimer?.cancel();
+    for (final t in _emitDebounce.values) {
+      t.cancel();
+    }
+    _emitDebounce.clear();
+    for (final rec in _records.values.toList()) {
+      _disposeRecord(rec, removeFromMap: false);
     }
     _records.clear();
-    _queue.clear();
+    _byQueueId.clear();
+    try {
+      await _qm.dispose();
+    } catch (e) {
+      log('QueueManager dispose: $e');
+    }
   }
 }

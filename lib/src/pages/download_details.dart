@@ -1,8 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ytsmovies/src/bloc/download_manager/index.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class DownloadDetailsPage extends StatelessWidget {
   final int taskId;
@@ -586,8 +587,7 @@ class _FileRow extends StatelessWidget {
         children: [
           Text(
             '${DownloadTask.formatBytes(file.size)} • ${file.progressPercentage}',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: Colors.grey[600]),
+            style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
           ),
           const SizedBox(height: 4),
           LinearProgressIndicator(
@@ -794,6 +794,40 @@ class _PerTaskSettingsTabState extends State<_PerTaskSettingsTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const Text('Download Behavior',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Sequential download'),
+                  subtitle: const Text('Applies on next start'),
+                  value: widget.task.sequentialDownload,
+                  onChanged: (value) {
+                    context.read<DownloadManagerBloc>().add(
+                          DownloadManagerSetSequentialDownload(
+                            taskId: widget.task.taskId,
+                            sequentialDownload: value,
+                          ),
+                        );
+                  },
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: _moveDownload,
+                  icon: const Icon(Icons.drive_file_move_outline),
+                  label: const Text('Move Download'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 const Text('Speed Limits (KB/s, blank = unlimited)',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
@@ -862,6 +896,17 @@ class _PerTaskSettingsTabState extends State<_PerTaskSettingsTab> {
             taskId: widget.task.taskId,
             downloadLimit: null,
             uploadLimit: null,
+          ),
+        );
+  }
+
+  Future<void> _moveDownload() async {
+    final newPath = await FilePicker.platform.getDirectoryPath();
+    if (newPath == null || !mounted) return;
+    context.read<DownloadManagerBloc>().add(
+          DownloadManagerMoveDownloadTask(
+            taskId: widget.task.taskId,
+            newSavePath: newPath,
           ),
         );
   }

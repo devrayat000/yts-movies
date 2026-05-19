@@ -1,8 +1,9 @@
 library;
 
-import 'dart:developer';
-import 'dart:math' hide log;
 import 'dart:async';
+import 'dart:developer';
+import 'dart:io';
+import 'dart:math' hide log;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -17,6 +18,7 @@ import 'package:ytsmovies/src/service_extensions.dart';
 import 'package:ytsmovies/src/bloc/download_manager/index.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
 import 'package:ytsmovies/src/pages/download_settings.dart';
+import 'package:ytsmovies/src/widgets/dialogs/advanced_download_dialog.dart';
 
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/utils/index.dart';

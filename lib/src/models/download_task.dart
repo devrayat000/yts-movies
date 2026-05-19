@@ -115,6 +115,9 @@ sealed class DownloadTask with _$DownloadTask {
     DateTime? completedAt,
     String? coverImage,
 
+    /// Whether to use sequential download (streaming-style)
+    @Default(false) bool sequentialDownload,
+
     /// Per-task download speed limit in bytes/sec (null = unlimited)
     int? downloadSpeedLimit,
 
@@ -152,8 +155,9 @@ sealed class DownloadTask with _$DownloadTask {
   String get formattedDownloadedSize => formatBytes(downloadedBytes);
   String get formattedTotalSize => formatBytes(totalBytes);
 
-  String? get formattedDownloadLimit =>
-      downloadSpeedLimit == null ? null : '${formatBytes(downloadSpeedLimit!)}/s';
+  String? get formattedDownloadLimit => downloadSpeedLimit == null
+      ? null
+      : '${formatBytes(downloadSpeedLimit!)}/s';
   String? get formattedUploadLimit =>
       uploadSpeedLimit == null ? null : '${formatBytes(uploadSpeedLimit!)}/s';
 

@@ -29,10 +29,12 @@ class DownloadManagerBloc
     on<DownloadManagerUpdateProgress>(_onUpdateProgress);
     on<DownloadManagerClearCompleted>(_onClearCompleted);
     on<DownloadManagerSetSpeedLimit>(_onSetSpeedLimit);
+    on<DownloadManagerSetSequentialDownload>(_onSetSequentialDownload);
     on<DownloadManagerSetFilePriority>(_onSetFilePriority);
     on<DownloadManagerApplyFileSelection>(_onApplyFileSelection);
     on<DownloadManagerAddTracker>(_onAddTracker);
     on<DownloadManagerRemoveTracker>(_onRemoveTracker);
+    on<DownloadManagerMoveDownloadTask>(_onMoveDownloadTask);
   }
 
   Future<void> _onStarted(
@@ -68,8 +70,9 @@ class DownloadManagerBloc
         trackers: update.trackers ?? existing.trackers,
         downloadSpeedLimit:
             update.downloadSpeedLimit ?? existing.downloadSpeedLimit,
-        uploadSpeedLimit:
-            update.uploadSpeedLimit ?? existing.uploadSpeedLimit,
+        uploadSpeedLimit: update.uploadSpeedLimit ?? existing.uploadSpeedLimit,
+        sequentialDownload:
+            update.sequentialDownload ?? existing.sequentialDownload,
         filePath: update.savedFilePath ?? existing.filePath,
         completedAt: update.status == DownloadStatus.completed
             ? DateTime.now()
@@ -99,8 +102,15 @@ class DownloadManagerBloc
       await _foregroundDownloadService.startDownload(
         taskId: event.task.taskId,
         magnetUri: event.task.magnetUri,
-        savePath: _foregroundDownloadService.downloadPath,
+        savePath:
+            event.task.filePath ?? _foregroundDownloadService.downloadPath,
         movieTitle: event.task.movieTitle,
+        downloadLimit: event.task.downloadSpeedLimit,
+        uploadLimit: event.task.uploadSpeedLimit,
+        sequentialDownload: event.task.sequentialDownload,
+        extraTrackers: event.task.trackers.map((t) => t.url).toList(),
+        selectedIndices:
+            event.selectedIndices ?? _selectedIndices(event.task.files),
       );
     } catch (e, s) {
       log('Error adding download: $e', error: e, stackTrace: s);
@@ -219,6 +229,24 @@ class DownloadManagerBloc
     }
   }
 
+  Future<void> _onSetSequentialDownload(
+    DownloadManagerSetSequentialDownload event,
+    Emitter<DownloadManagerState> emit,
+  ) async {
+    await _foregroundDownloadService.setSequentialDownload(
+      taskId: event.taskId,
+      sequentialDownload: event.sequentialDownload,
+    );
+    final task = state.downloads[event.taskId];
+    if (task != null) {
+      emit(state.copyWith(downloads: {
+        ...state.downloads,
+        event.taskId:
+            task.copyWith(sequentialDownload: event.sequentialDownload),
+      }));
+    }
+  }
+
   Future<void> _onSetFilePriority(
     DownloadManagerSetFilePriority event,
     Emitter<DownloadManagerState> emit,
@@ -258,6 +286,34 @@ class DownloadManagerBloc
       taskId: event.taskId,
       trackerUrl: event.trackerUrl,
     );
+  }
+
+  Future<void> _onMoveDownloadTask(
+    DownloadManagerMoveDownloadTask event,
+    Emitter<DownloadManagerState> emit,
+  ) async {
+    await _foregroundDownloadService.moveDownloadTask(
+      taskId: event.taskId,
+      newSavePath: event.newSavePath,
+    );
+    final task = state.downloads[event.taskId];
+    if (task != null) {
+      emit(state.copyWith(downloads: {
+        ...state.downloads,
+        event.taskId: task.copyWith(filePath: event.newSavePath),
+      }));
+    }
+  }
+
+  List<int>? _selectedIndices(List<TorrentFileInfo> files) {
+    if (files.isEmpty) return null;
+    final selected = <int>[];
+    for (final file in files) {
+      if (file.priority != FilePriorityLevel.skip) {
+        selected.add(file.index);
+      }
+    }
+    return selected;
   }
 
   @override

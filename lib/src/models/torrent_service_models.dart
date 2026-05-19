@@ -15,6 +15,8 @@ sealed class StartDownloadRequest with _$StartDownloadRequest {
     @Default(<String>[]) List<String> extraTrackers,
     int? initialDownloadLimit,
     int? initialUploadLimit,
+    @Default(false) bool sequentialDownload,
+    List<int>? selectedIndices,
   }) = _StartDownloadRequest;
 
   factory StartDownloadRequest.fromJson(Map<String, dynamic> json) =>
@@ -45,6 +47,18 @@ sealed class SetSpeedLimitRequest with _$SetSpeedLimitRequest {
       _$SetSpeedLimitRequestFromJson(json);
 }
 
+/// Enable or disable sequential download for a task
+@freezed
+sealed class SetSequentialDownloadRequest with _$SetSequentialDownloadRequest {
+  const factory SetSequentialDownloadRequest({
+    required int taskId,
+    required bool sequentialDownload,
+  }) = _SetSequentialDownloadRequest;
+
+  factory SetSequentialDownloadRequest.fromJson(Map<String, dynamic> json) =>
+      _$SetSequentialDownloadRequestFromJson(json);
+}
+
 /// Set priority for a single file
 @freezed
 sealed class SetFilePriorityRequest with _$SetFilePriorityRequest {
@@ -68,6 +82,18 @@ sealed class ApplyFileSelectionRequest with _$ApplyFileSelectionRequest {
 
   factory ApplyFileSelectionRequest.fromJson(Map<String, dynamic> json) =>
       _$ApplyFileSelectionRequestFromJson(json);
+}
+
+/// Move all files for a download task to a new directory
+@freezed
+sealed class MoveDownloadTaskRequest with _$MoveDownloadTaskRequest {
+  const factory MoveDownloadTaskRequest({
+    required int taskId,
+    required String newSavePath,
+  }) = _MoveDownloadTaskRequest;
+
+  factory MoveDownloadTaskRequest.fromJson(Map<String, dynamic> json) =>
+      _$MoveDownloadTaskRequestFromJson(json);
 }
 
 /// Add a custom tracker URL
@@ -114,6 +140,7 @@ sealed class ProgressUpdate with _$ProgressUpdate {
     int? downloadSpeedLimit,
     int? uploadSpeedLimit,
     String? savedFilePath,
+    bool? sequentialDownload,
   }) = _ProgressUpdate;
 
   factory ProgressUpdate.fromJson(Map<String, dynamic> json) =>
