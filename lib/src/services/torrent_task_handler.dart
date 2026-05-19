@@ -4,7 +4,6 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:b_encode_decode/b_encode_decode.dart';
 import 'package:events_emitter2/src/events_emitter.dart' show EventsListener;
 import 'package:dtorrent_task_v2/dtorrent_task_v2.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -430,9 +429,11 @@ class _TorrentTaskHandler {
 
   Future<void> _enqueue(_Record rec, List<int> metadataBytes) async {
     try {
-      final decoded = decode(Uint8List.fromList(metadataBytes));
-      final torrentMap = <String, dynamic>{'info': decoded};
-      final model = TorrentParser.parseFromMap(torrentMap);
+      // Parse from raw info-dict bytes so the SHA-1 matches the magnet
+      // info hash exactly. Re-encoding via parseFromMap re-orders keys and
+      // the resulting hash gets rejected by every peer at handshake time.
+      final model =
+          TorrentParser.parseFromInfoBytes(Uint8List.fromList(metadataBytes));
       rec.model = model;
       rec.totalBytes =
           model.length ?? model.files.fold<int>(0, (s, f) => s + f.length);
@@ -528,6 +529,17 @@ class _TorrentTaskHandler {
             errorMessage: e.toString(),
           );
         }
+      }
+    }
+
+    // Seed the task's DHT with any nodes embedded in the metadata so peer
+    // discovery doesn't have to wait on the bootstrap routing table alone.
+    final model = rec.model;
+    if (model != null) {
+      for (final node in model.nodes) {
+        try {
+          task.addDHTNode(node);
+        } catch (_) {}
       }
     }
 
