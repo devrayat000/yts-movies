@@ -204,7 +204,9 @@ class _TorrentTaskHandler {
   void _applySnapshot(_Record rec, TorrentInfo info) {
     if (!rec.metadataApplied && info.hasMetadata) {
       rec.metadataApplied = true;
-      _pushPriorities(rec);
+      // Skip priority push in preview mode — user hasn't selected files yet.
+      // Priorities will be applied via applyFileSelection (the dialog commit).
+      if (!rec.previewMode) _pushPriorities(rec);
       rec.files = _readFiles(rec);
     }
 
@@ -243,7 +245,7 @@ class _TorrentTaskHandler {
         rec.taskId,
         rec.movieTitle,
         '${(rec.progress * 100).toStringAsFixed(1)}% • '
-            '${_fmtSpeed(rec.downloadSpeed)} ↓ ${_fmtSpeed(rec.uploadSpeed)} ↑',
+        '${_fmtSpeed(rec.downloadSpeed)} ↓ ${_fmtSpeed(rec.uploadSpeed)} ↑',
         progress: (rec.progress * 100).toInt(),
         maxProgress: 100,
       );
@@ -452,8 +454,9 @@ class _TorrentTaskHandler {
     final tid = rec.torrentId;
     final fileCount = tid == null ? 0 : _engine.getFiles(tid).length;
     for (var i = 0; i < fileCount; i++) {
-      rec.filePriorities[i] =
-          selected.contains(i) ? FilePriorityLevel.normal : FilePriorityLevel.skip;
+      rec.filePriorities[i] = selected.contains(i)
+          ? FilePriorityLevel.normal
+          : FilePriorityLevel.skip;
     }
     rec.selectedIndices = request.selectedIndices;
     _pushAllPriorities(rec);
@@ -479,8 +482,7 @@ class _TorrentTaskHandler {
     final files = _engine.getFiles(tid);
     if (files.isEmpty) return;
     final priorities = List<int>.generate(files.length, (i) {
-      return _priorityToInt(
-          rec.filePriorities[i] ?? FilePriorityLevel.normal);
+      return _priorityToInt(rec.filePriorities[i] ?? FilePriorityLevel.normal);
     });
     try {
       _engine.setFilePriorities(tid, priorities);

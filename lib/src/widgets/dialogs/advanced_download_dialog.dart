@@ -91,7 +91,7 @@ class _DownloadConfigPageState extends State<DownloadConfigPage> {
     );
     _bloc.add(DownloadManagerAddDownload(
       task: task,
-      selectedIndices: const [],
+      selectedIndices: null,
       previewMode: true,
     ));
   }
@@ -181,8 +181,7 @@ class _DownloadConfigPageState extends State<DownloadConfigPage> {
       builder: (context, state) {
         final task = state.downloads[widget.taskId];
         final filesReady = task != null && task.files.isNotEmpty;
-        final hasError =
-            task != null && task.status == DownloadStatus.failed;
+        final hasError = task != null && task.status == DownloadStatus.failed;
 
         return Scaffold(
           appBar: AppBar(
@@ -389,7 +388,8 @@ class _DownloadConfigPageState extends State<DownloadConfigPage> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(Icons.error_outline, color: theme.colorScheme.onErrorContainer),
+            Icon(Icons.error_outline,
+                color: theme.colorScheme.onErrorContainer),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
