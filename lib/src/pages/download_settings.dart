@@ -107,9 +107,12 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
   }
 
   // ---- Concurrency ----
+  // libtorrent_flutter has no per-session cap; the engine runs every added
+  // torrent in parallel. Preference is kept for forward compatibility but
+  // does not currently throttle the engine.
   Future<void> _setMaxConcurrent(int value) async {
     setState(() => _maxConcurrent = value);
-    await _svc.setMaxConcurrent(value);
+    await _prefs.setMaxConcurrentDownloads(value);
   }
 
   // ---- Default trackers ----

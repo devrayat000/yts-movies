@@ -8,7 +8,16 @@ class DownloadManagerStarted extends DownloadManagerEvent {}
 class DownloadManagerAddDownload extends DownloadManagerEvent {
   final DownloadTask task;
   final List<int>? selectedIndices;
-  DownloadManagerAddDownload({required this.task, this.selectedIndices});
+
+  /// When true, the magnet is added only to fetch metadata for the
+  /// pre-download config dialog. The handler skips all files until the dialog
+  /// confirms with applyFileSelection.
+  final bool previewMode;
+  DownloadManagerAddDownload({
+    required this.task,
+    this.selectedIndices,
+    this.previewMode = false,
+  });
 }
 
 class DownloadManagerPauseDownload extends DownloadManagerEvent {
@@ -38,7 +47,8 @@ class DownloadManagerUpdateProgress extends DownloadManagerEvent {
 
 class DownloadManagerClearCompleted extends DownloadManagerEvent {}
 
-/// Set per-task speed limits (null = unlimited)
+/// libtorrent_flutter only honours session-wide caps; the handler stores the
+/// last requested values for UI display.
 class DownloadManagerSetSpeedLimit extends DownloadManagerEvent {
   final int taskId;
   final int? downloadLimit;
@@ -47,16 +57,6 @@ class DownloadManagerSetSpeedLimit extends DownloadManagerEvent {
     required this.taskId,
     this.downloadLimit,
     this.uploadLimit,
-  });
-}
-
-/// Toggle sequential download for a task
-class DownloadManagerSetSequentialDownload extends DownloadManagerEvent {
-  final int taskId;
-  final bool sequentialDownload;
-  DownloadManagerSetSequentialDownload({
-    required this.taskId,
-    required this.sequentialDownload,
   });
 }
 
@@ -82,22 +82,9 @@ class DownloadManagerApplyFileSelection extends DownloadManagerEvent {
   });
 }
 
-class DownloadManagerAddTracker extends DownloadManagerEvent {
-  final int taskId;
-  final String trackerUrl;
-  DownloadManagerAddTracker({required this.taskId, required this.trackerUrl});
-}
-
-class DownloadManagerRemoveTracker extends DownloadManagerEvent {
-  final int taskId;
-  final String trackerUrl;
-  DownloadManagerRemoveTracker({
-    required this.taskId,
-    required this.trackerUrl,
-  });
-}
-
-/// Move all files for a download task to a new directory
+/// Move all files for a download task to a new directory.
+/// Handled entirely in the main isolate (libtorrent_flutter has no live-move
+/// API); rename only succeeds for finished or paused downloads.
 class DownloadManagerMoveDownloadTask extends DownloadManagerEvent {
   final int taskId;
   final String newSavePath;

@@ -12,11 +12,10 @@ sealed class StartDownloadRequest with _$StartDownloadRequest {
     required String magnetUri,
     required String savePath,
     required String movieTitle,
-    @Default(<String>[]) List<String> extraTrackers,
     int? initialDownloadLimit,
     int? initialUploadLimit,
-    @Default(false) bool sequentialDownload,
     List<int>? selectedIndices,
+    @Default(false) bool previewMode,
   }) = _StartDownloadRequest;
 
   factory StartDownloadRequest.fromJson(Map<String, dynamic> json) =>
@@ -34,7 +33,8 @@ sealed class DownloadControlRequest with _$DownloadControlRequest {
       _$DownloadControlRequestFromJson(json);
 }
 
-/// Set per-task speed limit (null = unlimited)
+/// Set speed limit. libtorrent_flutter only supports session-wide limits, so
+/// the most recent request wins across all tasks.
 @freezed
 sealed class SetSpeedLimitRequest with _$SetSpeedLimitRequest {
   const factory SetSpeedLimitRequest({
@@ -45,18 +45,6 @@ sealed class SetSpeedLimitRequest with _$SetSpeedLimitRequest {
 
   factory SetSpeedLimitRequest.fromJson(Map<String, dynamic> json) =>
       _$SetSpeedLimitRequestFromJson(json);
-}
-
-/// Enable or disable sequential download for a task
-@freezed
-sealed class SetSequentialDownloadRequest with _$SetSequentialDownloadRequest {
-  const factory SetSequentialDownloadRequest({
-    required int taskId,
-    required bool sequentialDownload,
-  }) = _SetSequentialDownloadRequest;
-
-  factory SetSequentialDownloadRequest.fromJson(Map<String, dynamic> json) =>
-      _$SetSequentialDownloadRequestFromJson(json);
 }
 
 /// Set priority for a single file
@@ -84,57 +72,6 @@ sealed class ApplyFileSelectionRequest with _$ApplyFileSelectionRequest {
       _$ApplyFileSelectionRequestFromJson(json);
 }
 
-/// Move all files for a download task to a new directory
-@freezed
-sealed class MoveDownloadTaskRequest with _$MoveDownloadTaskRequest {
-  const factory MoveDownloadTaskRequest({
-    required int taskId,
-    required String newSavePath,
-  }) = _MoveDownloadTaskRequest;
-
-  factory MoveDownloadTaskRequest.fromJson(Map<String, dynamic> json) =>
-      _$MoveDownloadTaskRequestFromJson(json);
-}
-
-/// Ack returned from the background handler after a move attempt.
-/// `success: false` is the cue for the bloc to fall back to local file rename.
-@freezed
-sealed class MoveDownloadTaskAck with _$MoveDownloadTaskAck {
-  const factory MoveDownloadTaskAck({
-    required int taskId,
-    required bool success,
-    String? newSavePath,
-    String? reason,
-  }) = _MoveDownloadTaskAck;
-
-  factory MoveDownloadTaskAck.fromJson(Map<String, dynamic> json) =>
-      _$MoveDownloadTaskAckFromJson(json);
-}
-
-/// Add a custom tracker URL
-@freezed
-sealed class AddTrackerRequest with _$AddTrackerRequest {
-  const factory AddTrackerRequest({
-    required int taskId,
-    required String trackerUrl,
-  }) = _AddTrackerRequest;
-
-  factory AddTrackerRequest.fromJson(Map<String, dynamic> json) =>
-      _$AddTrackerRequestFromJson(json);
-}
-
-/// Remove a tracker
-@freezed
-sealed class RemoveTrackerRequest with _$RemoveTrackerRequest {
-  const factory RemoveTrackerRequest({
-    required int taskId,
-    required String trackerUrl,
-  }) = _RemoveTrackerRequest;
-
-  factory RemoveTrackerRequest.fromJson(Map<String, dynamic> json) =>
-      _$RemoveTrackerRequestFromJson(json);
-}
-
 /// Progress update from background service.
 /// Optional fields are emitted only when something changed (saves IPC bytes).
 @freezed
@@ -155,7 +92,6 @@ sealed class ProgressUpdate with _$ProgressUpdate {
     int? downloadSpeedLimit,
     int? uploadSpeedLimit,
     String? savedFilePath,
-    bool? sequentialDownload,
   }) = _ProgressUpdate;
 
   factory ProgressUpdate.fromJson(Map<String, dynamic> json) =>

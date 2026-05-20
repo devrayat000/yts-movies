@@ -29,11 +29,8 @@ class DownloadManagerBloc
     on<DownloadManagerUpdateProgress>(_onUpdateProgress);
     on<DownloadManagerClearCompleted>(_onClearCompleted);
     on<DownloadManagerSetSpeedLimit>(_onSetSpeedLimit);
-    on<DownloadManagerSetSequentialDownload>(_onSetSequentialDownload);
     on<DownloadManagerSetFilePriority>(_onSetFilePriority);
     on<DownloadManagerApplyFileSelection>(_onApplyFileSelection);
-    on<DownloadManagerAddTracker>(_onAddTracker);
-    on<DownloadManagerRemoveTracker>(_onRemoveTracker);
     on<DownloadManagerMoveDownloadTask>(_onMoveDownloadTask);
   }
 
@@ -71,8 +68,6 @@ class DownloadManagerBloc
         downloadSpeedLimit:
             update.downloadSpeedLimit ?? existing.downloadSpeedLimit,
         uploadSpeedLimit: update.uploadSpeedLimit ?? existing.uploadSpeedLimit,
-        sequentialDownload:
-            update.sequentialDownload ?? existing.sequentialDownload,
         filePath: update.savedFilePath ?? existing.filePath,
         completedAt: update.status == DownloadStatus.completed
             ? DateTime.now()
@@ -107,10 +102,9 @@ class DownloadManagerBloc
         movieTitle: event.task.movieTitle,
         downloadLimit: event.task.downloadSpeedLimit,
         uploadLimit: event.task.uploadSpeedLimit,
-        sequentialDownload: event.task.sequentialDownload,
-        extraTrackers: event.task.trackers.map((t) => t.url).toList(),
         selectedIndices:
             event.selectedIndices ?? _selectedIndices(event.task.files),
+        previewMode: event.previewMode,
       );
     } catch (e, s) {
       log('Error adding download: $e', error: e, stackTrace: s);
@@ -255,24 +249,6 @@ class DownloadManagerBloc
     }
   }
 
-  Future<void> _onSetSequentialDownload(
-    DownloadManagerSetSequentialDownload event,
-    Emitter<DownloadManagerState> emit,
-  ) async {
-    await _foregroundDownloadService.setSequentialDownload(
-      taskId: event.taskId,
-      sequentialDownload: event.sequentialDownload,
-    );
-    final task = state.downloads[event.taskId];
-    if (task != null) {
-      emit(state.copyWith(downloads: {
-        ...state.downloads,
-        event.taskId:
-            task.copyWith(sequentialDownload: event.sequentialDownload),
-      }));
-    }
-  }
-
   Future<void> _onSetFilePriority(
     DownloadManagerSetFilePriority event,
     Emitter<DownloadManagerState> emit,
@@ -294,45 +270,15 @@ class DownloadManagerBloc
     );
   }
 
-  Future<void> _onAddTracker(
-    DownloadManagerAddTracker event,
-    Emitter<DownloadManagerState> emit,
-  ) async {
-    await _foregroundDownloadService.addTracker(
-      taskId: event.taskId,
-      trackerUrl: event.trackerUrl,
-    );
-  }
-
-  Future<void> _onRemoveTracker(
-    DownloadManagerRemoveTracker event,
-    Emitter<DownloadManagerState> emit,
-  ) async {
-    await _foregroundDownloadService.removeTracker(
-      taskId: event.taskId,
-      trackerUrl: event.trackerUrl,
-    );
-  }
-
+  /// libtorrent_flutter has no live-move API. We rename files on disk from the
+  /// main isolate — works for completed/paused/stopped tasks; an in-progress
+  /// download will keep writing to the old path until restarted.
   Future<void> _onMoveDownloadTask(
     DownloadManagerMoveDownloadTask event,
     Emitter<DownloadManagerState> emit,
   ) async {
     final current = state.downloads[event.taskId];
     if (current == null) return;
-    final running = await _foregroundDownloadService.isServiceRunning();
-    if (running) {
-      final ack = await _foregroundDownloadService.moveDownloadTask(
-        taskId: event.taskId,
-        newSavePath: event.newSavePath,
-      );
-      if (ack.success) {
-        // Handler also sends a ProgressUpdate with `savedFilePath` —
-        // `_handleProgressUpdate` applies it to state. Nothing to do here.
-        return;
-      }
-      log('Move via service failed (${ack.reason}); falling back to local');
-    }
     final moved = await _moveTaskFilesLocal(current, event.newSavePath);
     if (moved) {
       emit(state.copyWith(downloads: {
@@ -349,8 +295,7 @@ class DownloadManagerBloc
       await Directory(newSavePath).create(recursive: true);
       var moved = 0;
       for (final file in task.files) {
-        final normalized =
-            file.name.replaceAll('/', Platform.pathSeparator);
+        final normalized = file.name.replaceAll('/', Platform.pathSeparator);
         final fromPath = '$basePath${Platform.pathSeparator}$normalized';
         final toPath = '$newSavePath${Platform.pathSeparator}$normalized';
         final src = File(fromPath);

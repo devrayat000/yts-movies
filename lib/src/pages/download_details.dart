@@ -582,23 +582,12 @@ class _FileRow extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: theme.textTheme.bodyMedium,
       ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${DownloadTask.formatBytes(file.size)} • ${file.progressPercentage}',
-            style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 4),
-          LinearProgressIndicator(
-            value: file.progress.clamp(0.0, 1.0),
-            minHeight: 4,
-            backgroundColor: Colors.grey[300],
-            valueColor: AlwaysStoppedAnimation<Color>(
-              selected ? theme.colorScheme.primary : Colors.grey,
-            ),
-          ),
-        ],
+      // libtorrent_flutter doesn't expose per-file byte progress; show size
+      // and a Done marker (set by the handler when the torrent completes).
+      subtitle: Text(
+        '${DownloadTask.formatBytes(file.size)}'
+        '${file.completed ? " • Done" : ""}',
+        style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
       ),
       trailing: PopupMenuButton<FilePriorityLevel>(
         initialValue: file.priority,
@@ -639,20 +628,23 @@ class _TrackersTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(12),
-          child: ElevatedButton.icon(
-            onPressed: () => _showAddDialog(context),
-            icon: const Icon(Icons.add),
-            label: const Text('Add Tracker'),
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            'libtorrent_flutter fetches public trackers automatically and '
+            'does not expose per-task tracker controls.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
         const Divider(height: 1),
         Expanded(
           child: task.trackers.isEmpty
-              ? const Center(child: Text('No trackers'))
+              ? const Center(child: Text('No trackers reported'))
               : ListView.separated(
                   itemCount: task.trackers.length,
                   separatorBuilder: (_, __) => const Divider(height: 1),
@@ -674,17 +666,6 @@ class _TrackersTab extends StatelessWidget {
                         '${t.leechers > 0 ? ' • ${t.leechers} leechers' : ''}'
                         '${t.errorMessage != null ? ' • ${t.errorMessage}' : ''}',
                       ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: () {
-                          context.read<DownloadManagerBloc>().add(
-                                DownloadManagerRemoveTracker(
-                                  taskId: task.taskId,
-                                  trackerUrl: t.url,
-                                ),
-                              );
-                        },
-                      ),
                     );
                   },
                 ),
@@ -704,45 +685,6 @@ class _TrackersTab extends StatelessWidget {
       case TrackerStatus.unknown:
         return const Icon(Icons.help_outline, color: Colors.grey);
     }
-  }
-
-  void _showAddDialog(BuildContext context) {
-    final ctrl = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: const Text('Add Tracker'),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Tracker URL',
-            hintText: 'udp://tracker.example.com:6969/announce',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final url = ctrl.text.trim();
-              if (url.isNotEmpty) {
-                context.read<DownloadManagerBloc>().add(
-                      DownloadManagerAddTracker(
-                        taskId: task.taskId,
-                        trackerUrl: url,
-                      ),
-                    );
-              }
-              Navigator.pop(dialogCtx);
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -794,24 +736,17 @@ class _PerTaskSettingsTabState extends State<_PerTaskSettingsTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Download Behavior',
+                const Text('Storage',
                     style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Sequential download'),
-                  subtitle: const Text('Applies on next start'),
-                  value: widget.task.sequentialDownload,
-                  onChanged: (value) {
-                    context.read<DownloadManagerBloc>().add(
-                          DownloadManagerSetSequentialDownload(
-                            taskId: widget.task.taskId,
-                            sequentialDownload: value,
-                          ),
-                        );
-                  },
+                const SizedBox(height: 4),
+                Text(
+                  'Move only renames already-written files. In-progress '
+                  'downloads keep writing to the original path until restarted.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 OutlinedButton.icon(
                   onPressed: _moveDownload,
                   icon: const Icon(Icons.drive_file_move_outline),
@@ -830,6 +765,14 @@ class _PerTaskSettingsTabState extends State<_PerTaskSettingsTab> {
               children: [
                 const Text('Speed Limits (KB/s, blank = unlimited)',
                     style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(
+                  'Caps are session-wide — last edit wins across every '
+                  'active download.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _dlCtrl,

@@ -182,9 +182,8 @@ class ForegroundDownloadService {
     required String movieTitle,
     int? downloadLimit,
     int? uploadLimit,
-    bool sequentialDownload = false,
-    List<String>? extraTrackers,
     List<int>? selectedIndices,
+    bool previewMode = false,
   }) async {
     final service = FlutterBackgroundService();
     if (!await service.isRunning()) {
@@ -198,16 +197,6 @@ class ForegroundDownloadService {
       await Future.delayed(const Duration(milliseconds: 500));
     }
 
-    // Apply global limits + default trackers from preferences
-    service.invoke('setMaxConcurrent', {
-      'value': _preferencesService.maxConcurrentDownloads,
-    });
-
-    final trackers = <String>{
-      ..._preferencesService.defaultTrackers,
-      if (extraTrackers != null) ...extraTrackers,
-    }.toList();
-
     service.invoke(
       'startDownload',
       StartDownloadRequest(
@@ -215,13 +204,12 @@ class ForegroundDownloadService {
         magnetUri: magnetUri,
         savePath: savePath,
         movieTitle: movieTitle,
-        extraTrackers: trackers,
         initialDownloadLimit:
             downloadLimit ?? _preferencesService.globalDownloadLimit,
         initialUploadLimit:
             uploadLimit ?? _preferencesService.globalUploadLimit,
-        sequentialDownload: sequentialDownload,
         selectedIndices: selectedIndices,
+        previewMode: previewMode,
       ).toJson(),
     );
   }
@@ -247,6 +235,9 @@ class ForegroundDownloadService {
     );
   }
 
+  /// libtorrent_flutter exposes only session-wide limits. The handler applies
+  /// the most-recent request across all tasks; the per-task field is kept for
+  /// UI display but the cap is effectively global.
   Future<void> setSpeedLimit({
     required int taskId,
     int? downloadLimit,
@@ -258,19 +249,6 @@ class ForegroundDownloadService {
         taskId: taskId,
         downloadLimit: downloadLimit,
         uploadLimit: uploadLimit,
-      ).toJson(),
-    );
-  }
-
-  Future<void> setSequentialDownload({
-    required int taskId,
-    required bool sequentialDownload,
-  }) async {
-    FlutterBackgroundService().invoke(
-      'setSequentialDownload',
-      SetSequentialDownloadRequest(
-        taskId: taskId,
-        sequentialDownload: sequentialDownload,
       ).toJson(),
     );
   }
@@ -301,74 +279,6 @@ class ForegroundDownloadService {
         selectedIndices: selectedIndices,
       ).toJson(),
     );
-  }
-
-  Future<void> addTracker({
-    required int taskId,
-    required String trackerUrl,
-  }) async {
-    FlutterBackgroundService().invoke(
-      'addTracker',
-      AddTrackerRequest(taskId: taskId, trackerUrl: trackerUrl).toJson(),
-    );
-  }
-
-  /// Asks the background handler to move a task's files. Returns the ack —
-  /// callers should fall back to a local rename if `success` is false.
-  /// Times out (treated as failure) if the service doesn't ack within
-  /// [ackTimeout]; this covers crashes mid-flight and dead-service edge cases.
-  Future<MoveDownloadTaskAck> moveDownloadTask({
-    required int taskId,
-    required String newSavePath,
-    Duration ackTimeout = const Duration(seconds: 10),
-  }) async {
-    final service = FlutterBackgroundService();
-    final completer = Completer<MoveDownloadTaskAck>();
-    late StreamSubscription<Map<String, dynamic>?> sub;
-    sub = service.on('moveDownloadTaskAck').listen((event) {
-      if (event == null) return;
-      if (event['taskId'] != taskId) return;
-      if (completer.isCompleted) return;
-      completer.complete(MoveDownloadTaskAck(
-        taskId: taskId,
-        success: event['success'] == true,
-        newSavePath: event['newSavePath'] as String?,
-        reason: event['reason'] as String?,
-      ));
-      unawaited(sub.cancel());
-    });
-    service.invoke(
-      'moveDownloadTask',
-      MoveDownloadTaskRequest(
-        taskId: taskId,
-        newSavePath: newSavePath,
-      ).toJson(),
-    );
-    try {
-      return await completer.future.timeout(ackTimeout);
-    } on TimeoutException {
-      await sub.cancel();
-      return MoveDownloadTaskAck(
-        taskId: taskId,
-        success: false,
-        reason: 'ack_timeout',
-      );
-    }
-  }
-
-  Future<void> removeTracker({
-    required int taskId,
-    required String trackerUrl,
-  }) async {
-    FlutterBackgroundService().invoke(
-      'removeTracker',
-      RemoveTrackerRequest(taskId: taskId, trackerUrl: trackerUrl).toJson(),
-    );
-  }
-
-  Future<void> setMaxConcurrent(int value) async {
-    await _preferencesService.setMaxConcurrentDownloads(value);
-    FlutterBackgroundService().invoke('setMaxConcurrent', {'value': value});
   }
 
   Future<void> stopService() async {
