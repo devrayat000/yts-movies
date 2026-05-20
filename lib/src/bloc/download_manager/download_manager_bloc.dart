@@ -29,10 +29,12 @@ class DownloadManagerBloc
     on<DownloadManagerUpdateProgress>(_onUpdateProgress);
     on<DownloadManagerClearCompleted>(_onClearCompleted);
     on<DownloadManagerSetSpeedLimit>(_onSetSpeedLimit);
+    on<DownloadManagerSetSequentialDownload>(_onSetSequentialDownload);
     on<DownloadManagerSetFilePriority>(_onSetFilePriority);
     on<DownloadManagerApplyFileSelection>(_onApplyFileSelection);
     on<DownloadManagerAddTracker>(_onAddTracker);
     on<DownloadManagerRemoveTracker>(_onRemoveTracker);
+    on<DownloadManagerMoveDownloadTask>(_onMoveDownloadTask);
   }
 
   Future<void> _onStarted(
@@ -68,8 +70,9 @@ class DownloadManagerBloc
         trackers: update.trackers ?? existing.trackers,
         downloadSpeedLimit:
             update.downloadSpeedLimit ?? existing.downloadSpeedLimit,
-        uploadSpeedLimit:
-            update.uploadSpeedLimit ?? existing.uploadSpeedLimit,
+        uploadSpeedLimit: update.uploadSpeedLimit ?? existing.uploadSpeedLimit,
+        sequentialDownload:
+            update.sequentialDownload ?? existing.sequentialDownload,
         filePath: update.savedFilePath ?? existing.filePath,
         completedAt: update.status == DownloadStatus.completed
             ? DateTime.now()
@@ -99,8 +102,15 @@ class DownloadManagerBloc
       await _foregroundDownloadService.startDownload(
         taskId: event.task.taskId,
         magnetUri: event.task.magnetUri,
-        savePath: _foregroundDownloadService.downloadPath,
+        savePath:
+            event.task.filePath ?? _foregroundDownloadService.downloadPath,
         movieTitle: event.task.movieTitle,
+        downloadLimit: event.task.downloadSpeedLimit,
+        uploadLimit: event.task.uploadSpeedLimit,
+        sequentialDownload: event.task.sequentialDownload,
+        extraTrackers: event.task.trackers.map((t) => t.url).toList(),
+        selectedIndices:
+            event.selectedIndices ?? _selectedIndices(event.task.files),
       );
     } catch (e, s) {
       log('Error adding download: $e', error: e, stackTrace: s);
@@ -163,19 +173,45 @@ class DownloadManagerBloc
     try {
       final task = state.downloads[event.taskId];
       await _foregroundDownloadService.stopDownload(event.taskId);
-      if (task?.filePath != null) {
-        try {
-          final f = File(task!.filePath!);
-          if (await f.exists()) await f.delete();
-        } catch (e) {
-          log('Error deleting file: $e');
-        }
-      }
+      await _deleteDownloadArtifacts(task);
       final next = Map<int, DownloadTask>.from(state.downloads)
         ..remove(event.taskId);
       emit(state.copyWith(downloads: next));
     } catch (e, s) {
       log('Error deleting download: $e', error: e, stackTrace: s);
+    }
+  }
+
+  /// `filePath` is the save **directory**. Delete each known file plus the
+  /// directory itself if empty. Best-effort — swallow per-entry errors so
+  /// one stuck file doesn't block removing the rest.
+  Future<void> _deleteDownloadArtifacts(DownloadTask? task) async {
+    if (task == null) return;
+    final basePath = task.filePath;
+    if (basePath == null) return;
+    for (final file in task.files) {
+      try {
+        final normalized = file.name.replaceAll('/', Platform.pathSeparator);
+        final f = File('$basePath${Platform.pathSeparator}$normalized');
+        if (await f.exists()) await f.delete();
+      } catch (e) {
+        log('Delete file failed: $e');
+      }
+    }
+    try {
+      final dir = Directory(basePath);
+      if (await dir.exists()) {
+        final remaining = await dir.list().toList();
+        if (remaining.isEmpty) {
+          await dir.delete();
+        } else if (task.files.isEmpty) {
+          // No file metadata recorded (e.g. download failed before metadata).
+          // Wipe the per-task dir wholesale to clean up state files.
+          await dir.delete(recursive: true);
+        }
+      }
+    } catch (e) {
+      log('Delete dir failed: $e');
     }
   }
 
@@ -219,6 +255,24 @@ class DownloadManagerBloc
     }
   }
 
+  Future<void> _onSetSequentialDownload(
+    DownloadManagerSetSequentialDownload event,
+    Emitter<DownloadManagerState> emit,
+  ) async {
+    await _foregroundDownloadService.setSequentialDownload(
+      taskId: event.taskId,
+      sequentialDownload: event.sequentialDownload,
+    );
+    final task = state.downloads[event.taskId];
+    if (task != null) {
+      emit(state.copyWith(downloads: {
+        ...state.downloads,
+        event.taskId:
+            task.copyWith(sequentialDownload: event.sequentialDownload),
+      }));
+    }
+  }
+
   Future<void> _onSetFilePriority(
     DownloadManagerSetFilePriority event,
     Emitter<DownloadManagerState> emit,
@@ -258,6 +312,79 @@ class DownloadManagerBloc
       taskId: event.taskId,
       trackerUrl: event.trackerUrl,
     );
+  }
+
+  Future<void> _onMoveDownloadTask(
+    DownloadManagerMoveDownloadTask event,
+    Emitter<DownloadManagerState> emit,
+  ) async {
+    final current = state.downloads[event.taskId];
+    if (current == null) return;
+    final running = await _foregroundDownloadService.isServiceRunning();
+    if (running) {
+      final ack = await _foregroundDownloadService.moveDownloadTask(
+        taskId: event.taskId,
+        newSavePath: event.newSavePath,
+      );
+      if (ack.success) {
+        // Handler also sends a ProgressUpdate with `savedFilePath` —
+        // `_handleProgressUpdate` applies it to state. Nothing to do here.
+        return;
+      }
+      log('Move via service failed (${ack.reason}); falling back to local');
+    }
+    final moved = await _moveTaskFilesLocal(current, event.newSavePath);
+    if (moved) {
+      emit(state.copyWith(downloads: {
+        ...state.downloads,
+        event.taskId: current.copyWith(filePath: event.newSavePath),
+      }));
+    }
+  }
+
+  Future<bool> _moveTaskFilesLocal(
+      DownloadTask task, String newSavePath) async {
+    final basePath = task.filePath ?? _foregroundDownloadService.downloadPath;
+    try {
+      await Directory(newSavePath).create(recursive: true);
+      var moved = 0;
+      for (final file in task.files) {
+        final normalized =
+            file.name.replaceAll('/', Platform.pathSeparator);
+        final fromPath = '$basePath${Platform.pathSeparator}$normalized';
+        final toPath = '$newSavePath${Platform.pathSeparator}$normalized';
+        final src = File(fromPath);
+        if (!await src.exists()) continue;
+        await Directory(File(toPath).parent.path).create(recursive: true);
+        await src.rename(toPath);
+        moved++;
+      }
+      // If the source basePath itself is now empty and is a subdir of the
+      // legacy default, tidy it up. Best-effort only.
+      try {
+        final srcDir = Directory(basePath);
+        if (await srcDir.exists() &&
+            await srcDir.list().isEmpty &&
+            basePath != newSavePath) {
+          await srcDir.delete();
+        }
+      } catch (_) {}
+      return moved > 0 || task.files.isEmpty;
+    } catch (e, s) {
+      log('Local move failed: $e', error: e, stackTrace: s);
+      return false;
+    }
+  }
+
+  List<int>? _selectedIndices(List<TorrentFileInfo> files) {
+    if (files.isEmpty) return null;
+    final selected = <int>[];
+    for (final file in files) {
+      if (file.priority != FilePriorityLevel.skip) {
+        selected.add(file.index);
+      }
+    }
+    return selected;
   }
 
   @override

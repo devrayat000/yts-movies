@@ -114,6 +114,42 @@ class DownloadButton extends StatelessWidget {
       final magnetUri = _torrent.magnet(movie!.title).toString();
       final taskId = urlToUniqueInt(magnetUri);
 
+      final advanced = await showDialog<Map<String, dynamic>>(
+        context: context,
+        builder: (dialogContext) => AdvancedDownloadDialog(
+          torrent: _torrent,
+          movieTitle: movie!.title,
+          magnetUri: magnetUri,
+        ),
+      );
+      if (advanced == null) return;
+
+      final savePath = (advanced['savePath'] as String?) ??
+          getIt<ForegroundDownloadService>().downloadPath;
+      final sequentialDownload = advanced['sequentialDownload'] == true;
+      final trackers =
+          (advanced['trackers'] as List?)?.map((e) => e.toString()).toList() ??
+              const <String>[];
+      final selectedIndices = (advanced['selectedIndices'] as List?)
+          ?.map((e) => int.tryParse(e.toString()))
+          .whereType<int>()
+          .toList();
+
+      final dlLimitMb =
+          (advanced['downloadSpeedLimit'] as num?)?.toDouble() ?? 0;
+      final ulLimitMb = (advanced['uploadSpeedLimit'] as num?)?.toDouble() ?? 0;
+      final downloadLimit =
+          dlLimitMb <= 0 ? null : (dlLimitMb * 1024 * 1024).round();
+      final uploadLimit =
+          ulLimitMb <= 0 ? null : (ulLimitMb * 1024 * 1024).round();
+
+      try {
+        final dir = Directory(savePath);
+        if (!await dir.exists()) {
+          await dir.create(recursive: true);
+        }
+      } catch (_) {}
+
       // Check if already downloading
       if (!context.mounted) return;
       final bloc = context.read<DownloadManagerBloc>();
@@ -142,11 +178,25 @@ class DownloadButton extends StatelessWidget {
         type: _torrent.type,
         size: _torrent.size,
         coverImage: movie!.mediumCoverImage,
+        filePath: savePath,
+        downloadSpeedLimit: downloadLimit,
+        uploadSpeedLimit: uploadLimit,
+        sequentialDownload: sequentialDownload,
+        trackers: trackers
+            .map(
+              (url) => TrackerInfo(
+                url: url,
+                status: TrackerStatus.connecting,
+                userAdded: true,
+              ),
+            )
+            .toList(),
       );
 
       // Add to download manager
       bloc.add(DownloadManagerAddDownload(
         task: task,
+        selectedIndices: selectedIndices,
       ));
 
       if (context.mounted) {

@@ -180,6 +180,11 @@ class ForegroundDownloadService {
     required String magnetUri,
     required String savePath,
     required String movieTitle,
+    int? downloadLimit,
+    int? uploadLimit,
+    bool sequentialDownload = false,
+    List<String>? extraTrackers,
+    List<int>? selectedIndices,
   }) async {
     final service = FlutterBackgroundService();
     if (!await service.isRunning()) {
@@ -198,6 +203,11 @@ class ForegroundDownloadService {
       'value': _preferencesService.maxConcurrentDownloads,
     });
 
+    final trackers = <String>{
+      ..._preferencesService.defaultTrackers,
+      if (extraTrackers != null) ...extraTrackers,
+    }.toList();
+
     service.invoke(
       'startDownload',
       StartDownloadRequest(
@@ -205,9 +215,13 @@ class ForegroundDownloadService {
         magnetUri: magnetUri,
         savePath: savePath,
         movieTitle: movieTitle,
-        extraTrackers: _preferencesService.defaultTrackers,
-        initialDownloadLimit: _preferencesService.globalDownloadLimit,
-        initialUploadLimit: _preferencesService.globalUploadLimit,
+        extraTrackers: trackers,
+        initialDownloadLimit:
+            downloadLimit ?? _preferencesService.globalDownloadLimit,
+        initialUploadLimit:
+            uploadLimit ?? _preferencesService.globalUploadLimit,
+        sequentialDownload: sequentialDownload,
+        selectedIndices: selectedIndices,
       ).toJson(),
     );
   }
@@ -248,6 +262,19 @@ class ForegroundDownloadService {
     );
   }
 
+  Future<void> setSequentialDownload({
+    required int taskId,
+    required bool sequentialDownload,
+  }) async {
+    FlutterBackgroundService().invoke(
+      'setSequentialDownload',
+      SetSequentialDownloadRequest(
+        taskId: taskId,
+        sequentialDownload: sequentialDownload,
+      ).toJson(),
+    );
+  }
+
   Future<void> setFilePriority({
     required int taskId,
     required int fileIndex,
@@ -284,6 +311,49 @@ class ForegroundDownloadService {
       'addTracker',
       AddTrackerRequest(taskId: taskId, trackerUrl: trackerUrl).toJson(),
     );
+  }
+
+  /// Asks the background handler to move a task's files. Returns the ack —
+  /// callers should fall back to a local rename if `success` is false.
+  /// Times out (treated as failure) if the service doesn't ack within
+  /// [ackTimeout]; this covers crashes mid-flight and dead-service edge cases.
+  Future<MoveDownloadTaskAck> moveDownloadTask({
+    required int taskId,
+    required String newSavePath,
+    Duration ackTimeout = const Duration(seconds: 10),
+  }) async {
+    final service = FlutterBackgroundService();
+    final completer = Completer<MoveDownloadTaskAck>();
+    late StreamSubscription<Map<String, dynamic>?> sub;
+    sub = service.on('moveDownloadTaskAck').listen((event) {
+      if (event == null) return;
+      if (event['taskId'] != taskId) return;
+      if (completer.isCompleted) return;
+      completer.complete(MoveDownloadTaskAck(
+        taskId: taskId,
+        success: event['success'] == true,
+        newSavePath: event['newSavePath'] as String?,
+        reason: event['reason'] as String?,
+      ));
+      unawaited(sub.cancel());
+    });
+    service.invoke(
+      'moveDownloadTask',
+      MoveDownloadTaskRequest(
+        taskId: taskId,
+        newSavePath: newSavePath,
+      ).toJson(),
+    );
+    try {
+      return await completer.future.timeout(ackTimeout);
+    } on TimeoutException {
+      await sub.cancel();
+      return MoveDownloadTaskAck(
+        taskId: taskId,
+        success: false,
+        reason: 'ack_timeout',
+      );
+    }
   }
 
   Future<void> removeTracker({
