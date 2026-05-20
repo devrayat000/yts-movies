@@ -100,6 +100,7 @@ class _Record {
   /// Live task — populated once QueueItemStarted fires.
   TorrentTask? task;
   EventsListener<TaskEvent>? taskListener;
+  bool taskSourcesApplied = false;
 
   /// Active during the metadata-download phase only.
   MetadataDownloader? metadata;
@@ -488,8 +489,8 @@ class _TorrentTaskHandler {
 
     rec.taskListener = task.createListener();
     rec.taskListener!
-      ..on<StateFileUpdated>((event) {
-        _emitDebounced(rec);
+      ..on<TaskStarted>((event) {
+        _applyTaskStartupWiring(rec);
       })
       ..on<TaskFileCompleted>((event) {
         _markFileCompleted(rec, event);
@@ -501,6 +502,33 @@ class _TorrentTaskHandler {
       ..on<TaskStopped>((event) {
         // Same.
       });
+
+    if (rec.filePriorities.isNotEmpty) _applyAllPriorities(rec);
+    _applySpeedLimits(rec);
+
+    if (task.state == TaskState.running) {
+      _applyTaskStartupWiring(rec);
+    }
+
+    _send(ProgressUpdate(
+      taskId: rec.taskId,
+      status: DownloadStatus.downloading,
+      totalBytes: rec.totalBytes,
+      files: rec.buildFileInfos(),
+      trackers: rec.trackers.values.toList(),
+      downloadSpeedLimit: rec.downloadSpeedLimit,
+      uploadSpeedLimit: rec.uploadSpeedLimit,
+      savedFilePath: rec.savePath,
+      sequentialDownload: rec.sequentialDownload,
+    ));
+  }
+
+  void _applyTaskStartupWiring(_Record rec) {
+    if (rec.taskSourcesApplied) return;
+    final task = rec.task;
+    if (task == null || task.state != TaskState.running) return;
+
+    rec.taskSourcesApplied = true;
 
     // Transfer peers from the metadata downloader to avoid cold reconnect.
     final md = rec.metadata;
@@ -514,8 +542,8 @@ class _TorrentTaskHandler {
       rec.metadata = null;
     }
 
-    // Magnet + user-added trackers (the model's own announces are wired by
-    // the task itself; this adds the extras).
+    // Magnet + user-added trackers (the task's own announce set is handled
+    // internally; this adds the explicit extra announce URLs after start()).
     final infoHash = rec.infoHashBuffer;
     if (infoHash != null) {
       for (final url in rec.trackers.keys) {
@@ -532,8 +560,8 @@ class _TorrentTaskHandler {
       }
     }
 
-    // Seed the task's DHT with any nodes embedded in the metadata so peer
-    // discovery doesn't have to wait on the bootstrap routing table alone.
+    // Seed the task's DHT with nodes from the torrent metadata so peer
+    // discovery can start immediately instead of waiting on bootstrap alone.
     final model = rec.model;
     if (model != null) {
       for (final node in model.nodes) {
@@ -542,21 +570,6 @@ class _TorrentTaskHandler {
         } catch (_) {}
       }
     }
-
-    if (rec.filePriorities.isNotEmpty) _applyAllPriorities(rec);
-    _applySpeedLimits(rec);
-
-    _send(ProgressUpdate(
-      taskId: rec.taskId,
-      status: DownloadStatus.downloading,
-      totalBytes: rec.totalBytes,
-      files: rec.buildFileInfos(),
-      trackers: rec.trackers.values.toList(),
-      downloadSpeedLimit: rec.downloadSpeedLimit,
-      uploadSpeedLimit: rec.uploadSpeedLimit,
-      savedFilePath: rec.savePath,
-      sequentialDownload: rec.sequentialDownload,
-    ));
   }
 
   void pauseDownload(DownloadControlRequest request) {
@@ -802,8 +815,7 @@ class _TorrentTaskHandler {
         status: rec.lastStatus,
         savedFilePath: rec.savePath,
       ));
-      _sendMoveAck(rec.taskId,
-          success: true, newSavePath: request.newSavePath);
+      _sendMoveAck(rec.taskId, success: true, newSavePath: request.newSavePath);
     } catch (e) {
       log('moveDownloadTask failed: $e');
       _sendMoveAck(rec.taskId, success: false, reason: e.toString());
