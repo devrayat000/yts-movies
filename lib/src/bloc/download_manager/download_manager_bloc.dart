@@ -40,15 +40,31 @@ class DownloadManagerBloc
   ) async {
     _progressSubscription =
         _foregroundDownloadService.progressStream.listen(_handleProgressUpdate);
+    // HydratedBloc may have rehydrated tasks that were active when the app
+    // last quit. The bg engine forgets all torrents on app restart, so any
+    // queued/metadata/downloading entry would otherwise display as live
+    // forever. Mark them stopped so the user can resume (re-add) if wanted.
+    final next = <int, DownloadTask>{};
+    var dirty = false;
+    state.downloads.forEach((id, t) {
+      if (t.status == DownloadStatus.downloading ||
+          t.status == DownloadStatus.downloadingMetadata ||
+          t.status == DownloadStatus.queued) {
+        next[id] = t.copyWith(status: DownloadStatus.stopped);
+        dirty = true;
+      } else {
+        next[id] = t;
+      }
+    });
+    if (dirty) emit(state.copyWith(downloads: next));
   }
 
   void _handleProgressUpdate(ProgressUpdate update) {
     try {
       final existing = state.downloads[update.taskId];
-      if (existing == null) {
-        log('Progress for unknown task ${update.taskId}');
-        return;
-      }
+      // Stale updates land here when the user deletes a task while the bg
+      // handler still has in-flight progress on the wire. No-op silently.
+      if (existing == null) return;
       // Only overwrite fields that the update meaningfully carries.
       final updated = existing.copyWith(
         status: update.status,
@@ -62,15 +78,22 @@ class DownloadManagerBloc
             : existing.downloadedBytes,
         totalBytes:
             update.totalBytes > 0 ? update.totalBytes : existing.totalBytes,
-        errorMessage: update.error ?? existing.errorMessage,
+        // Stick to whichever error is newest; clear if the engine reports a
+        // healthy state again (recovery).
+        errorMessage: update.error ??
+            (update.status == DownloadStatus.failed
+                ? existing.errorMessage
+                : null),
         files: update.files ?? existing.files,
         trackers: update.trackers ?? existing.trackers,
         downloadSpeedLimit:
             update.downloadSpeedLimit ?? existing.downloadSpeedLimit,
         uploadSpeedLimit: update.uploadSpeedLimit ?? existing.uploadSpeedLimit,
         filePath: update.savedFilePath ?? existing.filePath,
+        // Set once on the first completed update; later seeding-phase
+        // updates would otherwise keep bumping the timestamp forward.
         completedAt: update.status == DownloadStatus.completed
-            ? DateTime.now()
+            ? (existing.completedAt ?? DateTime.now())
             : existing.completedAt,
       );
       add(DownloadManagerUpdateProgress(updated));

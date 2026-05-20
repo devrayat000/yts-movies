@@ -748,9 +748,14 @@ class _PerTaskSettingsTabState extends State<_PerTaskSettingsTab> {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: _moveDownload,
+                  // Renaming files while the engine is writing to them
+                  // corrupts the download. Only allow when the task is
+                  // paused/stopped/completed/failed.
+                  onPressed: widget.task.isActive ? null : _moveDownload,
                   icon: const Icon(Icons.drive_file_move_outline),
-                  label: const Text('Move Download'),
+                  label: Text(widget.task.isActive
+                      ? 'Pause to Move'
+                      : 'Move Download'),
                 ),
               ],
             ),

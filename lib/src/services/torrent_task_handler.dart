@@ -227,8 +227,14 @@ class _TorrentTaskHandler {
     if (newStatus == DownloadStatus.completed &&
         prevStatus != DownloadStatus.completed) {
       _markAllSelectedFilesComplete(rec);
-      _showNotification(rec.taskId, rec.movieTitle, 'Download completed!',
-          progress: 100, maxProgress: 100);
+      _showNotification(
+        rec.taskId,
+        rec.movieTitle,
+        'Download completed!',
+        progress: 100,
+        maxProgress: 100,
+        ongoing: false,
+      );
       _scheduleIdleStop();
     } else if (newStatus == DownloadStatus.failed) {
       _scheduleIdleStop();
@@ -275,8 +281,13 @@ class _TorrentTaskHandler {
       // per-file priority has been set yet.
       final explicit = rec.filePriorities[i];
       if (explicit != null) return _priorityToInt(explicit);
-      if (selected != null && !selected.contains(i)) return 0;
-      return _priorityToInt(FilePriorityLevel.normal);
+      final level = (selected != null && !selected.contains(i))
+          ? FilePriorityLevel.skip
+          : FilePriorityLevel.normal;
+      // Sync the cache so later per-file edits don't accidentally promote
+      // skipped files back to normal.
+      rec.filePriorities[i] = level;
+      return _priorityToInt(level);
     });
     try {
       _engine.setFilePriorities(tid, priorities);
@@ -386,6 +397,7 @@ class _TorrentTaskHandler {
       _byTorrentId.remove(tid);
     }
     _records.remove(rec.taskId);
+    _cancelTaskNotification(rec.taskId);
     _send(ProgressUpdate(taskId: rec.taskId, status: DownloadStatus.stopped));
     _scheduleIdleStop();
   }
@@ -493,7 +505,14 @@ class _TorrentTaskHandler {
       _byTorrentId.remove(tid);
     }
     _records.remove(rec.taskId);
+    _cancelTaskNotification(rec.taskId);
     _scheduleIdleStop();
+  }
+
+  Future<void> _cancelTaskNotification(int id) async {
+    try {
+      await notificationsPlugin.cancel(id);
+    } catch (_) {}
   }
 
   void _sendProgress(_Record rec, {String? errorMsg}) {
@@ -620,6 +639,7 @@ class _TorrentTaskHandler {
     String body, {
     int? progress,
     int? maxProgress,
+    bool ongoing = true,
   }) async {
     final androidDetails = AndroidNotificationDetails(
       notificationChannelId,
@@ -630,8 +650,8 @@ class _TorrentTaskHandler {
       showProgress: progress != null && maxProgress != null,
       maxProgress: maxProgress ?? 0,
       progress: progress ?? 0,
-      ongoing: true,
-      autoCancel: false,
+      ongoing: ongoing,
+      autoCancel: !ongoing,
       playSound: false,
       enableVibration: false,
       icon: '@mipmap/ic_launcher',
@@ -665,6 +685,9 @@ class _TorrentTaskHandler {
       try {
         _engine.removeTorrent(tid, deleteFiles: false);
       } catch (_) {}
+    }
+    for (final taskId in _records.keys.toList()) {
+      await _cancelTaskNotification(taskId);
     }
     _records.clear();
     _byTorrentId.clear();

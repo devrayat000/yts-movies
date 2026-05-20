@@ -43,6 +43,8 @@ class _DownloadConfigPageState extends State<DownloadConfigPage> {
   bool _initialSelectionApplied = false;
   bool _showAdvanced = false;
   bool _committed = false;
+  bool _disposed = false;
+  bool _previewStartScheduled = false;
 
   final TextEditingController _dlCtrl = TextEditingController();
   final TextEditingController _ulCtrl = TextEditingController();
@@ -57,16 +59,23 @@ class _DownloadConfigPageState extends State<DownloadConfigPage> {
 
   @override
   void dispose() {
+    _disposed = true;
     _dlCtrl.dispose();
     _ulCtrl.dispose();
     // Abandon the preview torrent if the user backed out without committing.
-    if (!_committed && _bloc.state.downloads.containsKey(widget.taskId)) {
+    // Use a scheduled flag too — covers the case where _changeSavePath
+    // queued a re-add that hasn't fired yet.
+    if (!_committed &&
+        (_previewStartScheduled ||
+            _bloc.state.downloads.containsKey(widget.taskId))) {
       _bloc.add(DownloadManagerDeleteDownload(widget.taskId));
     }
     super.dispose();
   }
 
   void _startPreview() {
+    if (_disposed) return;
+    _previewStartScheduled = false;
     if (_bloc.state.downloads.containsKey(widget.taskId)) return;
     final task = DownloadTask(
       taskId: widget.taskId,
@@ -91,14 +100,22 @@ class _DownloadConfigPageState extends State<DownloadConfigPage> {
     final newPath = await FilePicker.platform.getDirectoryPath();
     if (newPath == null || newPath == _savePath) return;
     // libtorrent has no live-move so we drop the current preview and re-add
-    // against the new path.
+    // against the new path. Wait for the bloc to drop the entry first —
+    // otherwise the re-add's containsKey guard skips silently.
     _bloc.add(DownloadManagerDeleteDownload(widget.taskId));
+    _previewStartScheduled = true;
+    try {
+      await _bloc.stream
+          .firstWhere((s) => !s.downloads.containsKey(widget.taskId))
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {/* fall through; _startPreview will re-check */}
+    if (!mounted) return;
     setState(() {
       _savePath = newPath;
       _selectedIndices.clear();
       _initialSelectionApplied = false;
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startPreview());
+    _startPreview();
   }
 
   void _start() {
