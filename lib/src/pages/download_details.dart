@@ -13,17 +13,15 @@ class DownloadDetailsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Download Details'),
           bottom: const TabBar(
-            isScrollable: true,
             tabs: [
               Tab(icon: Icon(Icons.info_outline), text: 'Overview'),
               Tab(icon: Icon(Icons.folder_open), text: 'Files'),
-              Tab(icon: Icon(Icons.dns), text: 'Trackers'),
-              Tab(icon: Icon(Icons.tune), text: 'Settings'),
+              Tab(icon: Icon(Icons.tune), text: 'Storage'),
             ],
           ),
         ),
@@ -37,8 +35,7 @@ class DownloadDetailsPage extends StatelessWidget {
               children: [
                 _OverviewTab(task: task),
                 _FilesTab(task: task),
-                _TrackersTab(task: task),
-                _PerTaskSettingsTab(task: task),
+                _StorageTab(task: task),
               ],
             );
           },
@@ -228,7 +225,7 @@ class _ProgressSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            if (task.status == DownloadStatus.downloading) ...[
+            if (task.status == DownloadStatus.downloading)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -257,18 +254,6 @@ class _ProgressSection extends StatelessWidget {
                   ),
                 ],
               ),
-              if (task.downloadSpeedLimit != null ||
-                  task.uploadSpeedLimit != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Limit: '
-                  '${task.formattedDownloadLimit ?? "∞"} ↓ / '
-                  '${task.formattedUploadLimit ?? "∞"} ↑',
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: Colors.grey[600]),
-                ),
-              ],
-            ],
           ],
         ),
       ),
@@ -341,13 +326,6 @@ class _StatisticsCard extends StatelessWidget {
               value: task.seeders.toString(),
               icon: Icons.cloud_upload,
             ),
-            const SizedBox(height: 8),
-            _StatRow(
-              label: 'Hash',
-              value: task.torrentHash,
-              icon: Icons.tag,
-              monospace: true,
-            ),
             if (task.startedAt != null) ...[
               const SizedBox(height: 8),
               _StatRow(
@@ -391,13 +369,11 @@ class _StatRow extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
-  final bool monospace;
   final Color? valueColor;
   const _StatRow({
     required this.label,
     required this.value,
     required this.icon,
-    this.monospace = false,
     this.valueColor,
   });
 
@@ -418,11 +394,7 @@ class _StatRow extends StatelessWidget {
                       ?.copyWith(color: Colors.grey[600])),
               Text(
                 value,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontFamily: monospace ? 'monospace' : null,
-                  fontSize: monospace ? 10 : null,
-                  color: valueColor,
-                ),
+                style: theme.textTheme.bodyMedium?.copyWith(color: valueColor),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -478,7 +450,8 @@ class _ActionButtons extends StatelessWidget {
 }
 
 // ============================================================
-// Files tab
+// Files tab — include / skip only. libtorrent supports four priority
+// levels but they're noise for end users; collapse to a checkbox.
 // ============================================================
 class _FilesTab extends StatelessWidget {
   final DownloadTask task;
@@ -516,12 +489,12 @@ class _FilesTab extends StatelessWidget {
               TextButton.icon(
                 onPressed: () => _setAll(context, FilePriorityLevel.normal),
                 icon: const Icon(Icons.done_all, size: 16),
-                label: const Text('Select all'),
+                label: const Text('All'),
               ),
               TextButton.icon(
                 onPressed: () => _setAll(context, FilePriorityLevel.skip),
                 icon: const Icon(Icons.block, size: 16),
-                label: const Text('Skip all'),
+                label: const Text('None'),
               ),
             ],
           ),
@@ -561,172 +534,54 @@ class _FileRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final selected = file.priority != FilePriorityLevel.skip;
-    return ListTile(
-      leading: Checkbox(
-        value: selected,
-        onChanged: (v) {
-          context.read<DownloadManagerBloc>().add(
-                DownloadManagerSetFilePriority(
-                  taskId: taskId,
-                  fileIndex: file.index,
-                  priority: v == true
-                      ? FilePriorityLevel.normal
-                      : FilePriorityLevel.skip,
-                ),
-              );
-        },
-      ),
+    return CheckboxListTile(
+      value: selected,
+      onChanged: (v) {
+        context.read<DownloadManagerBloc>().add(
+              DownloadManagerSetFilePriority(
+                taskId: taskId,
+                fileIndex: file.index,
+                priority: v == true
+                    ? FilePriorityLevel.normal
+                    : FilePriorityLevel.skip,
+              ),
+            );
+      },
       title: Text(
         file.name,
-        maxLines: 1,
+        maxLines: 2,
         overflow: TextOverflow.ellipsis,
         style: theme.textTheme.bodyMedium,
       ),
-      // libtorrent_flutter doesn't expose per-file byte progress; show size
-      // and a Done marker (set by the handler when the torrent completes).
+      // libtorrent_flutter doesn't expose per-file byte progress; surface
+      // size and (when known) the Done marker set on torrent completion.
       subtitle: Text(
         '${DownloadTask.formatBytes(file.size)}'
         '${file.completed ? " • Done" : ""}',
         style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
       ),
-      trailing: PopupMenuButton<FilePriorityLevel>(
-        initialValue: file.priority,
-        onSelected: (p) {
-          context.read<DownloadManagerBloc>().add(
-                DownloadManagerSetFilePriority(
-                  taskId: taskId,
-                  fileIndex: file.index,
-                  priority: p,
-                ),
-              );
-        },
-        itemBuilder: (_) => const [
-          PopupMenuItem(value: FilePriorityLevel.high, child: Text('High')),
-          PopupMenuItem(value: FilePriorityLevel.normal, child: Text('Normal')),
-          PopupMenuItem(value: FilePriorityLevel.low, child: Text('Low')),
-          PopupMenuItem(value: FilePriorityLevel.skip, child: Text('Skip')),
-        ],
-        child: Chip(
-          label: Text(
-            file.priority.name,
-            style: const TextStyle(fontSize: 10),
-          ),
-          padding: EdgeInsets.zero,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-      ),
+      controlAffinity: ListTileControlAffinity.leading,
+      dense: true,
     );
   }
 }
 
 // ============================================================
-// Trackers tab
+// Storage tab — move-on-disk only. Per-task speed caps don't exist in
+// libtorrent_flutter (session-wide), so we don't expose them here.
 // ============================================================
-class _TrackersTab extends StatelessWidget {
+class _StorageTab extends StatefulWidget {
   final DownloadTask task;
-  const _TrackersTab({required this.task});
+  const _StorageTab({required this.task});
 
+  @override
+  State<_StorageTab> createState() => _StorageTabState();
+}
+
+class _StorageTabState extends State<_StorageTab> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            'libtorrent_flutter fetches public trackers automatically and '
-            'does not expose per-task tracker controls.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        const Divider(height: 1),
-        Expanded(
-          child: task.trackers.isEmpty
-              ? const Center(child: Text('No trackers reported'))
-              : ListView.separated(
-                  itemCount: task.trackers.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, i) {
-                    final t = task.trackers[i];
-                    return ListTile(
-                      leading: _statusIcon(t.status),
-                      title: Text(
-                        t.url,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontFamily: 'monospace', fontSize: 11),
-                      ),
-                      subtitle: Text(
-                        '${t.status.name}'
-                        '${t.userAdded ? ' • user-added' : ''}'
-                        '${t.seeders > 0 ? ' • ${t.seeders} seeders' : ''}'
-                        '${t.leechers > 0 ? ' • ${t.leechers} leechers' : ''}'
-                        '${t.errorMessage != null ? ' • ${t.errorMessage}' : ''}',
-                      ),
-                    );
-                  },
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _statusIcon(TrackerStatus s) {
-    switch (s) {
-      case TrackerStatus.working:
-        return const Icon(Icons.check_circle, color: Colors.green);
-      case TrackerStatus.connecting:
-        return const Icon(Icons.sync, color: Colors.blue);
-      case TrackerStatus.failed:
-        return const Icon(Icons.error, color: Colors.red);
-      case TrackerStatus.unknown:
-        return const Icon(Icons.help_outline, color: Colors.grey);
-    }
-  }
-}
-
-// ============================================================
-// Per-task settings tab
-// ============================================================
-class _PerTaskSettingsTab extends StatefulWidget {
-  final DownloadTask task;
-  const _PerTaskSettingsTab({required this.task});
-
-  @override
-  State<_PerTaskSettingsTab> createState() => _PerTaskSettingsTabState();
-}
-
-class _PerTaskSettingsTabState extends State<_PerTaskSettingsTab> {
-  late final TextEditingController _dlCtrl;
-  late final TextEditingController _ulCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _dlCtrl = TextEditingController(
-      text: widget.task.downloadSpeedLimit == null
-          ? ''
-          : (widget.task.downloadSpeedLimit! / 1024).toStringAsFixed(0),
-    );
-    _ulCtrl = TextEditingController(
-      text: widget.task.uploadSpeedLimit == null
-          ? ''
-          : (widget.task.uploadSpeedLimit! / 1024).toStringAsFixed(0),
-    );
-  }
-
-  @override
-  void dispose() {
-    _dlCtrl.dispose();
-    _ulCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -736,82 +591,37 @@ class _PerTaskSettingsTabState extends State<_PerTaskSettingsTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Storage',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
+                Text('Save location',
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    widget.task.filePath ?? '—',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(fontFamily: 'monospace'),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 Text(
-                  'Move only renames already-written files. In-progress '
-                  'downloads keep writing to the original path until restarted.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                  'Move renames already-written files on disk. In-progress '
+                  'downloads keep writing to the original path until stopped.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  // Renaming files while the engine is writing to them
-                  // corrupts the download. Only allow when the task is
-                  // paused/stopped/completed/failed.
                   onPressed: widget.task.isActive ? null : _moveDownload,
                   icon: const Icon(Icons.drive_file_move_outline),
                   label: Text(widget.task.isActive
-                      ? 'Pause to Move'
-                      : 'Move Download'),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Speed Limits (KB/s, blank = unlimited)',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(
-                  'Caps are session-wide — last edit wins across every '
-                  'active download.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _dlCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Download limit (KB/s)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _ulCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Upload limit (KB/s)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: _apply,
-                        icon: const Icon(Icons.save),
-                        label: const Text('Apply'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton(
-                      onPressed: _clear,
-                      child: const Text('Unlimited'),
-                    ),
-                  ],
+                      ? 'Pause to move'
+                      : 'Move to new location'),
                 ),
               ],
             ),
@@ -819,33 +629,6 @@ class _PerTaskSettingsTabState extends State<_PerTaskSettingsTab> {
         ),
       ],
     );
-  }
-
-  void _apply() {
-    final dl = int.tryParse(_dlCtrl.text.trim());
-    final ul = int.tryParse(_ulCtrl.text.trim());
-    context.read<DownloadManagerBloc>().add(
-          DownloadManagerSetSpeedLimit(
-            taskId: widget.task.taskId,
-            downloadLimit: dl == null ? null : dl * 1024,
-            uploadLimit: ul == null ? null : ul * 1024,
-          ),
-        );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Speed limits applied')),
-    );
-  }
-
-  void _clear() {
-    _dlCtrl.clear();
-    _ulCtrl.clear();
-    context.read<DownloadManagerBloc>().add(
-          DownloadManagerSetSpeedLimit(
-            taskId: widget.task.taskId,
-            downloadLimit: null,
-            uploadLimit: null,
-          ),
-        );
   }
 
   Future<void> _moveDownload() async {

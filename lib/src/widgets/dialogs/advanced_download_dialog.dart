@@ -1,3 +1,5 @@
+import 'dart:developer' as dev;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +11,12 @@ import 'package:ytsmovies/src/models/download_task.dart';
 import 'package:ytsmovies/src/models/movie.dart';
 import 'package:ytsmovies/src/models/torrent.dart' as m;
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
+
+void _d(String msg) {
+  // ignore: avoid_print
+  debugPrint('[DLG] $msg');
+  dev.log(msg, name: 'DLG');
+}
 
 /// Full-page pre-download configuration.
 ///
@@ -41,13 +49,9 @@ class _DownloadConfigPageState extends State<DownloadConfigPage> {
   late String _savePath;
   final Set<int> _selectedIndices = <int>{};
   bool _initialSelectionApplied = false;
-  bool _showAdvanced = false;
   bool _committed = false;
   bool _disposed = false;
   bool _previewStartScheduled = false;
-
-  final TextEditingController _dlCtrl = TextEditingController();
-  final TextEditingController _ulCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -60,8 +64,6 @@ class _DownloadConfigPageState extends State<DownloadConfigPage> {
   @override
   void dispose() {
     _disposed = true;
-    _dlCtrl.dispose();
-    _ulCtrl.dispose();
     // Abandon the preview torrent if the user backed out without committing.
     // Use a scheduled flag too — covers the case where _changeSavePath
     // queued a re-add that hasn't fired yet.
@@ -74,9 +76,16 @@ class _DownloadConfigPageState extends State<DownloadConfigPage> {
   }
 
   void _startPreview() {
-    if (_disposed) return;
+    _d('_startPreview: taskId=${widget.taskId}, savePath=$_savePath');
+    if (_disposed) {
+      _d('_startPreview: disposed, skip');
+      return;
+    }
     _previewStartScheduled = false;
-    if (_bloc.state.downloads.containsKey(widget.taskId)) return;
+    if (_bloc.state.downloads.containsKey(widget.taskId)) {
+      _d('_startPreview: taskId already in bloc state, skip');
+      return;
+    }
     final task = DownloadTask(
       taskId: widget.taskId,
       movieId: widget.movie.id,
@@ -119,31 +128,33 @@ class _DownloadConfigPageState extends State<DownloadConfigPage> {
   }
 
   void _start() {
-    if (_selectedIndices.isEmpty) return;
+    _d('_start: taskId=${widget.taskId}, selected=$_selectedIndices');
+    if (_selectedIndices.isEmpty) {
+      _d('_start: empty selection, abort');
+      return;
+    }
     _committed = true;
     _bloc.add(DownloadManagerApplyFileSelection(
       taskId: widget.taskId,
       selectedIndices: _selectedIndices.toList()..sort(),
     ));
-    final dl = int.tryParse(_dlCtrl.text.trim());
-    final ul = int.tryParse(_ulCtrl.text.trim());
-    if (dl != null || ul != null) {
-      _bloc.add(DownloadManagerSetSpeedLimit(
-        taskId: widget.taskId,
-        downloadLimit: dl == null ? null : dl * 1024,
-        uploadLimit: ul == null ? null : ul * 1024,
-      ));
-    }
     if (!mounted) return;
+    // Capture messenger + router BEFORE pop — after pop the dialog's
+    // BuildContext is detached and ScaffoldMessenger.of would no-op.
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
     Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       SnackBar(
         content: const Text('Download started'),
         action: SnackBarAction(
           label: 'View',
-          onPressed: () => context.pushNamed('downloads'),
+          onPressed: () {
+            router.pushNamed('downloads');
+            messenger.removeCurrentSnackBar();
+          },
         ),
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 4),
       ),
     );
   }
@@ -204,8 +215,6 @@ class _DownloadConfigPageState extends State<DownloadConfigPage> {
                 _metadataLoadingCard(theme, task)
               else
                 _filesCard(theme, task),
-              const SizedBox(height: 16),
-              _advancedCard(theme),
             ],
           ),
           bottomNavigationBar: SafeArea(
@@ -487,59 +496,6 @@ class _DownloadConfigPageState extends State<DownloadConfigPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _advancedCard(ThemeData theme) {
-    return Card(
-      child: Column(
-        children: [
-          ListTile(
-            title: const Text('Advanced options'),
-            subtitle: const Text('Speed limits (session-wide)'),
-            trailing: Icon(
-              _showAdvanced ? Icons.expand_less : Icons.expand_more,
-            ),
-            onTap: () => setState(() => _showAdvanced = !_showAdvanced),
-          ),
-          if (_showAdvanced)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'libtorrent_flutter only exposes engine-wide caps. The '
-                    'most recent value wins across every active download.',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _dlCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Download limit (KB/s, blank = unlimited)',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _ulCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Upload limit (KB/s, blank = unlimited)',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
       ),
     );
   }

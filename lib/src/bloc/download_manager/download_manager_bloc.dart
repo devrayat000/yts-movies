@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
@@ -10,6 +11,14 @@ import 'package:ytsmovies/src/services/foreground_download_service.dart';
 
 part 'download_manager_event.dart';
 part 'download_manager_state.dart';
+
+const String _logTag = 'DMB';
+
+void _d(String msg, {Object? error, StackTrace? stackTrace}) {
+  // ignore: avoid_print
+  debugPrint('[$_logTag] $msg');
+  log(msg, name: _logTag, error: error, stackTrace: stackTrace);
+}
 
 /// BLoC for managing downloads
 @singleton
@@ -32,12 +41,16 @@ class DownloadManagerBloc
     on<DownloadManagerSetFilePriority>(_onSetFilePriority);
     on<DownloadManagerApplyFileSelection>(_onApplyFileSelection);
     on<DownloadManagerMoveDownloadTask>(_onMoveDownloadTask);
+    _d('DownloadManagerBloc constructed, hydrated downloads='
+        '${state.downloads.length}');
   }
 
   Future<void> _onStarted(
     DownloadManagerStarted event,
     Emitter<DownloadManagerState> emit,
   ) async {
+    _d('_onStarted: subscribing to progressStream, '
+        'rehydrated=${state.downloads.length}');
     _progressSubscription =
         _foregroundDownloadService.progressStream.listen(_handleProgressUpdate);
     // HydratedBloc may have rehydrated tasks that were active when the app
@@ -50,6 +63,7 @@ class DownloadManagerBloc
       if (t.status == DownloadStatus.downloading ||
           t.status == DownloadStatus.downloadingMetadata ||
           t.status == DownloadStatus.queued) {
+        _d('_onStarted: reset stale task=$id from ${t.status} to stopped');
         next[id] = t.copyWith(status: DownloadStatus.stopped);
         dirty = true;
       } else {
@@ -62,24 +76,28 @@ class DownloadManagerBloc
   void _handleProgressUpdate(ProgressUpdate update) {
     try {
       final existing = state.downloads[update.taskId];
-      // Stale updates land here when the user deletes a task while the bg
-      // handler still has in-flight progress on the wire. No-op silently.
-      if (existing == null) return;
-      // Only overwrite fields that the update meaningfully carries.
+      if (existing == null) {
+        _d('_handleProgressUpdate: stale update for unknown taskId='
+            '${update.taskId}, ignoring');
+        return;
+      }
+      if (existing.status != update.status) {
+        _d('_handleProgressUpdate: task=${update.taskId} status '
+            '${existing.status} -> ${update.status} '
+            '(progress=${(update.progress * 100).toStringAsFixed(1)}%, '
+            'dl=${update.downloadSpeed}, ul=${update.uploadSpeed}, '
+            'done=${update.downloadedBytes}/${update.totalBytes})');
+      }
       final updated = existing.copyWith(
         status: update.status,
-        progress: update.progress > 0 ? update.progress : existing.progress,
+        progress: update.progress.clamp(0.0, 1.0),
         downloadSpeed: update.downloadSpeed,
         uploadSpeed: update.uploadSpeed,
         peers: update.peers,
         seeders: update.seeders,
-        downloadedBytes: update.downloadedBytes > 0
-            ? update.downloadedBytes
-            : existing.downloadedBytes,
+        downloadedBytes: update.downloadedBytes,
         totalBytes:
             update.totalBytes > 0 ? update.totalBytes : existing.totalBytes,
-        // Stick to whichever error is newest; clear if the engine reports a
-        // healthy state again (recovery).
         errorMessage: update.error ??
             (update.status == DownloadStatus.failed
                 ? existing.errorMessage
@@ -90,15 +108,13 @@ class DownloadManagerBloc
             update.downloadSpeedLimit ?? existing.downloadSpeedLimit,
         uploadSpeedLimit: update.uploadSpeedLimit ?? existing.uploadSpeedLimit,
         filePath: update.savedFilePath ?? existing.filePath,
-        // Set once on the first completed update; later seeding-phase
-        // updates would otherwise keep bumping the timestamp forward.
         completedAt: update.status == DownloadStatus.completed
             ? (existing.completedAt ?? DateTime.now())
             : existing.completedAt,
       );
       add(DownloadManagerUpdateProgress(updated));
     } catch (e, s) {
-      log('ERROR in _handleProgressUpdate: $e', error: e, stackTrace: s);
+      _d('ERROR in _handleProgressUpdate: $e', error: e, stackTrace: s);
     }
   }
 
@@ -106,8 +122,14 @@ class DownloadManagerBloc
     DownloadManagerAddDownload event,
     Emitter<DownloadManagerState> emit,
   ) async {
+    _d('_onAddDownload: taskId=${event.task.taskId}, '
+        'movieTitle="${event.task.movieTitle}", '
+        'selected=${event.selectedIndices}, preview=${event.previewMode}');
     try {
-      if (state.downloads.containsKey(event.task.taskId)) return;
+      if (state.downloads.containsKey(event.task.taskId)) {
+        _d('_onAddDownload: duplicate taskId, skipping');
+        return;
+      }
 
       final initial = event.task.copyWith(
         status: DownloadStatus.queued,
@@ -116,6 +138,7 @@ class DownloadManagerBloc
       emit(state.copyWith(
         downloads: {...state.downloads, event.task.taskId: initial},
       ));
+      _d('_onAddDownload: emitted queued state, dispatching to service');
 
       await _foregroundDownloadService.startDownload(
         taskId: event.task.taskId,
@@ -130,7 +153,7 @@ class DownloadManagerBloc
         previewMode: event.previewMode,
       );
     } catch (e, s) {
-      log('Error adding download: $e', error: e, stackTrace: s);
+      _d('_onAddDownload: failed: $e', error: e, stackTrace: s);
       final errorTask = event.task.copyWith(
         status: DownloadStatus.failed,
         errorMessage: e.toString(),
@@ -145,6 +168,7 @@ class DownloadManagerBloc
     DownloadManagerPauseDownload event,
     Emitter<DownloadManagerState> emit,
   ) async {
+    _d('_onPauseDownload: taskId=${event.taskId}');
     await _foregroundDownloadService.pauseDownload(event.taskId);
     final task = state.downloads[event.taskId];
     if (task != null) {
@@ -159,6 +183,7 @@ class DownloadManagerBloc
     DownloadManagerResumeDownload event,
     Emitter<DownloadManagerState> emit,
   ) async {
+    _d('_onResumeDownload: taskId=${event.taskId}');
     await _foregroundDownloadService.resumeDownload(event.taskId);
     final task = state.downloads[event.taskId];
     if (task != null) {
@@ -173,6 +198,7 @@ class DownloadManagerBloc
     DownloadManagerStopDownload event,
     Emitter<DownloadManagerState> emit,
   ) async {
+    _d('_onStopDownload: taskId=${event.taskId}');
     await _foregroundDownloadService.stopDownload(event.taskId);
     final task = state.downloads[event.taskId];
     if (task != null) {
@@ -187,49 +213,83 @@ class DownloadManagerBloc
     DownloadManagerDeleteDownload event,
     Emitter<DownloadManagerState> emit,
   ) async {
+    _d('_onDeleteDownload: taskId=${event.taskId}');
     try {
       final task = state.downloads[event.taskId];
-      await _foregroundDownloadService.stopDownload(event.taskId);
+      // Ask the engine to wipe files first (it releases its file handles
+      // before unlinking, important on Windows). No-op if the task wasn't
+      // attached to the engine (e.g. rehydrated as stopped after restart).
+      await _foregroundDownloadService.deleteDownload(event.taskId);
+      // Then sweep anything the engine missed (rehydrated/never-started).
+      // Wait a tick so the engine's deleteFiles unlinks land first; otherwise
+      // we'd race on multi-file torrents.
+      await Future<void>.delayed(const Duration(milliseconds: 300));
       await _deleteDownloadArtifacts(task);
       final next = Map<int, DownloadTask>.from(state.downloads)
         ..remove(event.taskId);
       emit(state.copyWith(downloads: next));
     } catch (e, s) {
-      log('Error deleting download: $e', error: e, stackTrace: s);
+      _d('_onDeleteDownload: failed: $e', error: e, stackTrace: s);
     }
   }
 
-  /// `filePath` is the save **directory**. Delete each known file plus the
-  /// directory itself if empty. Best-effort — swallow per-entry errors so
-  /// one stuck file doesn't block removing the rest.
+  /// Best-effort filesystem cleanup. Runs after the engine-side delete and
+  /// also handles rehydrated tasks the engine never knew about.
+  ///
+  /// libtorrent stores files at `<basePath>/<file.name>`, where `file.name`
+  /// is the in-torrent path. Multi-file torrents share a common root folder
+  /// (the torrent name) — wipe that whole subdir. Single-file torrents drop
+  /// straight into `<basePath>`, so delete the individual file. Never touch
+  /// `basePath` itself — other torrents may share it.
   Future<void> _deleteDownloadArtifacts(DownloadTask? task) async {
     if (task == null) return;
     final basePath = task.filePath;
     if (basePath == null) return;
+    _d('_deleteDownloadArtifacts: basePath=$basePath, '
+        'files=${task.files.length}');
+
+    final sep = Platform.pathSeparator;
+    final commonRoot = _commonTopFolder(task.files);
+    if (commonRoot != null) {
+      final rootDir = Directory('$basePath$sep$commonRoot');
+      try {
+        if (await rootDir.exists()) {
+          await rootDir.delete(recursive: true);
+          _d('_deleteDownloadArtifacts: wiped $rootDir');
+          return;
+        }
+      } catch (e, s) {
+        _d('_deleteDownloadArtifacts: wipe subdir failed: $e',
+            error: e, stackTrace: s);
+      }
+    }
     for (final file in task.files) {
       try {
-        final normalized = file.name.replaceAll('/', Platform.pathSeparator);
-        final f = File('$basePath${Platform.pathSeparator}$normalized');
+        final normalized = file.name.replaceAll('/', sep);
+        final f = File('$basePath$sep$normalized');
         if (await f.exists()) await f.delete();
       } catch (e) {
-        log('Delete file failed: $e');
+        _d('_deleteDownloadArtifacts: delete file failed: $e');
       }
     }
-    try {
-      final dir = Directory(basePath);
-      if (await dir.exists()) {
-        final remaining = await dir.list().toList();
-        if (remaining.isEmpty) {
-          await dir.delete();
-        } else if (task.files.isEmpty) {
-          // No file metadata recorded (e.g. download failed before metadata).
-          // Wipe the per-task dir wholesale to clean up state files.
-          await dir.delete(recursive: true);
-        }
+  }
+
+  /// Returns the shared top-level folder name across [files] (e.g. the
+  /// torrent root) when every file lives under one, else null. Treats
+  /// both `/` and `\` as separators since libtorrent uses POSIX paths.
+  static String? _commonTopFolder(List<TorrentFileInfo> files) {
+    if (files.isEmpty) return null;
+    String? root;
+    for (final f in files) {
+      final parts = f.name.split(RegExp(r'[\\/]'));
+      if (parts.length < 2 || parts.first.isEmpty) return null;
+      if (root == null) {
+        root = parts.first;
+      } else if (root != parts.first) {
+        return null;
       }
-    } catch (e) {
-      log('Delete dir failed: $e');
     }
+    return root;
   }
 
   void _onUpdateProgress(
@@ -246,8 +306,10 @@ class DownloadManagerBloc
     DownloadManagerClearCompleted event,
     Emitter<DownloadManagerState> emit,
   ) {
+    final before = state.downloads.length;
     final next = Map<int, DownloadTask>.from(state.downloads)
       ..removeWhere((_, v) => v.status == DownloadStatus.completed);
+    _d('_onClearCompleted: removed ${before - next.length} entries');
     emit(state.copyWith(downloads: next));
   }
 
@@ -255,6 +317,8 @@ class DownloadManagerBloc
     DownloadManagerSetSpeedLimit event,
     Emitter<DownloadManagerState> emit,
   ) async {
+    _d('_onSetSpeedLimit: taskId=${event.taskId}, '
+        'dl=${event.downloadLimit}, ul=${event.uploadLimit}');
     await _foregroundDownloadService.setSpeedLimit(
       taskId: event.taskId,
       downloadLimit: event.downloadLimit,
@@ -276,6 +340,8 @@ class DownloadManagerBloc
     DownloadManagerSetFilePriority event,
     Emitter<DownloadManagerState> emit,
   ) async {
+    _d('_onSetFilePriority: taskId=${event.taskId}, '
+        'file=${event.fileIndex}, prio=${event.priority}');
     await _foregroundDownloadService.setFilePriority(
       taskId: event.taskId,
       fileIndex: event.fileIndex,
@@ -287,6 +353,8 @@ class DownloadManagerBloc
     DownloadManagerApplyFileSelection event,
     Emitter<DownloadManagerState> emit,
   ) async {
+    _d('_onApplyFileSelection: taskId=${event.taskId}, '
+        'selected=${event.selectedIndices}');
     await _foregroundDownloadService.applyFileSelection(
       taskId: event.taskId,
       selectedIndices: event.selectedIndices,
@@ -300,6 +368,8 @@ class DownloadManagerBloc
     DownloadManagerMoveDownloadTask event,
     Emitter<DownloadManagerState> emit,
   ) async {
+    _d('_onMoveDownloadTask: taskId=${event.taskId}, '
+        'newPath=${event.newSavePath}');
     final current = state.downloads[event.taskId];
     if (current == null) return;
     final moved = await _moveTaskFilesLocal(current, event.newSavePath);
@@ -339,7 +409,7 @@ class DownloadManagerBloc
       } catch (_) {}
       return moved > 0 || task.files.isEmpty;
     } catch (e, s) {
-      log('Local move failed: $e', error: e, stackTrace: s);
+      _d('_moveTaskFilesLocal failed: $e', error: e, stackTrace: s);
       return false;
     }
   }
@@ -357,6 +427,7 @@ class DownloadManagerBloc
 
   @override
   Future<void> close() {
+    _d('close: cancelling subscription');
     _progressSubscription?.cancel();
     return super.close();
   }
@@ -365,8 +436,8 @@ class DownloadManagerBloc
   DownloadManagerState? fromJson(Map<String, dynamic> json) {
     try {
       return DownloadManagerState.fromJson(json);
-    } catch (e) {
-      log('Error deserializing DownloadManagerState: $e');
+    } catch (e, s) {
+      _d('fromJson failed: $e', error: e, stackTrace: s);
       return null;
     }
   }
@@ -375,8 +446,8 @@ class DownloadManagerBloc
   Map<String, dynamic>? toJson(DownloadManagerState state) {
     try {
       return state.toJson();
-    } catch (e) {
-      log('Error serializing DownloadManagerState: $e');
+    } catch (e, s) {
+      _d('toJson failed: $e', error: e, stackTrace: s);
       return null;
     }
   }

@@ -19,8 +19,6 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
 
   late final TextEditingController _dlLimitCtrl;
   late final TextEditingController _ulLimitCtrl;
-  late int _maxConcurrent;
-  late List<String> _defaultTrackers;
 
   ForegroundDownloadService get _svc => getIt<ForegroundDownloadService>();
   PreferencesService get _prefs => getIt<PreferencesService>();
@@ -39,8 +37,6 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
           ? ''
           : (_prefs.globalUploadLimit! / 1024).toStringAsFixed(0),
     );
-    _maxConcurrent = _prefs.maxConcurrentDownloads;
-    _defaultTrackers = List.of(_prefs.defaultTrackers);
   }
 
   @override
@@ -50,7 +46,6 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
     super.dispose();
   }
 
-  // ---- Location ----
   Future<void> _selectDownloadLocation() async {
     setState(() => _isLoading = true);
     try {
@@ -92,7 +87,6 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
     }
   }
 
-  // ---- Speed limits ----
   Future<void> _applyGlobalLimits() async {
     final dl = int.tryParse(_dlLimitCtrl.text.trim());
     final ul = int.tryParse(_ulLimitCtrl.text.trim());
@@ -104,53 +98,6 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
             content: Text('Global limits saved (applied to new downloads)')),
       );
     }
-  }
-
-  // ---- Concurrency ----
-  // libtorrent_flutter has no per-session cap; the engine runs every added
-  // torrent in parallel. Preference is kept for forward compatibility but
-  // does not currently throttle the engine.
-  Future<void> _setMaxConcurrent(int value) async {
-    setState(() => _maxConcurrent = value);
-    await _prefs.setMaxConcurrentDownloads(value);
-  }
-
-  // ---- Default trackers ----
-  Future<void> _addDefaultTracker() async {
-    final ctrl = TextEditingController();
-    final url = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Add default tracker'),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Tracker URL',
-            hintText: 'udp://tracker.opentrackr.org:1337/announce',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
-    if (url != null && url.isNotEmpty) {
-      await _prefs.addDefaultTracker(url);
-      setState(() => _defaultTrackers = List.of(_prefs.defaultTrackers));
-    }
-  }
-
-  Future<void> _removeDefaultTracker(String url) async {
-    await _prefs.removeDefaultTracker(url);
-    setState(() => _defaultTrackers = List.of(_prefs.defaultTrackers));
   }
 
   @override
@@ -252,7 +199,7 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
           ),
           const SizedBox(height: 16),
 
-          // --- Speed limits ---
+          // --- Speed limits (session-wide) ---
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -263,14 +210,14 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
                     children: [
                       Icon(Icons.speed, color: theme.colorScheme.primary),
                       const SizedBox(width: 8),
-                      Text('Global Speed Limits',
+                      Text('Speed Limits',
                           style: theme.textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.bold)),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Applied to new downloads. Blank = unlimited.',
+                    'Applied engine-wide across every download. Blank = unlimited.',
                     style: theme.textTheme.bodySmall
                         ?.copyWith(color: Colors.grey[600]),
                   ),
@@ -301,108 +248,6 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
                       label: const Text('Save limits'),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // --- Concurrency ---
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.layers, color: theme.colorScheme.primary),
-                      const SizedBox(width: 8),
-                      Text('Max Concurrent Downloads',
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Slider(
-                          value: _maxConcurrent.toDouble(),
-                          min: 1,
-                          max: 10,
-                          divisions: 9,
-                          label: '$_maxConcurrent',
-                          onChanged: (v) =>
-                              setState(() => _maxConcurrent = v.toInt()),
-                          onChangeEnd: (v) => _setMaxConcurrent(v.toInt()),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 32,
-                        child: Text('$_maxConcurrent',
-                            textAlign: TextAlign.center),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // --- Default trackers ---
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.dns, color: theme.colorScheme.primary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text('Default Trackers',
-                            style: theme.textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold)),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: _addDefaultTracker,
-                        tooltip: 'Add tracker',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Applied to every new download in addition to the magnet trackers.',
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 8),
-                  if (_defaultTrackers.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Text('No default trackers configured.'),
-                    )
-                  else
-                    ..._defaultTrackers.map((url) => ListTile(
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.link, size: 18),
-                          title: Text(
-                            url,
-                            style: const TextStyle(
-                                fontFamily: 'monospace', fontSize: 11),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline),
-                            onPressed: () => _removeDefaultTracker(url),
-                          ),
-                        )),
                 ],
               ),
             ),
