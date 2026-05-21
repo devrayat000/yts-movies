@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:developer' as dev;
+import 'dart:developer';
 import 'dart:io';
 import 'dart:ui';
 
@@ -13,108 +13,104 @@ import 'package:ytsmovies/src/models/torrent_service_models.dart';
 const String notificationChannelId = 'torrent_downloads';
 const int notificationId = 888;
 
-const String _logTag = 'TT';
-
-/// Tee every debug line to debugPrint (stdout / `adb logcat`) AND
-/// dart:developer.log (DevTools). The background isolate is the dark
-/// continent of Flutter logging — be loud.
-void _d(String msg, {Object? error, StackTrace? stack}) {
-  // ignore: avoid_print
-  debugPrint('[$_logTag] $msg');
-  dev.log(msg, name: _logTag, error: error, stackTrace: stack);
-}
-
 /// Background-isolate entry point. libtorrent_flutter holds a single FFI
 /// session per process, so the engine lives entirely inside this isolate
 /// and the main isolate talks to it via flutter_background_service IPC.
 @pragma('vm:entry-point')
 void onStartBackgroundService(ServiceInstance service) async {
-  _d('onStartBackgroundService: enter (pid=$pid)');
+  log('onStartBackgroundService: enter (pid=$pid)', name: 'BackgroundService');
   DartPluginRegistrant.ensureInitialized();
-  _d('onStartBackgroundService: DartPluginRegistrant ready');
+  log('onStartBackgroundService: DartPluginRegistrant ready',
+      name: 'BackgroundService');
   final notifications = FlutterLocalNotificationsPlugin();
 
   if (!LibtorrentFlutter.isInitialized) {
-    _d('LibtorrentFlutter.init starting (defaultSavePath=${Directory.systemTemp.path})');
+    log('LibtorrentFlutter.init starting (defaultSavePath=${Directory.systemTemp.path})',
+        name: 'BackgroundService');
     try {
       await LibtorrentFlutter.init(
         defaultSavePath: Directory.systemTemp.path,
         fetchTrackers: false,
         pollInterval: const Duration(milliseconds: 750),
       );
-      _d('LibtorrentFlutter.init OK (version=${LibtorrentFlutter.instance.libraryVersion})');
+      log('LibtorrentFlutter.init OK (version=${LibtorrentFlutter.instance.libraryVersion})',
+          name: 'BackgroundService');
     } catch (e, s) {
-      _d('LibtorrentFlutter.init FAILED: $e', error: e, stack: s);
+      log('LibtorrentFlutter.init FAILED: $e',
+          error: e, stackTrace: s, name: 'BackgroundService');
       rethrow;
     }
   } else {
-    _d('LibtorrentFlutter already initialized');
+    log('LibtorrentFlutter already initialized', name: 'BackgroundService');
   }
 
   final handler = _TorrentHandler(service, notifications);
-  _d('_TorrentHandler constructed');
+  log('_TorrentHandler constructed', name: 'BackgroundService');
 
   service.on('startDownload').listen((event) {
-    _d('IPC<- startDownload: $event');
+    log('IPC<- startDownload: $event', name: 'BackgroundService');
     if (event == null) {
-      _d('IPC<- startDownload: null payload, ignoring');
+      log('IPC<- startDownload: null payload, ignoring',
+          name: 'BackgroundService');
       return;
     }
     try {
       handler.startDownload(StartDownloadRequest.fromJson(event));
     } catch (e, s) {
-      _d('IPC<- startDownload parse error: $e', error: e, stack: s);
+      log('IPC<- startDownload parse error: $e',
+          error: e, stackTrace: s, name: 'BackgroundService');
     }
   });
   service.on('pauseDownload').listen((event) {
-    _d('IPC<- pauseDownload: $event');
+    log('IPC<- pauseDownload: $event', name: 'BackgroundService');
     if (event != null) {
       handler.pauseDownload(DownloadControlRequest.fromJson(event));
     }
   });
   service.on('resumeDownload').listen((event) {
-    _d('IPC<- resumeDownload: $event');
+    log('IPC<- resumeDownload: $event', name: 'BackgroundService');
     if (event != null) {
       handler.resumeDownload(DownloadControlRequest.fromJson(event));
     }
   });
   service.on('stopDownload').listen((event) {
-    _d('IPC<- stopDownload: $event');
+    log('IPC<- stopDownload: $event', name: 'BackgroundService');
     if (event != null) {
       handler.stopDownload(DownloadControlRequest.fromJson(event));
     }
   });
   service.on('setSpeedLimit').listen((event) {
-    _d('IPC<- setSpeedLimit: $event');
+    log('IPC<- setSpeedLimit: $event', name: 'BackgroundService');
     if (event != null) {
       handler.setSpeedLimit(SetSpeedLimitRequest.fromJson(event));
     }
   });
   service.on('setFilePriority').listen((event) {
-    _d('IPC<- setFilePriority: $event');
+    log('IPC<- setFilePriority: $event', name: 'BackgroundService');
     if (event != null) {
       handler.setFilePriority(SetFilePriorityRequest.fromJson(event));
     }
   });
   service.on('applyFileSelection').listen((event) {
-    _d('IPC<- applyFileSelection: $event');
+    log('IPC<- applyFileSelection: $event', name: 'BackgroundService');
     if (event != null) {
       handler.applyFileSelection(ApplyFileSelectionRequest.fromJson(event));
     }
   });
   service.on('deleteDownload').listen((event) {
-    _d('IPC<- deleteDownload: $event');
+    log('IPC<- deleteDownload: $event', name: 'BackgroundService');
     if (event != null) {
       handler.deleteDownload(DownloadControlRequest.fromJson(event));
     }
   });
   service.on('stopService').listen((event) async {
-    _d('IPC<- stopService');
+    log('IPC<- stopService', name: 'BackgroundService');
     await handler.shutdown();
     service.stopSelf();
   });
 
-  _d('onStartBackgroundService: ready, listening on IPC');
+  log('onStartBackgroundService: ready, listening on IPC',
+      name: 'BackgroundService');
 }
 
 /// Per-task bookkeeping inside the background isolate.
@@ -181,12 +177,17 @@ String _infoStr(TorrentInfo i) =>
 
 class _TorrentHandler {
   _TorrentHandler(this.service, this.notifications) {
-    _d('_TorrentHandler: subscribing to torrentUpdates');
+    log('_TorrentHandler: subscribing to torrentUpdates',
+        name: '_TorrentHandler');
     _torrentSub = _engine.torrentUpdates.listen(
       _onSnapshot,
-      onError: (Object e, StackTrace s) =>
-          _d('torrentUpdates stream error: $e', error: e, stack: s),
-      onDone: () => _d('torrentUpdates stream closed'),
+      onError: (Object e, StackTrace s) => log(
+          'torrentUpdates stream error: $e',
+          error: e,
+          stackTrace: s,
+          name: '_TorrentHandler'),
+      onDone: () =>
+          log('torrentUpdates stream closed', name: '_TorrentHandler'),
     );
     _aggregateTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       _updateForegroundNotification();
@@ -214,9 +215,10 @@ class _TorrentHandler {
   // ─── IPC commands ────────────────────────────────────────────────────────
 
   Future<void> startDownload(StartDownloadRequest req) async {
-    _d('startDownload: req=$req');
+    log('startDownload: req=$req', name: '_TorrentHandler');
     if (_tasks.containsKey(req.taskId)) {
-      _d('startDownload: ${req.taskId} already running, skipping');
+      log('startDownload: ${req.taskId} already running, skipping',
+          name: '_TorrentHandler');
       return;
     }
     _cancelIdleStop();
@@ -229,35 +231,41 @@ class _TorrentHandler {
       previewMode: req.previewMode,
     );
     _tasks[req.taskId] = task;
-    _d('startDownload: task registered $task');
+    log('startDownload: task registered $task', name: '_TorrentHandler');
 
     try {
       await Directory(task.savePath).create(recursive: true);
-      _d('startDownload: savePath ready (${task.savePath})');
+      log('startDownload: savePath ready (${task.savePath})',
+          name: '_TorrentHandler');
     } catch (e, s) {
-      _d('startDownload: save dir create failed (${task.savePath}): $e',
-          error: e, stack: s);
+      log('startDownload: save dir create failed (${task.savePath}): $e',
+          error: e, stackTrace: s, name: '_TorrentHandler');
     }
 
     if (req.initialDownloadLimit != null) {
       _sessionDl = req.initialDownloadLimit;
       _engine.setDownloadLimit(_sessionDl ?? 0);
-      _d('startDownload: session DL limit set to $_sessionDl');
+      log('startDownload: session DL limit set to $_sessionDl',
+          name: '_TorrentHandler');
     }
     if (req.initialUploadLimit != null) {
       _sessionUl = req.initialUploadLimit;
       _engine.setUploadLimit(_sessionUl ?? 0);
-      _d('startDownload: session UL limit set to $_sessionUl');
+      log('startDownload: session UL limit set to $_sessionUl',
+          name: '_TorrentHandler');
     }
 
     try {
-      _d('startDownload: calling addMagnet (savePath=${task.savePath})');
+      log('startDownload: calling addMagnet (savePath=${task.savePath})',
+          name: '_TorrentHandler');
       final torrentId = _engine.addMagnet(req.magnetUri, task.savePath);
       task.torrentId = torrentId;
       _torrentToTask[torrentId] = task.taskId;
-      _d('startDownload: addMagnet OK torrentId=$torrentId for task=${task.taskId}');
+      log('startDownload: addMagnet OK torrentId=$torrentId for task=${task.taskId}',
+          name: '_TorrentHandler');
     } catch (e, s) {
-      _d('startDownload: addMagnet FAILED: $e', error: e, stack: s);
+      log('startDownload: addMagnet FAILED: $e',
+          error: e, stackTrace: s, name: '_TorrentHandler');
       _fail(task, e.toString());
       return;
     }
@@ -268,18 +276,20 @@ class _TorrentHandler {
   }
 
   void pauseDownload(DownloadControlRequest req) {
-    _d('pauseDownload: taskId=${req.taskId}');
+    log('pauseDownload: taskId=${req.taskId}');
     final task = _tasks[req.taskId];
     if (task == null) {
-      _d('pauseDownload: no task for ${req.taskId}, ignoring');
+      log('pauseDownload: no task for ${req.taskId}, ignoring',
+          name: '_TorrentHandler');
       return;
     }
     final tid = task.torrentId;
     if (tid != null) {
       _engine.pauseTorrent(tid);
-      _d('pauseDownload: engine.pauseTorrent($tid) called');
+      log('pauseDownload: engine.pauseTorrent($tid) called',
+          name: '_TorrentHandler');
     } else {
-      _d('pauseDownload: task has no torrentId yet');
+      log('pauseDownload: task has no torrentId yet', name: '_TorrentHandler');
     }
     task.pausedByUser = true;
     task.lastStatus = DownloadStatus.paused;
@@ -287,10 +297,11 @@ class _TorrentHandler {
   }
 
   void resumeDownload(DownloadControlRequest req) {
-    _d('resumeDownload: taskId=${req.taskId}');
+    log('resumeDownload: taskId=${req.taskId}', name: '_TorrentHandler');
     final task = _tasks[req.taskId];
     if (task == null) {
-      _d('resumeDownload: no task for ${req.taskId}, ignoring');
+      log('resumeDownload: no task for ${req.taskId}, ignoring',
+          name: '_TorrentHandler');
       return;
     }
     _cancelIdleStop();
@@ -298,20 +309,23 @@ class _TorrentHandler {
     final tid = task.torrentId;
     if (tid != null) {
       _engine.resumeTorrent(tid);
-      _d('resumeDownload: engine.resumeTorrent($tid) called');
+      log('resumeDownload: engine.resumeTorrent($tid) called',
+          name: '_TorrentHandler');
     }
     task.lastStatus = task.previewMode || task.totalWanted == 0
         ? DownloadStatus.downloadingMetadata
         : DownloadStatus.downloading;
-    _d('resumeDownload: optimistic status -> ${task.lastStatus}');
+    log('resumeDownload: optimistic status -> ${task.lastStatus}',
+        name: '_TorrentHandler');
     _emit(task);
   }
 
   void stopDownload(DownloadControlRequest req) {
-    _d('stopDownload: taskId=${req.taskId}');
+    log('stopDownload: taskId=${req.taskId}', name: '_TorrentHandler');
     final task = _tasks[req.taskId];
     if (task == null) {
-      _d('stopDownload: no task for ${req.taskId}, ignoring');
+      log('stopDownload: no task for ${req.taskId}, ignoring',
+          name: '_TorrentHandler');
       return;
     }
     _detachFromEngine(task);
@@ -326,20 +340,24 @@ class _TorrentHandler {
   /// than manual fs deletion because the engine releases its file handles
   /// before unlinking, which matters on Windows.
   void deleteDownload(DownloadControlRequest req) {
-    _d('deleteDownload: taskId=${req.taskId}');
+    log('deleteDownload: taskId=${req.taskId}', name: '_TorrentHandler');
     final task = _tasks[req.taskId];
     if (task == null) {
-      _d('deleteDownload: no task in engine for ${req.taskId} '
-          '(probably rehydrated/stopped) — main isolate will sweep disk');
+      log(
+          'deleteDownload: no task in engine for ${req.taskId} '
+          '(probably rehydrated/stopped) — main isolate will sweep disk',
+          name: '_TorrentHandler');
       return;
     }
     final tid = task.torrentId;
     if (tid != null) {
       try {
         _engine.removeTorrent(tid, deleteFiles: true);
-        _d('deleteDownload: removeTorrent(tid=$tid, deleteFiles=true) OK');
+        log('deleteDownload: removeTorrent(tid=$tid, deleteFiles=true) OK',
+            name: '_TorrentHandler');
       } catch (e, s) {
-        _d('deleteDownload: removeTorrent failed: $e', error: e, stack: s);
+        log('deleteDownload: removeTorrent failed: $e',
+            error: e, stackTrace: s, name: '_TorrentHandler');
       }
       _torrentToTask.remove(tid);
     }
@@ -351,26 +369,31 @@ class _TorrentHandler {
   }
 
   void setSpeedLimit(SetSpeedLimitRequest req) {
-    _d('setSpeedLimit: dl=${req.downloadLimit}, ul=${req.uploadLimit}');
+    log('setSpeedLimit: dl=${req.downloadLimit}, ul=${req.uploadLimit}',
+        name: '_TorrentHandler');
     final task = _tasks[req.taskId];
     if (task == null) {
-      _d('setSpeedLimit: no task for ${req.taskId}, ignoring');
+      log('setSpeedLimit: no task for ${req.taskId}, ignoring',
+          name: '_TorrentHandler');
       return;
     }
     _sessionDl = req.downloadLimit;
     _sessionUl = req.uploadLimit;
     _engine.setDownloadLimit(_sessionDl ?? 0);
     _engine.setUploadLimit(_sessionUl ?? 0);
-    _d('setSpeedLimit: applied session-wide dl=$_sessionDl, ul=$_sessionUl');
+    log('setSpeedLimit: applied session-wide dl=$_sessionDl, ul=$_sessionUl',
+        name: '_TorrentHandler');
     _emit(task);
   }
 
   void setFilePriority(SetFilePriorityRequest req) {
-    _d('setFilePriority: taskId=${req.taskId}, file=${req.fileIndex}, '
-        'prio=${req.priority}');
+    log(
+        'setFilePriority: taskId=${req.taskId}, file=${req.fileIndex}, '
+        'prio=${req.priority}',
+        name: '_TorrentHandler');
     final task = _tasks[req.taskId];
     if (task == null) {
-      _d('setFilePriority: no task, ignoring');
+      log('setFilePriority: no task, ignoring', name: '_TorrentHandler');
       return;
     }
     task.priorities[req.fileIndex] = req.priority;
@@ -386,11 +409,13 @@ class _TorrentHandler {
   }
 
   void applyFileSelection(ApplyFileSelectionRequest req) {
-    _d('applyFileSelection: taskId=${req.taskId}, '
-        'selected=${req.selectedIndices}');
+    log(
+        'applyFileSelection: taskId=${req.taskId}, '
+        'selected=${req.selectedIndices}',
+        name: '_TorrentHandler');
     final task = _tasks[req.taskId];
     if (task == null) {
-      _d('applyFileSelection: no task, ignoring');
+      log('applyFileSelection: no task, ignoring', name: '_TorrentHandler');
       return;
     }
     final wasPreview = task.previewMode;
@@ -399,7 +424,8 @@ class _TorrentHandler {
     final selected = req.selectedIndices.toSet();
     final tid = task.torrentId;
     final fileCount = tid == null ? 0 : _engine.getFiles(tid).length;
-    _d('applyFileSelection: wasPreview=$wasPreview, fileCount=$fileCount');
+    log('applyFileSelection: wasPreview=$wasPreview, fileCount=$fileCount',
+        name: '_TorrentHandler');
     for (var i = 0; i < fileCount; i++) {
       task.priorities[i] = selected.contains(i)
           ? FilePriorityLevel.normal
@@ -428,21 +454,26 @@ class _TorrentHandler {
     // download flow is verified end-to-end.
     const verbose = true;
     if (verbose) {
-      _d('_onSnapshot #$_snapshotCounter: '
-          '${snapshot.length} torrents, map=$_torrentToTask');
+      log(
+          '_onSnapshot #$_snapshotCounter: '
+          '${snapshot.length} torrents, map=$_torrentToTask',
+          name: '_TorrentHandler');
     }
     for (final entry in snapshot.entries) {
       final taskId = _torrentToTask[entry.key];
       if (taskId == null) {
         if (verbose) {
-          _d('_onSnapshot: unknown torrentId=${entry.key}, skipping');
+          log('_onSnapshot: unknown torrentId=${entry.key}, skipping',
+              name: '_TorrentHandler');
         }
         continue;
       }
       final task = _tasks[taskId];
       if (task == null) {
-        _d('_onSnapshot: stale taskId=$taskId for torrentId=${entry.key}, '
-            'cleaning up');
+        log(
+            '_onSnapshot: stale taskId=$taskId for torrentId=${entry.key}, '
+            'cleaning up',
+            name: '_TorrentHandler');
         _torrentToTask.remove(entry.key);
         continue;
       }
@@ -452,11 +483,14 @@ class _TorrentHandler {
 
   void _applySnapshot(_Task task, TorrentInfo info, {required bool verbose}) {
     if (verbose) {
-      _d('_applySnapshot[task=${task.taskId}]: ${_infoStr(info)}');
+      log('_applySnapshot[task=${task.taskId}]: ${_infoStr(info)}',
+          name: '_TorrentHandler');
     }
     if (!task.prioritiesPushed && info.hasMetadata) {
-      _d('_applySnapshot: first metadata for task=${task.taskId}, '
-          'reading files + pushing priorities');
+      log(
+          '_applySnapshot: first metadata for task=${task.taskId}, '
+          'reading files + pushing priorities',
+          name: '_TorrentHandler');
       task.files = _readFiles(task);
       _pushPriorities(task);
     }
@@ -479,19 +513,23 @@ class _TorrentHandler {
     task.lastStatus = newStatus;
 
     if (prevStatus != newStatus) {
-      _d('_applySnapshot[task=${task.taskId}]: status $prevStatus -> '
+      log(
+          '_applySnapshot[task=${task.taskId}]: status $prevStatus -> '
           '$newStatus (totalWanted=${info.totalWanted}, '
           'totalDone=${info.totalDone}, isFinished=${info.isFinished}, '
           'state=${info.state}, hasMetadata=${info.hasMetadata}, '
-          'previewMode=${task.previewMode})');
+          'previewMode=${task.previewMode})',
+          name: '_TorrentHandler');
     }
 
     if (newStatus == DownloadStatus.completed && !task.completionEmitted) {
-      _d('_applySnapshot[task=${task.taskId}]: ** COMPLETION LATCH SET ** '
+      log(
+          '_applySnapshot[task=${task.taskId}]: ** COMPLETION LATCH SET ** '
           'totalDone=${info.totalDone}, totalWanted=${info.totalWanted}, '
           'isFinished=${info.isFinished}, '
           'progress=${(info.progress * 100).toStringAsFixed(2)}%, '
-          'state=${info.state}');
+          'state=${info.state}',
+          name: '_TorrentHandler');
       task.completionEmitted = true;
       _markFilesComplete(task);
       _showCompletionNotification(task);
@@ -505,7 +543,7 @@ class _TorrentHandler {
       _updateForegroundNotification();
     } else if (newStatus == DownloadStatus.failed &&
         prevStatus != DownloadStatus.failed) {
-      _d('_applySnapshot[task=${task.taskId}]: FAILED, errorMsg="${info.errorMsg}"');
+      log('_applySnapshot[task=${task.taskId}]: FAILED, errorMsg="${info.errorMsg}"');
       _scheduleIdleStop();
     }
 
@@ -536,9 +574,11 @@ class _TorrentHandler {
         info.totalWanted > 0 &&
         info.totalDone < info.totalWanted &&
         info.progress < 0.999) {
-      _d('_statusFor[task=${task.taskId}]: clearing stale completion latch '
+      log(
+          '_statusFor[task=${task.taskId}]: clearing stale completion latch '
           '(done=${info.totalDone}/${info.totalWanted}, '
-          'progress=${(info.progress * 100).toStringAsFixed(1)}%)');
+          'progress=${(info.progress * 100).toStringAsFixed(1)}%)',
+          name: '_TorrentHandler');
       task.completionEmitted = false;
     }
     if (task.completionEmitted) return DownloadStatus.completed;
@@ -563,11 +603,11 @@ class _TorrentHandler {
   List<TorrentFileInfo> _readFiles(_Task task) {
     final tid = task.torrentId;
     if (tid == null) {
-      _d('_readFiles: no torrentId for task=${task.taskId}');
+      log('_readFiles: no torrentId for task=${task.taskId}');
       return const [];
     }
     final raw = _engine.getFiles(tid);
-    _d('_readFiles[task=${task.taskId}]: engine returned ${raw.length} files');
+    log('_readFiles[task=${task.taskId}]: engine returned ${raw.length} files');
     final out = [
       for (final f in raw)
         TorrentFileInfo(
@@ -580,7 +620,7 @@ class _TorrentHandler {
         ),
     ];
     for (final f in out) {
-      _d('  file[${f.index}]: name="${f.name}", size=${f.size}, prio=${f.priority}');
+      log('  file[${f.index}]: name="${f.name}", size=${f.size}, prio=${f.priority}');
     }
     return out;
   }
@@ -590,12 +630,12 @@ class _TorrentHandler {
   void _pushPriorities(_Task task) {
     final tid = task.torrentId;
     if (tid == null) {
-      _d('_pushPriorities: no torrentId for task=${task.taskId}, skip');
+      log('_pushPriorities: no torrentId for task=${task.taskId}, skip');
       return;
     }
     final files = _engine.getFiles(tid);
     if (files.isEmpty) {
-      _d('_pushPriorities[task=${task.taskId}]: no files yet (metadata pending), skip');
+      log('_pushPriorities[task=${task.taskId}]: no files yet (metadata pending), skip');
       return;
     }
 
@@ -614,14 +654,18 @@ class _TorrentHandler {
       task.priorities[i] = level;
       return _priorityToInt(level);
     });
-    _d('_pushPriorities[task=${task.taskId}]: vector=$vector '
-        '(previewMode=${task.previewMode}, selected=$selected)');
+    log(
+        '_pushPriorities[task=${task.taskId}]: vector=$vector '
+        '(previewMode=${task.previewMode}, selected=$selected)',
+        name: '_TorrentHandler');
     try {
       _engine.setFilePriorities(tid, vector);
       task.prioritiesPushed = true;
-      _d('_pushPriorities[task=${task.taskId}]: engine ack');
+      log('_pushPriorities[task=${task.taskId}]: engine ack',
+          name: '_TorrentHandler');
     } catch (e, s) {
-      _d('_pushPriorities[task=${task.taskId}]: FAILED $e', error: e, stack: s);
+      log('_pushPriorities[task=${task.taskId}]: FAILED $e',
+          error: e, stackTrace: s, name: '_TorrentHandler');
     }
   }
 
@@ -661,21 +705,24 @@ class _TorrentHandler {
       error: error,
     );
     if (verbose) {
-      _d('IPC-> progressUpdate #$_emitCounter: '
+      log(
+          'IPC-> progressUpdate #$_emitCounter: '
           'task=${task.taskId}, status=${task.lastStatus}, '
           'progress=${(task.progress * 100).toStringAsFixed(1)}%, '
           'dl=${task.downloadSpeed}, ul=${task.uploadSpeed}, '
-          'done=${task.totalDone}/${task.totalWanted}, error=$error');
+          'done=${task.totalDone}/${task.totalWanted}, error=$error',
+          name: '_TorrentHandler');
     }
     try {
       service.invoke('progressUpdate', update.toJson());
     } catch (e, s) {
-      _d('_emit: service.invoke FAILED $e', error: e, stack: s);
+      log('_emit: service.invoke FAILED $e',
+          error: e, stackTrace: s, name: '_TorrentHandler');
     }
   }
 
   void _fail(_Task task, String error) {
-    _d('_fail[task=${task.taskId}]: $error');
+    log('_fail[task=${task.taskId}]: $error');
     task.lastStatus = DownloadStatus.failed;
     _emit(task, error: error);
     _detachFromEngine(task);
@@ -689,9 +736,10 @@ class _TorrentHandler {
     if (tid == null) return;
     try {
       _engine.removeTorrent(tid, deleteFiles: false);
-      _d('_detachFromEngine: removeTorrent($tid) OK');
+      log('_detachFromEngine: removeTorrent($tid) OK');
     } catch (e, s) {
-      _d('_detachFromEngine: removeTorrent($tid) FAILED $e', error: e, stack: s);
+      log('_detachFromEngine: removeTorrent($tid) FAILED $e',
+          error: e, stackTrace: s, name: '_TorrentHandler');
     }
     _torrentToTask.remove(tid);
   }
@@ -738,7 +786,8 @@ class _TorrentHandler {
         payload: task.taskId.toString(),
       );
     } catch (e, s) {
-      _d('completion notification failed: $e', error: e, stack: s);
+      log('completion notification failed: $e',
+          error: e, stackTrace: s, name: '_TorrentHandler');
     }
   }
 
@@ -859,7 +908,8 @@ class _TorrentHandler {
         NotificationDetails(android: details),
       );
     } catch (e, s) {
-      _d('foreground notification failed: $e', error: e, stack: s);
+      log('foreground notification failed: $e',
+          error: e, stackTrace: s, name: '_TorrentHandler');
     }
   }
 
@@ -897,20 +947,23 @@ class _TorrentHandler {
     _idleStopTimer = Timer(_idleGrace, () {
       _idleStopTimer = null;
       if (_shuttingDown || _hasActiveWork()) return;
-      _d('_scheduleIdleStop: grace elapsed, shutting down service');
+      log('_scheduleIdleStop: grace elapsed, shutting down service',
+          name: '_TorrentHandler');
       _shuttingDown = true;
       shutdown().then((_) {
         try {
           service.stopSelf();
         } catch (e, s) {
-          _d('stopSelf failed: $e', error: e, stack: s);
+          log('stopSelf failed: $e',
+              error: e, stackTrace: s, name: '_TorrentHandler');
         }
       });
     });
   }
 
   Future<void> shutdown() async {
-    _d('shutdown: enter (alreadyDone=$_shutdownComplete)');
+    log('shutdown: enter (alreadyDone=$_shutdownComplete)',
+        name: '_TorrentHandler');
     if (_shutdownComplete) return;
     _shutdownComplete = true;
     await _torrentSub?.cancel();
@@ -926,7 +979,7 @@ class _TorrentHandler {
     }
     _tasks.clear();
     _torrentToTask.clear();
-    _d('shutdown: done');
+    log('shutdown: done', name: '_TorrentHandler');
   }
 
   String _fmtSpeed(int bps) {
