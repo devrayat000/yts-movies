@@ -12,6 +12,13 @@ import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/services/connectivity_service.dart';
 
+class _InitProgress {
+  final String message;
+  final double progress; // 0.0 to 1.0
+
+  const _InitProgress(this.message, this.progress);
+}
+
 /// A splash screen wrapper that handles app initialization
 class InitializationSplashScreen extends StatefulWidget {
   const InitializationSplashScreen({super.key});
@@ -23,29 +30,41 @@ class InitializationSplashScreen extends StatefulWidget {
 
 class _InitializationSplashScreenState
     extends State<InitializationSplashScreen> {
-  String? _errorMessage;
-  String _currentStep = 'Starting initialization...';
+  late Stream<_InitProgress> _stream;
 
   @override
   void initState() {
     super.initState();
     // Start initialization when splash screen is first loaded
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initialize();
+    _start();
+  }
+
+  void _start() {
+    final stream = _initialize().asBroadcastStream();
+
+    stream.listen(
+      (_) {},
+      onDone: () {
+        if (mounted) context.pushReplacementNamed('home');
+      },
+      onError: (e, s) {
+        log(e.toString(), error: e, stackTrace: s);
+      },
+    );
+
+    setState(() {
+      _stream = stream;
     });
   }
 
-  Future<void> _initialize() async {
+  Stream<_InitProgress> _initialize() async* {
     try {
       Timeline.startSync('init');
-      setState(() {
-        _errorMessage = null;
-      });
 
-      await _updateStep('Initializing Flutter engine...');
+      yield const _InitProgress('Initializing Flutter engine...', 0.2);
       await Future.delayed(const Duration(milliseconds: 300));
 
-      await _updateStep('Setting up system UI...');
+      yield const _InitProgress('Setting up system UI...', 0.4);
       SystemChrome.setSystemUIOverlayStyle(
         const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
@@ -54,47 +73,26 @@ class _InitializationSplashScreenState
       );
       await Future.delayed(const Duration(milliseconds: 200));
 
-      await _updateStep('Opening data stores...');
+      yield const _InitProgress('Opening data stores...', 0.6);
       await Future.wait([
         Hive.openBox<Movie>(MyBoxs.favouriteBox),
         Hive.openBox<String>(MyBoxs.searchHistoryBox),
       ]);
       await Future.delayed(const Duration(milliseconds: 300));
 
-      await _updateStep('Checking network connectivity...');
+      yield const _InitProgress('Checking network connectivity...', 0.8);
       await getIt<ConnectivityService>().initialize();
       await Future.delayed(const Duration(milliseconds: 300));
 
-      await _updateStep('Initializing services...');
+      yield const _InitProgress('Initializing services...', 0.9);
       // Services are already initialized via dependency injection
       await Future.delayed(const Duration(milliseconds: 300));
-      Timeline.finishSync();
 
-      await _updateStep('Finalizing setup...');
+      yield const _InitProgress('Finalizing setup...', 1.0);
       await Future.delayed(const Duration(milliseconds: 500));
-
-      // Navigate to home after successful initialization
-      if (mounted) {
-        context.pushReplacementNamed('home');
-      }
-    } catch (e, s) {
-      log(e.toString(), error: e, stackTrace: s);
-      setState(() {
-        _errorMessage = e.toString();
-      });
+    } finally {
+      Timeline.finishSync();
     }
-  }
-
-  Future<void> _updateStep(String step) async {
-    if (mounted) {
-      setState(() {
-        _currentStep = step;
-      });
-    }
-  }
-
-  void _retry() {
-    _initialize();
   }
 
   @override
@@ -130,15 +128,25 @@ class _InitializationSplashScreenState
           ),
         ),
         child: SafeArea(
-          child: _errorMessage != null
-              ? _buildErrorView(context, colorScheme)
-              : _buildLoadingView(context, colorScheme),
+          child: StreamBuilder(
+            stream: _stream,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                final progress = snapshot.data!;
+                return _buildLoadingView(context, colorScheme, progress);
+              } else if (snapshot.hasError) {
+                return _buildErrorView(context, colorScheme, snapshot.error);
+              }
+              return _buildLoadingView(context, colorScheme);
+            },
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildLoadingView(BuildContext context, ColorScheme colorScheme) {
+  Widget _buildLoadingView(BuildContext context, ColorScheme colorScheme,
+      [_InitProgress? progress]) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -175,8 +183,12 @@ class _InitializationSplashScreenState
             children: [
               // Continuous progress animation
               TweenAnimationBuilder<double>(
-                duration: const Duration(seconds: 2),
-                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeOutCubic,
+                tween: Tween(
+                  begin: 0.0,
+                  end: progress?.progress ?? 0.0, // target value from stream
+                ),
                 builder: (context, value, child) {
                   return Container(
                     height: 4,
@@ -203,24 +215,14 @@ class _InitializationSplashScreenState
                     ),
                   );
                 },
-                onEnd: () {
-                  // Restart animation for continuous effect
-                  if (_errorMessage == null && mounted) {
-                    Future.delayed(const Duration(milliseconds: 100), () {
-                      if (mounted) {
-                        setState(() {});
-                      }
-                    });
-                  }
-                },
               ),
 
               const SizedBox(height: 20), // Current step text
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 child: Text(
-                  _currentStep,
-                  key: ValueKey(_currentStep),
+                  progress?.message ?? 'Starting initialization...',
+                  key: ValueKey(progress?.message ?? 'starting'),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: colorScheme.onSurface
                             .withAlpha((0.7 * 255).toInt()),
@@ -238,7 +240,8 @@ class _InitializationSplashScreenState
     );
   }
 
-  Widget _buildErrorView(BuildContext context, ColorScheme colorScheme) {
+  Widget _buildErrorView(BuildContext context, ColorScheme colorScheme,
+      [Object? error]) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -266,7 +269,7 @@ class _InitializationSplashScreenState
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40),
           child: Text(
-            _errorMessage ?? 'An unexpected error occurred',
+            error?.toString() ?? 'An unexpected error occurred',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurface.withAlpha((0.7 * 255).toInt()),
                 ),
@@ -276,7 +279,7 @@ class _InitializationSplashScreenState
 
         const SizedBox(height: 40), // Retry Button
         ElevatedButton.icon(
-          onPressed: _retry,
+          onPressed: _start,
           icon: const Icon(Icons.refresh),
           label: const Text('Retry'),
           style: ElevatedButton.styleFrom(

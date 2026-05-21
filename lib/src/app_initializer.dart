@@ -116,7 +116,7 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> {
               getIt<DownloadManagerBloc>()..add(DownloadManagerStarted()),
         ),
       ],
-      child: const YTSApp(),
+      child: YTSApp(),
     );
   }
 }

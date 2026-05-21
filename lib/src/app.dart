@@ -6,15 +6,15 @@ import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/router.dart';
 import 'package:ytsmovies/src/widgets.dart';
 
-class YTSApp extends StatelessWidget {
-  const YTSApp({super.key});
+class YTSApp extends StatelessWidget with RouterExtension {
+  YTSApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'YTS Movies',
       debugShowCheckedModeBanner: false,
-      routerConfig: router,
+      routerConfig: this.router,
       scrollBehavior: const CupertinoScrollBehavior(),
       builder: (context, widget) => ConnectivityBanner(
         showWhenConnected: true,
