@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: 📂 Checkout code
         uses: actions/checkout@v5
+        with:
+          submodules: true # ensure submodules are available
 
       - name: 🛠️ Setup Flutter
         id: setup
@@ -34,31 +36,67 @@ jobs:
       - name: 🏗️ Build signed APK
         run: flutter build apk --release
 
-      - name: 📦 Rename APK file
+      - name: 📦 Rename APK files
         run: |
-          APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
-          if [ -f "$APK_PATH" ]; then
-            mv "$APK_PATH" "build/app/outputs/flutter-apk/yts-movies-v${{ steps.setup.outputs.version }}.apk"
-            echo "APK renamed to yts-movies-v${{ steps.setup.outputs.version }}.apk"
-          else
-            echo "APK file not found, skipping rename"
+          VERSION="${{ steps.setup.outputs.version }}"
+          SRC_DIR="build/app/outputs/apk/release"
+          DEST_DIR="build/app/outputs/flutter-apk"
+
+          mkdir -p "$DEST_DIR"
+
+          # Rename and move universal APK
+          if [ -f "$SRC_DIR/app-universal-release.apk" ]; then
+            mv "$SRC_DIR/app-universal-release.apk" "$DEST_DIR/yts-movies-v${VERSION}-universal.apk"
+            echo "Universal APK moved and renamed"
+          elif [ -f "$DEST_DIR/app-release.apk" ]; then
+            mv "$DEST_DIR/app-release.apk" "$DEST_DIR/yts-movies-v${VERSION}-universal.apk"
+            echo "Universal APK (from flutter-apk) moved and renamed"
           fi
+
+          # Rename and move arm64-v8a APK
+          if [ -f "$SRC_DIR/app-arm64-v8a-release.apk" ]; then
+            mv "$SRC_DIR/app-arm64-v8a-release.apk" "$DEST_DIR/yts-movies-v${VERSION}-arm64-v8a.apk"
+            echo "arm64-v8a APK moved and renamed"
+          fi
+
+          # Rename and move armeabi-v7a APK
+          if [ -f "$SRC_DIR/app-armeabi-v7a-release.apk" ]; then
+            mv "$SRC_DIR/app-armeabi-v7a-release.apk" "$DEST_DIR/yts-movies-v${VERSION}-armeabi-v7a.apk"
+            echo "armeabi-v7a APK moved and renamed"
+          fi
+
+          # List renamed files to verify
+          ls -la "$DEST_DIR"
 
       - name: 📊 Get APK info
         id: apk_info
         run: |
           sudo apt-get update && sudo apt-get install -y bc
+          VERSION="${{ steps.setup.outputs.version }}"
+          DEST_DIR="build/app/outputs/flutter-apk"
 
-          APK_PATH="build/app/outputs/flutter-apk/yts-movies-v${{ steps.setup.outputs.version }}.apk"
-          if [ -f "$APK_PATH" ]; then
-            SIZE_BYTES=$(stat -c%s "$APK_PATH")
-            SIZE_MB=$(echo "scale=2; $SIZE_BYTES / 1024 / 1024" | bc)
-            echo "size_mb=$SIZE_MB" >> $GITHUB_OUTPUT
-            echo "APK size: ${SIZE_MB} MB"
-          else
-            echo "size_mb=N/A" >> $GITHUB_OUTPUT
-            echo "APK file not found"
-          fi
+          # Helper function to get size in MB
+          get_size() {
+            local file_path="$1"
+            if [ -f "$file_path" ]; then
+              local bytes=$(stat -c%s "$file_path")
+              echo "scale=2; $bytes / 1024 / 1024" | bc
+            else
+              echo "N/A"
+            fi
+          }
+
+          SIZE_UNIVERSAL=$(get_size "$DEST_DIR/yts-movies-v${VERSION}-universal.apk")
+          SIZE_ARM64=$(get_size "$DEST_DIR/yts-movies-v${VERSION}-arm64-v8a.apk")
+          SIZE_ARM32=$(get_size "$DEST_DIR/yts-movies-v${VERSION}-armeabi-v7a.apk")
+
+          echo "size_universal=$SIZE_UNIVERSAL" >> $GITHUB_OUTPUT
+          echo "size_arm64=$SIZE_ARM64" >> $GITHUB_OUTPUT
+          echo "size_arm32=$SIZE_ARM32" >> $GITHUB_OUTPUT
+
+          echo "Universal APK: $SIZE_UNIVERSAL MB"
+          echo "ARM64-v8a APK: $SIZE_ARM64 MB"
+          echo "ARMeabi-v7a APK: $SIZE_ARM32 MB"
 
       - name: 🚀 Create Release
         id: create_release
@@ -71,9 +109,13 @@ jobs:
 
             **📱 App Details:**
             - Version: ${{ steps.setup.outputs.version }}
-            - Size: ${{ steps.apk_info.outputs.size_mb }} MB
-            - Build Type: Release APK
+            - Build Type: Release APK (Architectures Split)
             - Flutter Version: 3.32.1
+
+            **📥 Downloads & Sizes:**
+            - 🌍 **Universal APK**: `${{ steps.apk_info.outputs.size_universal }} MB` (for all devices)
+            - ⚡ **ARM64-v8a APK**: `${{ steps.apk_info.outputs.size_arm64 }} MB` (for modern 64-bit devices)
+            - 🔋 **ARMeabi-v7a APK**: `${{ steps.apk_info.outputs.size_arm32 }} MB` (for older/budget 32-bit devices)
 
             **🔐 Signing:**
             ${{ secrets.KEYSTORE_BASE64 && '✅ Signed with release keystore' || '⚠️ Signed with debug keystore' }}
@@ -85,14 +127,14 @@ jobs:
             - Triggered by: @${{ github.actor }}
 
             **📥 Installation:**
-            Download the APK file below and install it on your Android device. Make sure to enable "Install from unknown sources" in your device settings.
+            Download the APK appropriate for your device's architecture (typically **ARM64-v8a** for modern phones). If you are unsure, download the **Universal** version. Install it on your device (make sure to enable "Install from unknown sources" if prompted).
 
             ---
             *This is a preview build from a pull request. For production releases, check the main releases page.*
           draft: false
           prerelease: true
           files: |
-            build/app/outputs/flutter-apk/yts-movies-v${{ steps.setup.outputs.version }}.apk
+            build/app/outputs/flutter-apk/yts-movies-v${{ steps.setup.outputs.version }}-*.apk
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 💬 Comment PR with Release Link
@@ -101,7 +143,9 @@ jobs:
         with:
           script: |
             const version = '${{ steps.setup.outputs.version }}';
-            const size = '${{ steps.apk_info.outputs.size_mb }}';
+            const sizeUniversal = '${{ steps.apk_info.outputs.size_universal }}';
+            const sizeArm64 = '${{ steps.apk_info.outputs.size_arm64 }}';
+            const sizeArm32 = '${{ steps.apk_info.outputs.size_arm32 }}';
             const tag = '${{ steps.setup.outputs.tag }}';
             const releaseUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${tag}`;
 
@@ -111,20 +155,25 @@ jobs:
 
             const comment = `🚀 **APK Build Successful - Release Created!**
 
-            📱 **Download APK:** [${tag} Release](${releaseUrl})
-            📊 **Size:** ${size} MB
+            📱 **Download Release:** [${tag} Release Output](${releaseUrl})
+
+            **📊 APK Sizes:**
+            * 🌍 **Universal APK:** ${sizeUniversal} MB
+            * ⚡ **ARM64-v8a APK:** ${sizeArm64} MB
+            * 🔋 **ARMeabi-v7a APK:** ${sizeArm32} MB
+
             ${keystoreUsed}
 
             **Build Details:**
             - Version: ${version}
             - Commit: ${context.sha.substring(0, 7)}
             - Flutter Version: 3.32.1
-            - Build Type: Release APK
+            - Build Type: Release APKs
 
             **📥 How to install:**
-            1. Click the release link above
-            2. Download the APK file
-            3. Install on your Android device (enable "Unknown sources" if needed)
+            1. Click the release link above.
+            2. Choose the APK for your phone's architecture (usually **ARM64-v8a**). If you are unsure, download the **Universal** version.
+            3. Install on your Android device (enable "Unknown sources" if needed).
 
             *This is a preview release created from PR #${context.payload.pull_request.number}*`;
 
@@ -146,6 +195,8 @@ jobs:
     steps:
       - name: 📂 Checkout code
         uses: actions/checkout@v5
+        with:
+          submodules: true # ensure submodules are available
 
       - name: 🛠️ Setup Flutter
         id: setup

@@ -12,9 +12,10 @@ sealed class StartDownloadRequest with _$StartDownloadRequest {
     required String magnetUri,
     required String savePath,
     required String movieTitle,
-    @Default(<String>[]) List<String> extraTrackers,
     int? initialDownloadLimit,
     int? initialUploadLimit,
+    List<int>? selectedIndices,
+    @Default(false) bool previewMode,
   }) = _StartDownloadRequest;
 
   factory StartDownloadRequest.fromJson(Map<String, dynamic> json) =>
@@ -32,7 +33,8 @@ sealed class DownloadControlRequest with _$DownloadControlRequest {
       _$DownloadControlRequestFromJson(json);
 }
 
-/// Set per-task speed limit (null = unlimited)
+/// Set speed limit. libtorrent_flutter only supports session-wide limits, so
+/// the most recent request wins across all tasks.
 @freezed
 sealed class SetSpeedLimitRequest with _$SetSpeedLimitRequest {
   const factory SetSpeedLimitRequest({
@@ -68,30 +70,6 @@ sealed class ApplyFileSelectionRequest with _$ApplyFileSelectionRequest {
 
   factory ApplyFileSelectionRequest.fromJson(Map<String, dynamic> json) =>
       _$ApplyFileSelectionRequestFromJson(json);
-}
-
-/// Add a custom tracker URL
-@freezed
-sealed class AddTrackerRequest with _$AddTrackerRequest {
-  const factory AddTrackerRequest({
-    required int taskId,
-    required String trackerUrl,
-  }) = _AddTrackerRequest;
-
-  factory AddTrackerRequest.fromJson(Map<String, dynamic> json) =>
-      _$AddTrackerRequestFromJson(json);
-}
-
-/// Remove a tracker
-@freezed
-sealed class RemoveTrackerRequest with _$RemoveTrackerRequest {
-  const factory RemoveTrackerRequest({
-    required int taskId,
-    required String trackerUrl,
-  }) = _RemoveTrackerRequest;
-
-  factory RemoveTrackerRequest.fromJson(Map<String, dynamic> json) =>
-      _$RemoveTrackerRequestFromJson(json);
 }
 
 /// Progress update from background service.

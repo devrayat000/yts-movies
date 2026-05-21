@@ -64,6 +64,8 @@
         <!-- Foreground service for background downloads -->
         <service
             android:name="id.flutter.flutter_background_service.BackgroundService"
+            android:stopWithTask="true"
+            tools:replace="android:stopWithTask"
             android:foregroundServiceType="dataSync"/>
         
         <!-- Don't delete the meta-data below.

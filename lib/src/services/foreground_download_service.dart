@@ -1,6 +1,7 @@
 import 'dart:async';
-import 'dart:developer';
+import 'dart:developer' as dev;
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:injectable/injectable.dart';
@@ -11,6 +12,14 @@ import 'package:ytsmovies/src/models/torrent_service_models.dart';
 import 'package:ytsmovies/src/services/torrent_task_handler.dart';
 import 'package:ytsmovies/src/services/preferences_service.dart';
 import 'package:ytsmovies/src/utils/storage_permission.dart';
+
+const String _logTag = 'FDS';
+
+void _d(String msg, {Object? error, StackTrace? stack}) {
+  // ignore: avoid_print
+  debugPrint('[$_logTag] $msg');
+  dev.log(msg, name: _logTag, error: error, stackTrace: stack);
+}
 
 /// Service to manage foreground torrent downloads
 @singleton
@@ -39,9 +48,11 @@ class ForegroundDownloadService {
 
   @postConstruct
   Future<void> initialize() async {
+    _d('initialize: enter (alreadyInit=$_isInitialized)');
     if (_isInitialized) return;
 
     await _initDownloadPath();
+    _d('initialize: downloadPath=$_downloadPath');
     await _requestPermissions();
 
     final notificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -55,6 +66,7 @@ class ForegroundDownloadService {
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
+    _d('initialize: notification channel created');
 
     final service = FlutterBackgroundService();
     await service.configure(
@@ -73,17 +85,28 @@ class ForegroundDownloadService {
         foregroundServiceNotificationId: notificationId,
       ),
     );
+    _d('initialize: FlutterBackgroundService configured');
 
     service.on('progressUpdate').listen((event) {
-      if (event == null) return;
+      if (event == null) {
+        _d('progressUpdate: null event, ignoring');
+        return;
+      }
       try {
-        _progressController.add(ProgressUpdate.fromJson(event));
-      } catch (e) {
-        log('Error parsing progress update: $e');
+        final update = ProgressUpdate.fromJson(event);
+        _d('progressUpdate<- task=${update.taskId}, status=${update.status}, '
+            'progress=${(update.progress * 100).toStringAsFixed(1)}%, '
+            'dl=${update.downloadSpeed}, ul=${update.uploadSpeed}, '
+            'done=${update.downloadedBytes}/${update.totalBytes}, '
+            'files=${update.files?.length}, err=${update.error}');
+        _progressController.add(update);
+      } catch (e, s) {
+        _d('progressUpdate parse error: $e', error: e, stack: s);
       }
     });
 
     _isInitialized = true;
+    _d('initialize: done');
   }
 
   @pragma('vm:entry-point')
@@ -108,7 +131,7 @@ class ForegroundDownloadService {
       // and we don't want to prompt at app startup. Created on first write
       // (see `ensureSavePathExists`).
     } catch (e, s) {
-      log('Error initializing download path: $e', error: e, stackTrace: s);
+      _d('_initDownloadPath failed: $e', error: e, stack: s);
       final appDir = await getApplicationDocumentsDirectory();
       _downloadPath = '${appDir.path}/downloads';
       await Directory(_downloadPath!).create(recursive: true);
@@ -138,12 +161,13 @@ class ForegroundDownloadService {
     if (!await dir.exists()) await dir.create(recursive: true);
     await _preferencesService.setCustomDownloadPath(newPath);
     _downloadPath = newPath;
+    _d('updateDownloadPath: $_downloadPath');
   }
 
   Future<void> resetToDefaultPath() async {
     await _preferencesService.setCustomDownloadPath(null);
     _downloadPath = await _defaultPath();
-    // Directory created lazily on first write — see [ensureSavePathExists].
+    _d('resetToDefaultPath: $_downloadPath');
   }
 
   /// Only POST_NOTIFICATIONS is required at runtime — the foreground service
@@ -151,27 +175,37 @@ class ForegroundDownloadService {
   /// app-scoped external storage (no storage perm) or to a SAF-granted
   /// directory chosen by the user (perm is the URI grant itself).
   Future<void> _requestPermissions() async {
-    await Permission.notification.request();
+    final status = await Permission.notification.request();
+    _d('_requestPermissions: notification=$status');
   }
 
   Future<bool> checkPermissions() async {
     try {
       if (await Permission.notification.isDenied) {
         final status = await Permission.notification.request();
+        _d('checkPermissions: notification re-request -> $status');
         if (!status.isGranted) return false;
       }
       return true;
     } catch (e, s) {
-      log('Error checking permissions: $e', error: e, stackTrace: s);
+      _d('checkPermissions error: $e', error: e, stack: s);
       return false;
     }
   }
 
   Future<bool> startService() async {
     final service = FlutterBackgroundService();
-    if (await service.isRunning()) return true;
-    if (!await checkPermissions()) return false;
-    await service.startService();
+    if (await service.isRunning()) {
+      _d('startService: already running');
+      return true;
+    }
+    if (!await checkPermissions()) {
+      _d('startService: permission denied');
+      return false;
+    }
+    _d('startService: starting…');
+    final ok = await service.startService();
+    _d('startService: startService() returned $ok');
     return true;
   }
 
@@ -180,39 +214,48 @@ class ForegroundDownloadService {
     required String magnetUri,
     required String savePath,
     required String movieTitle,
+    int? downloadLimit,
+    int? uploadLimit,
+    List<int>? selectedIndices,
+    bool previewMode = false,
   }) async {
+    _d('startDownload: taskId=$taskId, savePath=$savePath, '
+        'movieTitle="$movieTitle", magnet="${_truncMagnet(magnetUri)}", '
+        'dl=$downloadLimit, ul=$uploadLimit, sel=$selectedIndices, '
+        'preview=$previewMode');
     final service = FlutterBackgroundService();
     if (!await service.isRunning()) {
+      _d('startDownload: service not running, starting');
       final started = await startService();
       if (!started) {
+        _d('startDownload: startService failed');
         throw Exception(
           'Failed to start foreground service. Please grant notification '
           'and storage permissions in app settings.',
         );
       }
+      _d('startDownload: waiting 500ms for service spin-up');
       await Future.delayed(const Duration(milliseconds: 500));
     }
 
-    // Apply global limits + default trackers from preferences
-    service.invoke('setMaxConcurrent', {
-      'value': _preferencesService.maxConcurrentDownloads,
-    });
-
-    service.invoke(
-      'startDownload',
-      StartDownloadRequest(
-        taskId: taskId,
-        magnetUri: magnetUri,
-        savePath: savePath,
-        movieTitle: movieTitle,
-        extraTrackers: _preferencesService.defaultTrackers,
-        initialDownloadLimit: _preferencesService.globalDownloadLimit,
-        initialUploadLimit: _preferencesService.globalUploadLimit,
-      ).toJson(),
+    final req = StartDownloadRequest(
+      taskId: taskId,
+      magnetUri: magnetUri,
+      savePath: savePath,
+      movieTitle: movieTitle,
+      initialDownloadLimit:
+          downloadLimit ?? _preferencesService.globalDownloadLimit,
+      initialUploadLimit:
+          uploadLimit ?? _preferencesService.globalUploadLimit,
+      selectedIndices: selectedIndices,
+      previewMode: previewMode,
     );
+    _d('startDownload-> invoke "startDownload" json keys=${req.toJson().keys.toList()}');
+    service.invoke('startDownload', req.toJson());
   }
 
   Future<void> pauseDownload(int taskId) async {
+    _d('pauseDownload-> taskId=$taskId');
     FlutterBackgroundService().invoke(
       'pauseDownload',
       DownloadControlRequest(taskId: taskId).toJson(),
@@ -220,6 +263,7 @@ class ForegroundDownloadService {
   }
 
   Future<void> resumeDownload(int taskId) async {
+    _d('resumeDownload-> taskId=$taskId');
     FlutterBackgroundService().invoke(
       'resumeDownload',
       DownloadControlRequest(taskId: taskId).toJson(),
@@ -227,17 +271,31 @@ class ForegroundDownloadService {
   }
 
   Future<void> stopDownload(int taskId) async {
+    _d('stopDownload-> taskId=$taskId');
     FlutterBackgroundService().invoke(
       'stopDownload',
       DownloadControlRequest(taskId: taskId).toJson(),
     );
   }
 
+  /// Drop the torrent and let libtorrent wipe its on-disk files.
+  Future<void> deleteDownload(int taskId) async {
+    _d('deleteDownload-> taskId=$taskId');
+    FlutterBackgroundService().invoke(
+      'deleteDownload',
+      DownloadControlRequest(taskId: taskId).toJson(),
+    );
+  }
+
+  /// libtorrent_flutter exposes only session-wide limits. The handler applies
+  /// the most-recent request across all tasks; the per-task field is kept for
+  /// UI display but the cap is effectively global.
   Future<void> setSpeedLimit({
     required int taskId,
     int? downloadLimit,
     int? uploadLimit,
   }) async {
+    _d('setSpeedLimit-> taskId=$taskId, dl=$downloadLimit, ul=$uploadLimit');
     FlutterBackgroundService().invoke(
       'setSpeedLimit',
       SetSpeedLimitRequest(
@@ -253,6 +311,7 @@ class ForegroundDownloadService {
     required int fileIndex,
     required FilePriorityLevel priority,
   }) async {
+    _d('setFilePriority-> taskId=$taskId, file=$fileIndex, prio=$priority');
     FlutterBackgroundService().invoke(
       'setFilePriority',
       SetFilePriorityRequest(
@@ -267,6 +326,7 @@ class ForegroundDownloadService {
     required int taskId,
     required List<int> selectedIndices,
   }) async {
+    _d('applyFileSelection-> taskId=$taskId, selected=$selectedIndices');
     FlutterBackgroundService().invoke(
       'applyFileSelection',
       ApplyFileSelectionRequest(
@@ -276,34 +336,14 @@ class ForegroundDownloadService {
     );
   }
 
-  Future<void> addTracker({
-    required int taskId,
-    required String trackerUrl,
-  }) async {
-    FlutterBackgroundService().invoke(
-      'addTracker',
-      AddTrackerRequest(taskId: taskId, trackerUrl: trackerUrl).toJson(),
-    );
-  }
-
-  Future<void> removeTracker({
-    required int taskId,
-    required String trackerUrl,
-  }) async {
-    FlutterBackgroundService().invoke(
-      'removeTracker',
-      RemoveTrackerRequest(taskId: taskId, trackerUrl: trackerUrl).toJson(),
-    );
-  }
-
-  Future<void> setMaxConcurrent(int value) async {
-    await _preferencesService.setMaxConcurrentDownloads(value);
-    FlutterBackgroundService().invoke('setMaxConcurrent', {'value': value});
-  }
-
   Future<void> stopService() async {
     final service = FlutterBackgroundService();
-    if (await service.isRunning()) service.invoke('stopService');
+    if (await service.isRunning()) {
+      _d('stopService-> invoking');
+      service.invoke('stopService');
+    } else {
+      _d('stopService: not running');
+    }
   }
 
   Future<bool> isServiceRunning() async {
@@ -311,7 +351,11 @@ class ForegroundDownloadService {
   }
 
   Future<void> dispose() async {
+    _d('dispose');
     await _progressController.close();
     _isInitialized = false;
   }
+
+  String _truncMagnet(String m) =>
+      m.length <= 80 ? m : '${m.substring(0, 80)}…(+${m.length - 80})';
 }

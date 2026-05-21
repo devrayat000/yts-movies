@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ytsmovies/src/api/movies.dart';
-import 'package:ytsmovies/src/app.dart';
 import 'package:ytsmovies/src/bloc/filter/index.dart';
 import 'package:ytsmovies/src/injection.dart';
 import 'package:ytsmovies/src/models/movie.dart';
@@ -19,112 +18,112 @@ import 'package:ytsmovies/src/pages/download_details.dart';
 import 'package:ytsmovies/src/widgets.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 
-extension RouterExtension on YTSApp {
+mixin RouterExtension {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
   static final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
   // Public getter for root navigator key
   static GlobalKey<NavigatorState> get rootNavigatorKey => _rootNavigatorKey;
 
-  GoRouter get router => GoRouter(
-        navigatorKey: _rootNavigatorKey,
+  final router = GoRouter(
+    navigatorKey: _rootNavigatorKey,
+    routes: [
+      GoRoute(
+        path: '/',
+        name: "splash",
+        builder: (context, state) => const InitializationSplashScreen(),
+      ),
+      ShellRoute(
+        navigatorKey: _shellNavigatorKey,
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state, child) => MultiProvider(
+          providers: [
+            RepositoryProvider(
+              create: (context) => getIt.get<MoviesClient>(),
+              lazy: true,
+            ),
+            Provider<Filter>(
+              create: (_) => Filter(),
+              dispose: (_, filter) => filter.reset(),
+            ),
+          ],
+          child: Unfocus(
+            child: PageStorage(
+              bucket: MyGlobals.bucket,
+              child: child,
+            ),
+          ),
+        ),
         routes: [
           GoRoute(
-            path: '/',
-            name: "splash",
-            builder: (context, state) => const InitializationSplashScreen(),
-          ),
-          ShellRoute(
-            navigatorKey: _shellNavigatorKey,
-            parentNavigatorKey: _rootNavigatorKey,
-            builder: (context, state, child) => MultiProvider(
-              providers: [
-                RepositoryProvider(
-                  create: (context) => getIt.get<MoviesClient>(),
-                  lazy: true,
-                ),
-                Provider<Filter>(
-                  create: (_) => Filter(),
-                  dispose: (_, filter) => filter.reset(),
-                ),
-              ],
-              child: Unfocus(
-                child: PageStorage(
-                  bucket: MyGlobals.bucket,
-                  child: child,
-                ),
-              ),
-            ),
+            path: "/home",
+            name: "home",
+            builder: (context, state) => const HomePage(),
             routes: [
               GoRoute(
-                path: "/home",
-                name: "home",
-                builder: (context, state) => const HomePage(),
+                path: 'search',
+                name: "search",
+                builder: (context, state) {
+                  final query = state.uri.queryParameters['q'];
+                  return SearchPage(initialQuery: query);
+                },
+              ),
+              GoRoute(
+                path: 'latest',
+                name: "latest",
+                builder: (context, state) => const LatestMoviesPage(),
+              ),
+              GoRoute(
+                path: '4k',
+                name: "4k",
+                builder: (context, state) => const HD4KMoviesPage(),
+              ),
+              GoRoute(
+                path: 'rated',
+                name: "rated",
+                builder: (context, state) => const RatedMoviesPage(),
+              ),
+              GoRoute(
+                path: 'favourites',
+                name: "favourites",
+                builder: (context, state) => const FavouritesPage(),
+              ),
+              GoRoute(
+                path: 'downloads',
+                name: "downloads",
+                builder: (context, state) => const DownloadsPage(),
                 routes: [
                   GoRoute(
-                    path: 'search',
-                    name: "search",
+                    path: 'details/:taskId',
+                    name: "download-details",
                     builder: (context, state) {
-                      final query = state.uri.queryParameters['q'];
-                      return SearchPage(initialQuery: query);
-                    },
-                  ),
-                  GoRoute(
-                    path: 'latest',
-                    name: "latest",
-                    builder: (context, state) => const LatestMoviesPage(),
-                  ),
-                  GoRoute(
-                    path: '4k',
-                    name: "4k",
-                    builder: (context, state) => const HD4KMoviesPage(),
-                  ),
-                  GoRoute(
-                    path: 'rated',
-                    name: "rated",
-                    builder: (context, state) => const RatedMoviesPage(),
-                  ),
-                  GoRoute(
-                    path: 'favourites',
-                    name: "favourites",
-                    builder: (context, state) => const FavouritesPage(),
-                  ),
-                  GoRoute(
-                    path: 'downloads',
-                    name: "downloads",
-                    builder: (context, state) => const DownloadsPage(),
-                    routes: [
-                      GoRoute(
-                        path: 'details/:taskId',
-                        name: "download-details",
-                        builder: (context, state) {
-                          final taskIdStr = state.pathParameters['taskId']!;
-                          final taskId = int.parse(taskIdStr);
-                          return DownloadDetailsPage(taskId: taskId);
-                        },
-                      ),
-                    ],
-                  ),
-                  GoRoute(
-                    path: 'app-info',
-                    name: "app-info",
-                    builder: (context, state) => const AppInfoPage(),
-                  ),
-                  GoRoute(
-                    path: 'movie/:id',
-                    name: "details",
-                    builder: (context, state) {
-                      if (state.extra != null && state.extra is Movie) {
-                        return MoviePage.withMovie(item: state.extra as Movie);
-                      }
-                      final id = int.parse(state.pathParameters['id']!);
-                      return MoviePage(id: id);
+                      final taskIdStr = state.pathParameters['taskId']!;
+                      final taskId = int.parse(taskIdStr);
+                      return DownloadDetailsPage(taskId: taskId);
                     },
                   ),
                 ],
               ),
+              GoRoute(
+                path: 'app-info',
+                name: "app-info",
+                builder: (context, state) => const AppInfoPage(),
+              ),
+              GoRoute(
+                path: 'movie/:id',
+                name: "details",
+                builder: (context, state) {
+                  if (state.extra != null && state.extra is Movie) {
+                    return MoviePage.withMovie(item: state.extra as Movie);
+                  }
+                  final id = int.parse(state.pathParameters['id']!);
+                  return MoviePage(id: id);
+                },
+              ),
             ],
           ),
         ],
-      );
+      ),
+    ],
+  );
 }
