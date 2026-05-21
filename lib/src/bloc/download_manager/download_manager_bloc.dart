@@ -63,8 +63,8 @@ class DownloadManagerBloc
       if (t.status == DownloadStatus.downloading ||
           t.status == DownloadStatus.downloadingMetadata ||
           t.status == DownloadStatus.queued) {
-        _d('_onStarted: reset stale task=$id from ${t.status} to stopped');
-        next[id] = t.copyWith(status: DownloadStatus.stopped);
+        _d('_onStarted: reset stale task=$id from ${t.status} to paused');
+        next[id] = t.copyWith(status: DownloadStatus.paused);
         dirty = true;
       } else {
         next[id] = t;

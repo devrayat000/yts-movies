@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:libtorrent_flutter/libtorrent_flutter.dart';
@@ -975,7 +974,10 @@ class _TorrentHandler {
       } catch (_) {}
     }
     for (final taskId in _tasks.keys.toList()) {
-      await _cancelTaskNotification(taskId);
+      final task = _tasks[taskId];
+      if (task != null && task.lastStatus != DownloadStatus.completed) {
+        await _cancelTaskNotification(taskId);
+      }
     }
     _tasks.clear();
     _torrentToTask.clear();
