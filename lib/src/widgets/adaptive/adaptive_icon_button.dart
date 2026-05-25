@@ -1,11 +1,6 @@
-import 'package:fluent_ui/fluent_ui.dart' as fluent;
-import 'package:flutter/material.dart' as material;
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
-import 'package:ytsmovies/src/services/desktop_window_service.dart';
-
-/// IconButton that uses fluent_ui's IconButton on desktop and Material's
-/// on mobile.
+/// IconButton that uses standard Material's IconButton.
 class AdaptiveIconButton extends StatelessWidget {
   const AdaptiveIconButton({
     super.key,
@@ -22,13 +17,7 @@ class AdaptiveIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isDesktop) {
-      final btn = fluent.IconButton(icon: icon, onPressed: onPressed);
-      return tooltip == null
-          ? btn
-          : fluent.Tooltip(message: tooltip!, child: btn);
-    }
-    return material.IconButton(
+    return IconButton(
       icon: icon,
       onPressed: onPressed,
       tooltip: tooltip,

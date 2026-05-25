@@ -1,4 +1,3 @@
-import 'package:fluent_ui/fluent_ui.dart' as fluent;
 import 'package:flutter/cupertino.dart'
     show CupertinoScrollBehavior, DefaultCupertinoLocalizations;
 import 'package:flutter/gestures.dart';
@@ -18,12 +17,13 @@ class YTSApp extends StatelessWidget with RouterExtension {
     return BlocBuilder<ThemeCubit, ThemeData>(
       buildWhen: (previous, current) => previous != current,
       builder: (context, materialTheme) {
-        return fluent.FluentApp.router(
+        final optimizedTheme = _desktopOptimizedTheme(materialTheme);
+        return MaterialApp.router(
           title: 'YTS Movies',
           debugShowCheckedModeBanner: false,
           routerConfig: this.router,
-          theme: _fluentThemeFor(materialTheme),
-          darkTheme: _fluentThemeFor(materialTheme),
+          theme: optimizedTheme,
+          darkTheme: optimizedTheme,
           themeMode: materialTheme.brightness == Brightness.dark
               ? ThemeMode.dark
               : ThemeMode.light,
@@ -32,12 +32,11 @@ class YTSApp extends StatelessWidget with RouterExtension {
             DefaultMaterialLocalizations.delegate,
             DefaultCupertinoLocalizations.delegate,
             DefaultWidgetsLocalizations.delegate,
-            fluent.FluentLocalizations.delegate,
           ],
           builder: (context, widget) => ConnectivityBanner(
             showWhenConnected: true,
             child: _AppShell(
-              materialTheme: materialTheme,
+              materialTheme: optimizedTheme,
               child: widget!,
             ),
           ),
@@ -46,20 +45,22 @@ class YTSApp extends StatelessWidget with RouterExtension {
     );
   }
 
-  fluent.FluentThemeData _fluentThemeFor(ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
-    return fluent.FluentThemeData(
-      brightness: isDark ? Brightness.dark : Brightness.light,
-      accentColor: fluent.AccentColor.swatch({
-        'darkest': theme.colorScheme.primary,
-        'darker': theme.colorScheme.primary,
-        'dark': theme.colorScheme.primary,
-        'normal': theme.colorScheme.primary,
-        'light': theme.colorScheme.primaryContainer,
-        'lighter': theme.colorScheme.primaryContainer,
-        'lightest': theme.colorScheme.primaryContainer,
-      }),
-      scaffoldBackgroundColor: theme.scaffoldBackgroundColor,
+  ThemeData _desktopOptimizedTheme(ThemeData theme) {
+    return theme.copyWith(
+      visualDensity: VisualDensity.adaptivePlatformDensity,
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: theme.cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: theme.brightness == Brightness.dark
+                ? const Color(0xFF374151)
+                : const Color(0xFFE5E7EB),
+            width: 1,
+          ),
+        ),
+      ),
     );
   }
 }

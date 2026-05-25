@@ -1,13 +1,7 @@
-import 'package:fluent_ui/fluent_ui.dart' as fluent;
-import 'package:flutter/material.dart' as material;
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 
-import 'package:ytsmovies/src/services/desktop_window_service.dart';
-
-/// Single-line text input that renders fluent_ui TextBox on Windows
-/// desktop and Material TextField on mobile. Wraps the common subset
-/// the app uses; advanced cases should drop down to the platform widget.
+/// Single-line text input that renders standard Material TextField.
 class AdaptiveTextField extends StatelessWidget {
   const AdaptiveTextField({
     super.key,
@@ -48,27 +42,7 @@ class AdaptiveTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isDesktop) {
-      return fluent.TextBox(
-        controller: controller,
-        focusNode: focusNode,
-        placeholder: placeholder,
-        onChanged: onChanged,
-        onSubmitted: onSubmitted,
-        prefix: prefix,
-        suffix: suffix,
-        obscureText: obscureText,
-        readOnly: readOnly,
-        autofocus: autofocus,
-        keyboardType: keyboardType,
-        textInputAction: textInputAction,
-        inputFormatters: inputFormatters,
-        maxLines: maxLines,
-        maxLength: maxLength,
-        style: style,
-      );
-    }
-    return material.TextField(
+    return TextField(
       controller: controller,
       focusNode: focusNode,
       onChanged: onChanged,
@@ -82,7 +56,7 @@ class AdaptiveTextField extends StatelessWidget {
       maxLines: maxLines,
       maxLength: maxLength,
       style: style,
-      decoration: material.InputDecoration(
+      decoration: InputDecoration(
         hintText: placeholder,
         prefixIcon: prefix,
         suffixIcon: suffix,

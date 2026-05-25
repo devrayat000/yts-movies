@@ -1,12 +1,7 @@
-import 'package:fluent_ui/fluent_ui.dart' as fluent;
-import 'package:flutter/material.dart' as material;
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
-import 'package:ytsmovies/src/services/desktop_window_service.dart';
-
-/// Page<T> that renders a FluentPageRoute on Windows desktop and a
-/// MaterialPage on mobile. Use as `pageBuilder:` in go_router routes
-/// so navigation gets native chrome on each platform.
+/// Page<T> that renders a MaterialPageRoute on all platforms.
+/// Use as `pageBuilder:` in go_router routes.
 class AdaptivePage<T> extends Page<T> {
   const AdaptivePage({
     required this.child,
@@ -24,15 +19,7 @@ class AdaptivePage<T> extends Page<T> {
 
   @override
   Route<T> createRoute(BuildContext context) {
-    if (isDesktop) {
-      return fluent.FluentPageRoute<T>(
-        settings: this,
-        builder: (_) => child,
-        maintainState: maintainState,
-        fullscreenDialog: fullscreenDialog,
-      );
-    }
-    return material.MaterialPageRoute<T>(
+    return MaterialPageRoute<T>(
       settings: this,
       builder: (_) => child,
       maintainState: maintainState,

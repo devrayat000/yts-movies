@@ -1,8 +1,4 @@
-import 'package:fluent_ui/fluent_ui.dart' as fluent;
-import 'package:flutter/material.dart' as material;
-import 'package:flutter/widgets.dart';
-
-import 'package:ytsmovies/src/services/desktop_window_service.dart';
+import 'package:flutter/material.dart';
 
 class AdaptiveCheckbox extends StatelessWidget {
   const AdaptiveCheckbox({
@@ -18,13 +14,7 @@ class AdaptiveCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isDesktop) {
-      return fluent.Checkbox(
-        checked: value,
-        onChanged: onChanged,
-      );
-    }
-    return material.Checkbox(
+    return Checkbox(
       value: value,
       onChanged: onChanged,
       tristate: tristate,

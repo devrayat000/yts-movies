@@ -1,13 +1,9 @@
-import 'package:fluent_ui/fluent_ui.dart' as fluent;
-import 'package:flutter/material.dart' as material;
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import 'package:ytsmovies/src/services/desktop_window_service.dart';
 
-/// Scaffold that picks fluent_ui's ScaffoldPage on Windows desktop and
-/// Material's Scaffold on mobile. On desktop the NavigationView already
-/// supplies the title bar / sidebar, so the page only needs to provide
-/// its body content.
+/// Scaffold that picks standard Material Scaffold on both desktop and mobile.
+/// On desktop, we style it with a custom top page header to feel desktoppy.
 class AdaptiveScaffold extends StatelessWidget {
   const AdaptiveScaffold({
     super.key,
@@ -24,11 +20,10 @@ class AdaptiveScaffold extends StatelessWidget {
     this.resizeToAvoidBottomInset,
   });
 
-  /// Mobile-only app bar. Ignored on desktop (sidebar handles chrome).
+  /// Mobile-only app bar. Ignored on desktop (custom header handles chrome).
   final PreferredSizeWidget? appBar;
 
-  /// Optional page title rendered above the body on desktop. Ignored on
-  /// mobile when [appBar] is provided.
+  /// Optional page title rendered above the body on desktop.
   final Widget? title;
 
   /// Optional desktop header actions rendered to the right of [title].
@@ -46,23 +41,41 @@ class AdaptiveScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isDesktop) {
-      return fluent.ScaffoldPage(
-        padding: EdgeInsets.zero,
-        header: title == null
-            ? null
-            : fluent.PageHeader(
-                title: title!,
-                commandBar: actions == null
-                    ? null
-                    : Row(
+      final theme = Theme.of(context);
+      return Scaffold(
+        backgroundColor: backgroundColor ?? theme.colorScheme.surface,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (title != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    DefaultTextStyle.merge(
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      child: title!,
+                    ),
+                    if (actions != null)
+                      Row(
                         mainAxisSize: MainAxisSize.min,
                         children: actions!,
                       ),
+                  ],
+                ),
               ),
-        content: body,
+            Expanded(child: body),
+          ],
+        ),
+        floatingActionButton: floatingActionButton,
+        bottomNavigationBar: bottomNavigationBar,
+        resizeToAvoidBottomInset: resizeToAvoidBottomInset,
       );
     }
-    return material.Scaffold(
+    return Scaffold(
       appBar: appBar,
       body: body,
       drawer: drawer,
