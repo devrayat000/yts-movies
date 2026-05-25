@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -53,6 +54,7 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> {
         _isInitializing = false;
       });
     } catch (e) {
+      log('Initialization error: $e', error: e);
       setState(() {
         _error = e.toString();
         _isInitializing = false;

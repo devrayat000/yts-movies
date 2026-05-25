@@ -37,7 +37,8 @@ Future<void> _initializeApp() async {
     FlutterError.presentError(details);
     if (kReleaseMode) {
       // In release mode, log the error but don't exit
-      debugPrint('Flutter error: ${details.toString()}');
+      log('Flutter error: ${details.toString()}',
+          error: details.exception, stackTrace: details.stack);
     }
   };
 
@@ -59,7 +60,7 @@ Future<void> _initializeCriticalStorage() async {
               (await getApplicationDocumentsDirectory()).path),
     );
   } catch (e) {
-    debugPrint('Failed to initialize critical storage: $e');
+    log('Failed to initialize critical storage: $e', error: e);
     // Continue with app startup even if storage fails
   }
 }

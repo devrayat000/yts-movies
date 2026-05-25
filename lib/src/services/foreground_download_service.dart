@@ -46,6 +46,9 @@ class ForegroundDownloadService {
     return p;
   }
 
+  bool get _supportsBackgroundService =>
+      Platform.isAndroid || Platform.isIOS;
+
   @postConstruct
   Future<void> initialize() async {
     _d('initialize: enter (alreadyInit=$_isInitialized)');
@@ -54,6 +57,12 @@ class ForegroundDownloadService {
     await _initDownloadPath();
     _d('initialize: downloadPath=$_downloadPath');
     await _requestPermissions();
+
+    if (!_supportsBackgroundService) {
+      _d('initialize: skipping FlutterBackgroundService (unsupported platform)');
+      _isInitialized = true;
+      return;
+    }
 
     final notificationsPlugin = FlutterLocalNotificationsPlugin();
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -194,6 +203,10 @@ class ForegroundDownloadService {
   }
 
   Future<bool> startService() async {
+    if (!_supportsBackgroundService) {
+      _d('startService: unsupported platform, no-op');
+      return false;
+    }
     final service = FlutterBackgroundService();
     if (await service.isRunning()) {
       _d('startService: already running');
@@ -223,6 +236,10 @@ class ForegroundDownloadService {
         'movieTitle="$movieTitle", magnet="${_truncMagnet(magnetUri)}", '
         'dl=$downloadLimit, ul=$uploadLimit, sel=$selectedIndices, '
         'preview=$previewMode');
+    if (!_supportsBackgroundService) {
+      _d('startDownload: unsupported platform, no-op');
+      return;
+    }
     final service = FlutterBackgroundService();
     if (!await service.isRunning()) {
       _d('startDownload: service not running, starting');
@@ -256,6 +273,7 @@ class ForegroundDownloadService {
 
   Future<void> pauseDownload(int taskId) async {
     _d('pauseDownload-> taskId=$taskId');
+    if (!_supportsBackgroundService) return;
     FlutterBackgroundService().invoke(
       'pauseDownload',
       DownloadControlRequest(taskId: taskId).toJson(),
@@ -264,6 +282,7 @@ class ForegroundDownloadService {
 
   Future<void> resumeDownload(int taskId) async {
     _d('resumeDownload-> taskId=$taskId');
+    if (!_supportsBackgroundService) return;
     FlutterBackgroundService().invoke(
       'resumeDownload',
       DownloadControlRequest(taskId: taskId).toJson(),
@@ -272,6 +291,7 @@ class ForegroundDownloadService {
 
   Future<void> stopDownload(int taskId) async {
     _d('stopDownload-> taskId=$taskId');
+    if (!_supportsBackgroundService) return;
     FlutterBackgroundService().invoke(
       'stopDownload',
       DownloadControlRequest(taskId: taskId).toJson(),
@@ -281,6 +301,7 @@ class ForegroundDownloadService {
   /// Drop the torrent and let libtorrent wipe its on-disk files.
   Future<void> deleteDownload(int taskId) async {
     _d('deleteDownload-> taskId=$taskId');
+    if (!_supportsBackgroundService) return;
     FlutterBackgroundService().invoke(
       'deleteDownload',
       DownloadControlRequest(taskId: taskId).toJson(),
@@ -296,6 +317,7 @@ class ForegroundDownloadService {
     int? uploadLimit,
   }) async {
     _d('setSpeedLimit-> taskId=$taskId, dl=$downloadLimit, ul=$uploadLimit');
+    if (!_supportsBackgroundService) return;
     FlutterBackgroundService().invoke(
       'setSpeedLimit',
       SetSpeedLimitRequest(
@@ -312,6 +334,7 @@ class ForegroundDownloadService {
     required FilePriorityLevel priority,
   }) async {
     _d('setFilePriority-> taskId=$taskId, file=$fileIndex, prio=$priority');
+    if (!_supportsBackgroundService) return;
     FlutterBackgroundService().invoke(
       'setFilePriority',
       SetFilePriorityRequest(
@@ -327,6 +350,7 @@ class ForegroundDownloadService {
     required List<int> selectedIndices,
   }) async {
     _d('applyFileSelection-> taskId=$taskId, selected=$selectedIndices');
+    if (!_supportsBackgroundService) return;
     FlutterBackgroundService().invoke(
       'applyFileSelection',
       ApplyFileSelectionRequest(
@@ -337,6 +361,7 @@ class ForegroundDownloadService {
   }
 
   Future<void> stopService() async {
+    if (!_supportsBackgroundService) return;
     final service = FlutterBackgroundService();
     if (await service.isRunning()) {
       _d('stopService-> invoking');
@@ -347,6 +372,7 @@ class ForegroundDownloadService {
   }
 
   Future<bool> isServiceRunning() async {
+    if (!_supportsBackgroundService) return false;
     return await FlutterBackgroundService().isRunning();
   }
 
