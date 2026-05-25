@@ -109,7 +109,6 @@ class DownloadButton extends StatelessWidget {
         context.pushNamed('downloads');
         return;
       }
-
       await Navigator.of(context).push(
         MaterialPageRoute(
           fullscreenDialog: true,

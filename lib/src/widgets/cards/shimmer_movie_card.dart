@@ -2,23 +2,25 @@ part of 'index.dart';
 
 class MovieListShimmer extends StatelessWidget {
   final int? count;
+  final int? crossAxisCount;
 
-  const MovieListShimmer({super.key, this.count});
+  const MovieListShimmer({super.key, this.count, this.crossAxisCount});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cols = crossAxisCount ?? context.posterGridColumns(targetItemWidth: 220);
     return Shimmer(
       linearGradient: context.read<ThemeCubit>().theme.shimmerGradient(isDark),
       child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: cols,
           childAspectRatio: 0.67,
           crossAxisSpacing: 8,
           mainAxisSpacing: 8,
         ),
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: count ?? 6,
+        itemCount: count ?? (cols * 3),
         shrinkWrap: true,
         itemBuilder: (context, i) {
           return const ShimmerMovieCard.grid();

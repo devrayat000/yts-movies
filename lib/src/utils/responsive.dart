@@ -30,4 +30,18 @@ extension ResponsiveBuildContext on BuildContext {
     final cols = (w / targetItemWidth).floor();
     return cols.clamp(2, 8);
   }
+
+  /// Suggested height for the horizontal intro carousels on home page.
+  double get introCarouselHeight {
+    switch (screenSize) {
+      case ScreenSize.compact:
+        return 200;
+      case ScreenSize.medium:
+        return 240;
+      case ScreenSize.expanded:
+        return 280;
+      case ScreenSize.large:
+        return 320;
+    }
+  }
 }

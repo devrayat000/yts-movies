@@ -1,5 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart' as fluent;
-import 'package:flutter/cupertino.dart' show CupertinoScrollBehavior;
+import 'package:flutter/cupertino.dart'
+    show CupertinoScrollBehavior, DefaultCupertinoLocalizations;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -14,15 +15,51 @@ class YTSApp extends StatelessWidget with RouterExtension {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'YTS Movies',
-      debugShowCheckedModeBanner: false,
-      routerConfig: this.router,
-      scrollBehavior: const _AppScrollBehavior(),
-      builder: (context, widget) => ConnectivityBanner(
-        showWhenConnected: true,
-        child: _AppShell(child: widget!),
-      ),
+    return BlocBuilder<ThemeCubit, ThemeData>(
+      buildWhen: (previous, current) => previous != current,
+      builder: (context, materialTheme) {
+        return fluent.FluentApp.router(
+          title: 'YTS Movies',
+          debugShowCheckedModeBanner: false,
+          routerConfig: this.router,
+          theme: _fluentThemeFor(materialTheme),
+          darkTheme: _fluentThemeFor(materialTheme),
+          themeMode: materialTheme.brightness == Brightness.dark
+              ? ThemeMode.dark
+              : ThemeMode.light,
+          scrollBehavior: const _AppScrollBehavior(),
+          localizationsDelegates: [
+            DefaultMaterialLocalizations.delegate,
+            DefaultCupertinoLocalizations.delegate,
+            DefaultWidgetsLocalizations.delegate,
+            fluent.FluentLocalizations.delegate,
+          ],
+          builder: (context, widget) => ConnectivityBanner(
+            showWhenConnected: true,
+            child: _AppShell(
+              materialTheme: materialTheme,
+              child: widget!,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  fluent.FluentThemeData _fluentThemeFor(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    return fluent.FluentThemeData(
+      brightness: isDark ? Brightness.dark : Brightness.light,
+      accentColor: fluent.AccentColor.swatch({
+        'darkest': theme.colorScheme.primary,
+        'darker': theme.colorScheme.primary,
+        'dark': theme.colorScheme.primary,
+        'normal': theme.colorScheme.primary,
+        'light': theme.colorScheme.primaryContainer,
+        'lighter': theme.colorScheme.primaryContainer,
+        'lightest': theme.colorScheme.primaryContainer,
+      }),
+      scaffoldBackgroundColor: theme.scaffoldBackgroundColor,
     );
   }
 }
@@ -42,8 +79,9 @@ class _AppScrollBehavior extends CupertinoScrollBehavior {
 }
 
 class _AppShell extends StatelessWidget {
-  const _AppShell({required this.child});
+  const _AppShell({required this.materialTheme, required this.child});
 
+  final ThemeData materialTheme;
   final Widget child;
 
   @override
@@ -54,52 +92,11 @@ class _AppShell extends StatelessWidget {
     }
     ErrorWidget.builder = (_) => errorWidget;
 
-    return _ThemeProvider(child: child);
-  }
-}
-
-class _ThemeProvider extends StatelessWidget {
-  const _ThemeProvider({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<ThemeCubit, ThemeData>(
-      builder: (context, theme) {
-        final desktopFrame =
-            isDesktop ? _DesktopChrome(child: child) : child;
-        final themed = AnimatedTheme(
-          data: theme,
-          curve: Curves.easeOutCirc,
-          child: desktopFrame,
-        );
-        // Provide a fluent_ui theme so fluent widgets used in the custom
-        // title bar / desktop affordances pick up matching colors. The
-        // primary Material theme is untouched.
-        return fluent.FluentTheme(
-          data: _fluentThemeFor(theme),
-          child: themed,
-        );
-      },
-      buildWhen: (previous, current) => previous != current,
-    );
-  }
-
-  fluent.FluentThemeData _fluentThemeFor(ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
-    return fluent.FluentThemeData(
-      brightness: isDark ? Brightness.dark : Brightness.light,
-      accentColor: fluent.AccentColor.swatch({
-        'darkest': theme.colorScheme.primary,
-        'darker': theme.colorScheme.primary,
-        'dark': theme.colorScheme.primary,
-        'normal': theme.colorScheme.primary,
-        'light': theme.colorScheme.primaryContainer,
-        'lighter': theme.colorScheme.primaryContainer,
-        'lightest': theme.colorScheme.primaryContainer,
-      }),
-      scaffoldBackgroundColor: theme.scaffoldBackgroundColor,
+    final frame = isDesktop ? _DesktopChrome(child: child) : child;
+    return AnimatedTheme(
+      data: materialTheme,
+      curve: Curves.easeOutCirc,
+      child: frame,
     );
   }
 }

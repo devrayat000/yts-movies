@@ -15,7 +15,9 @@ import 'package:ytsmovies/src/pages/app_info.dart';
 import 'package:ytsmovies/src/pages/search.dart';
 import 'package:ytsmovies/src/pages/downloads.dart';
 import 'package:ytsmovies/src/pages/download_details.dart';
+import 'package:ytsmovies/src/services/desktop_window_service.dart';
 import 'package:ytsmovies/src/widgets.dart';
+import 'package:ytsmovies/src/widgets/desktop_shell.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 
 mixin RouterExtension {
@@ -36,24 +38,32 @@ mixin RouterExtension {
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state, child) => MultiProvider(
-          providers: [
-            RepositoryProvider(
-              create: (context) => getIt.get<MoviesClient>(),
-              lazy: true,
-            ),
-            Provider<Filter>(
-              create: (_) => Filter(),
-              dispose: (_, filter) => filter.reset(),
-            ),
-          ],
-          child: Unfocus(
+        builder: (context, state, child) {
+          final content = Unfocus(
             child: PageStorage(
               bucket: MyGlobals.bucket,
               child: child,
             ),
-          ),
-        ),
+          );
+          return MultiProvider(
+            providers: [
+              RepositoryProvider(
+                create: (context) => getIt.get<MoviesClient>(),
+                lazy: true,
+              ),
+              Provider<Filter>(
+                create: (_) => Filter(),
+                dispose: (_, filter) => filter.reset(),
+              ),
+            ],
+            child: isDesktop
+                ? DesktopShell(
+                    location: state.uri.toString(),
+                    child: content,
+                  )
+                : content,
+          );
+        },
         routes: [
           GoRoute(
             path: "/home",

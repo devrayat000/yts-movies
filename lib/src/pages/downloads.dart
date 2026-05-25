@@ -6,8 +6,10 @@ import 'package:ytsmovies/src/bloc/download_manager/index.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
 import 'package:ytsmovies/src/pages/download_settings.dart';
 import 'package:ytsmovies/src/pages/download_details.dart';
+import 'package:ytsmovies/src/services/desktop_window_service.dart';
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
 import 'package:ytsmovies/src/injection.dart';
+import 'package:ytsmovies/src/widgets/desktop/desktop_dialogs.dart';
 import 'package:open_file_manager/open_file_manager.dart';
 
 class DownloadsPage extends StatelessWidget {
@@ -425,7 +427,21 @@ class _DownloadActionsMenu extends StatelessWidget {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context, DownloadManagerBloc bloc) {
+  void _showDeleteConfirmation(BuildContext context, DownloadManagerBloc bloc) async {
+    if (isDesktop) {
+      final confirmed = await showFluentConfirm(
+        context: context,
+        title: 'Delete Download',
+        message:
+            'Are you sure you want to delete this download? This will also remove downloaded files.',
+        confirmLabel: 'Delete',
+        destructive: true,
+      );
+      if (confirmed) {
+        bloc.add(DownloadManagerDeleteDownload(task.taskId));
+      }
+      return;
+    }
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(

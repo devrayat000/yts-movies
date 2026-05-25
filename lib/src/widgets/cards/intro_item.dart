@@ -97,7 +97,7 @@ class IntroItem extends StatelessWidget {
             ),
           ),
           SizedBox(
-            height: 200,
+            height: context.introCarouselHeight,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.only(

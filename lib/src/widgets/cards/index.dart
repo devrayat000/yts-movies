@@ -11,6 +11,7 @@ import 'package:ytsmovies/src/widgets/index.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
+import 'package:ytsmovies/src/utils/responsive.dart';
 
 part './actionbar.dart';
 part './intro_item.dart';
