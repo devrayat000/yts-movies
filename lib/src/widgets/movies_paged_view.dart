@@ -80,6 +80,7 @@ class _MoviesPagedViewState extends State<MoviesPagedView> {
 
   @override
   Widget build(BuildContext context) {
+    final crossAxisCount = context.posterGridColumns(targetItemWidth: 220);
     return CupertinoScrollbar(
       controller: _scrollController,
       child: RefreshIndicator(
@@ -91,8 +92,8 @@ class _MoviesPagedViewState extends State<MoviesPagedView> {
           scrollController: _scrollController,
           shrinkWrap: true,
           physics: const BouncingScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
             childAspectRatio:
                 0.67, // Slightly taller for better movie poster display
             crossAxisSpacing: 8,

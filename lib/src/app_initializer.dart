@@ -7,6 +7,7 @@ import 'package:ytsmovies/src/app.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/bloc/download_manager/index.dart';
 import 'package:ytsmovies/src/injection.dart';
+import 'package:ytsmovies/src/services/desktop_window_service.dart';
 import 'package:ytsmovies/src/services/notification_service.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
 import 'package:ytsmovies/src/router.dart';
@@ -23,6 +24,7 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> {
   bool _isInitializing = true;
   String? _error;
   StreamSubscription<int>? _notificationSubscription;
+  DesktopWindowService? _desktopWindowService;
 
   @override
   void initState() {
@@ -39,6 +41,13 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> {
       final notificationService = getIt<NotificationService>();
       _notificationSubscription = notificationService.notificationTapStream
           .listen(_handleNotificationTap);
+
+      // Initialize desktop window + tray integration (no-op off desktop)
+      if (isDesktop) {
+        _desktopWindowService =
+            DesktopWindowService(getIt<DownloadManagerBloc>());
+        await _desktopWindowService!.initialize();
+      }
 
       setState(() {
         _isInitializing = false;
@@ -80,6 +89,7 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> {
   @override
   void dispose() {
     _notificationSubscription?.cancel();
+    _desktopWindowService?.dispose();
     super.dispose();
   }
 

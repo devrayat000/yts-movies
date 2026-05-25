@@ -67,36 +67,44 @@ class DownloadsPage extends StatelessWidget {
             );
           }
 
+          // On wide screens, lay download cards out in a grid so each card
+          // doesn't stretch across the entire viewport.
+          final width = MediaQuery.sizeOf(context).width;
+          final cardsPerRow = (width / 520).floor().clamp(1, 4);
+
+          Widget buildSection(String title, List<DownloadTask> tasks) {
+            if (tasks.isEmpty) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionHeader(title: '$title (${tasks.length})'),
+                if (cardsPerRow == 1)
+                  ...tasks.map((t) => _DownloadTaskCard(task: t))
+                else
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: cardsPerRow,
+                      childAspectRatio: 2.6,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemCount: tasks.length,
+                    itemBuilder: (_, i) => _DownloadTaskCard(task: tasks[i]),
+                  ),
+                const SizedBox(height: 16),
+              ],
+            );
+          }
+
           return ListView(
             padding: const EdgeInsets.all(8.0),
             children: [
-              if (state.activeDownloads.isNotEmpty) ...[
-                _SectionHeader(
-                    title: 'Active (${state.activeDownloads.length})'),
-                ...state.activeDownloads
-                    .map((task) => _DownloadTaskCard(task: task)),
-                const SizedBox(height: 16),
-              ],
-              if (state.pausedDownloads.isNotEmpty) ...[
-                _SectionHeader(
-                    title: 'Paused (${state.pausedDownloads.length})'),
-                ...state.pausedDownloads
-                    .map((task) => _DownloadTaskCard(task: task)),
-                const SizedBox(height: 16),
-              ],
-              if (state.completedDownloads.isNotEmpty) ...[
-                _SectionHeader(
-                    title: 'Completed (${state.completedDownloads.length})'),
-                ...state.completedDownloads
-                    .map((task) => _DownloadTaskCard(task: task)),
-                const SizedBox(height: 16),
-              ],
-              if (state.failedDownloads.isNotEmpty) ...[
-                _SectionHeader(
-                    title: 'Failed (${state.failedDownloads.length})'),
-                ...state.failedDownloads
-                    .map((task) => _DownloadTaskCard(task: task)),
-              ],
+              buildSection('Active', state.activeDownloads),
+              buildSection('Paused', state.pausedDownloads),
+              buildSection('Completed', state.completedDownloads),
+              buildSection('Failed', state.failedDownloads),
             ],
           );
         },

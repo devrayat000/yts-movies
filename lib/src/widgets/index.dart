@@ -21,6 +21,7 @@ import 'package:ytsmovies/src/bloc/filter/index.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/lists.dart' as list;
+import 'package:ytsmovies/src/utils/responsive.dart';
 import 'package:ytsmovies/src/widgets/movies_list.dart';
 
 export 'package:ytsmovies/src/widgets/buttons/index.dart';

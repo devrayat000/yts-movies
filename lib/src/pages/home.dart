@@ -69,7 +69,10 @@ class HomePageState extends State<HomePage> {
         behavior: const MaterialScrollBehavior(),
         child: HeroMode(
           enabled: false,
-          child: ListView(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1400),
+              child: ListView(
             padding: const EdgeInsets.all(12.0),
             restorationId: "home-screen-listview",
             children: [
@@ -106,6 +109,8 @@ class HomePageState extends State<HomePage> {
                 onAction: () => _handleNavigation("rated"),
               ),
             ],
+              ),
+            ),
           ),
         ),
       ),
