@@ -8,7 +8,7 @@ import 'package:ytsmovies/src/api/movies.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
-import 'package:ytsmovies/src/services/desktop_window_service.dart';
+import 'package:ytsmovies/src/widgets/adaptive/adaptive.dart';
 import 'package:ytsmovies/src/services/error_notification_service.dart';
 
 class HomePage extends StatefulWidget {
@@ -63,9 +63,9 @@ class HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
       restorationId: "home-screen-scaffold",
-      appBar: isDesktop ? null : const HomeAppbar(),
+      appBar: const HomeAppbar(),
       body: ScrollConfiguration(
         behavior: const MaterialScrollBehavior(),
         child: HeroMode(

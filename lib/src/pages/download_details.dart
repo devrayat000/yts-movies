@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ytsmovies/src/bloc/download_manager/index.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
+import 'package:ytsmovies/src/widgets/adaptive/adaptive.dart';
 
 class DownloadDetailsPage extends StatelessWidget {
   final int taskId;
@@ -14,31 +15,41 @@ class DownloadDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 3,
-      child: Scaffold(
+      child: AdaptiveScaffold(
+        title: const Text('Download Details'),
         appBar: AppBar(
           title: const Text('Download Details'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(icon: Icon(Icons.info_outline), text: 'Overview'),
-              Tab(icon: Icon(Icons.folder_open), text: 'Files'),
-              Tab(icon: Icon(Icons.tune), text: 'Storage'),
-            ],
-          ),
         ),
-        body: BlocBuilder<DownloadManagerBloc, DownloadManagerState>(
-          builder: (context, state) {
-            final task = state.downloads[taskId];
-            if (task == null) {
-              return const Center(child: Text('Download not found'));
-            }
-            return TabBarView(
-              children: [
-                _OverviewTab(task: task),
-                _FilesTab(task: task),
-                _StorageTab(task: task),
-              ],
-            );
-          },
+        body: Column(
+          children: [
+            const Material(
+              type: MaterialType.transparency,
+              child: TabBar(
+                tabs: [
+                  Tab(icon: Icon(Icons.info_outline), text: 'Overview'),
+                  Tab(icon: Icon(Icons.folder_open), text: 'Files'),
+                  Tab(icon: Icon(Icons.tune), text: 'Storage'),
+                ],
+              ),
+            ),
+            Expanded(
+              child: BlocBuilder<DownloadManagerBloc, DownloadManagerState>(
+                builder: (context, state) {
+                  final task = state.downloads[taskId];
+                  if (task == null) {
+                    return const Center(child: Text('Download not found'));
+                  }
+                  return TabBarView(
+                    children: [
+                      _OverviewTab(task: task),
+                      _FilesTab(task: task),
+                      _StorageTab(task: task),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

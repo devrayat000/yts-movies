@@ -12,6 +12,7 @@ import 'package:flutter_breadcrumb/flutter_breadcrumb.dart'
 
 import 'package:ytsmovies/src/api/movies.dart';
 import 'package:ytsmovies/src/models/index.dart';
+import 'package:ytsmovies/src/widgets/adaptive/adaptive.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/services/error_notification_service.dart';
@@ -293,7 +294,7 @@ class _Screen extends StatelessWidget {
   Widget build(BuildContext context) {
     final language = allNativeNames[_movie.language] ?? 'English';
     final theme = Theme.of(context);
-    return Scaffold(
+    return AdaptiveScaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: GestureDetector(
         onHorizontalDragUpdate: (details) {

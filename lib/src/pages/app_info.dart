@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:ytsmovies/src/widgets/adaptive/adaptive.dart';
 
 class AppInfoPage extends StatelessWidget {
   const AppInfoPage({super.key});
@@ -19,7 +20,8 @@ class AppInfoPage extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
+    return AdaptiveScaffold(
+      title: const Text('App Info'),
       appBar: AppBar(
         title: const Text('App Info'),
         centerTitle: true,

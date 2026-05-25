@@ -13,6 +13,7 @@ class LatestMoviesPage extends StatelessWidget {
     return MoviesList(
       label: 'latest',
       handler: (page) => context.read<MoviesClient>().getMovieList(page: page),
+      title: const Text('Latest Movies'),
       appBar: AppBar(
         title: Text(
           'Latest Movies',
@@ -35,6 +36,7 @@ class HD4KMoviesPage extends StatelessWidget {
             page: page,
             quality: Quality.$2160,
           ),
+      title: const Text('4K Movies'),
       appBar: AppBar(
         title: Text(
           '4K Movies',
@@ -57,6 +59,7 @@ class RatedMoviesPage extends StatelessWidget {
             page: page,
             minimumRating: 5,
           ),
+      title: const Text('Highly Rated Movies'),
       appBar: AppBar(
         title: Text(
           'Highly Rated Movies',

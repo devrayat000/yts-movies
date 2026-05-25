@@ -11,6 +11,7 @@ class FavouritesPage extends StatelessWidget {
     return MoviesList(
       label: 'favourite',
       handler: context.favouritesService.getFavouriteMovies,
+      title: const Text('Favourite Movies'),
       appBar: AppBar(
         title: Text(
           'Favourite Movies',

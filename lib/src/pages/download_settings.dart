@@ -4,6 +4,7 @@ import 'package:permission_handler/permission_handler.dart' show openAppSettings
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
 import 'package:ytsmovies/src/services/preferences_service.dart';
 import 'package:ytsmovies/src/utils/storage_permission.dart';
+import 'package:ytsmovies/src/widgets/adaptive/adaptive.dart';
 import 'package:ytsmovies/src/injection.dart';
 
 class DownloadSettingsPage extends StatefulWidget {
@@ -106,7 +107,8 @@ class _DownloadSettingsPageState extends State<DownloadSettingsPage> {
     final customPath = _prefs.customDownloadPath;
     final isCustom = customPath != null;
 
-    return Scaffold(
+    return AdaptiveScaffold(
+      title: const Text('Download Settings'),
       appBar: AppBar(title: const Text('Download Settings')),
       body: ListView(
         padding: const EdgeInsets.all(16.0),

@@ -17,6 +17,7 @@ import 'package:ytsmovies/src/pages/downloads.dart';
 import 'package:ytsmovies/src/pages/download_details.dart';
 import 'package:ytsmovies/src/services/desktop_window_service.dart';
 import 'package:ytsmovies/src/widgets.dart';
+import 'package:ytsmovies/src/widgets/adaptive/adaptive_page.dart';
 import 'package:ytsmovies/src/widgets/desktop_shell.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 
@@ -68,48 +69,70 @@ mixin RouterExtension {
           GoRoute(
             path: "/home",
             name: "home",
-            builder: (context, state) => const HomePage(),
+            pageBuilder: (context, state) =>
+                AdaptivePage(key: state.pageKey, child: const HomePage()),
             routes: [
               GoRoute(
                 path: 'search',
                 name: "search",
-                builder: (context, state) {
+                pageBuilder: (context, state) {
                   final query = state.uri.queryParameters['q'];
-                  return SearchPage(initialQuery: query);
+                  return AdaptivePage(
+                    key: state.pageKey,
+                    child: SearchPage(initialQuery: query),
+                  );
                 },
               ),
               GoRoute(
                 path: 'latest',
                 name: "latest",
-                builder: (context, state) => const LatestMoviesPage(),
+                pageBuilder: (context, state) => AdaptivePage(
+                  key: state.pageKey,
+                  child: const LatestMoviesPage(),
+                ),
               ),
               GoRoute(
                 path: '4k',
                 name: "4k",
-                builder: (context, state) => const HD4KMoviesPage(),
+                pageBuilder: (context, state) => AdaptivePage(
+                  key: state.pageKey,
+                  child: const HD4KMoviesPage(),
+                ),
               ),
               GoRoute(
                 path: 'rated',
                 name: "rated",
-                builder: (context, state) => const RatedMoviesPage(),
+                pageBuilder: (context, state) => AdaptivePage(
+                  key: state.pageKey,
+                  child: const RatedMoviesPage(),
+                ),
               ),
               GoRoute(
                 path: 'favourites',
                 name: "favourites",
-                builder: (context, state) => const FavouritesPage(),
+                pageBuilder: (context, state) => AdaptivePage(
+                  key: state.pageKey,
+                  child: const FavouritesPage(),
+                ),
               ),
               GoRoute(
                 path: 'downloads',
                 name: "downloads",
-                builder: (context, state) => const DownloadsPage(),
+                pageBuilder: (context, state) => AdaptivePage(
+                  key: state.pageKey,
+                  child: const DownloadsPage(),
+                ),
                 routes: [
                   GoRoute(
                     path: 'details/:taskId',
                     name: "download-details",
-                    builder: (context, state) {
+                    pageBuilder: (context, state) {
                       final taskIdStr = state.pathParameters['taskId']!;
                       final taskId = int.parse(taskIdStr);
-                      return DownloadDetailsPage(taskId: taskId);
+                      return AdaptivePage(
+                        key: state.pageKey,
+                        child: DownloadDetailsPage(taskId: taskId),
+                      );
                     },
                   ),
                 ],
@@ -117,17 +140,26 @@ mixin RouterExtension {
               GoRoute(
                 path: 'app-info',
                 name: "app-info",
-                builder: (context, state) => const AppInfoPage(),
+                pageBuilder: (context, state) => AdaptivePage(
+                  key: state.pageKey,
+                  child: const AppInfoPage(),
+                ),
               ),
               GoRoute(
                 path: 'movie/:id',
                 name: "details",
-                builder: (context, state) {
+                pageBuilder: (context, state) {
                   if (state.extra != null && state.extra is Movie) {
-                    return MoviePage.withMovie(item: state.extra as Movie);
+                    return AdaptivePage(
+                      key: state.pageKey,
+                      child: MoviePage.withMovie(item: state.extra as Movie),
+                    );
                   }
                   final id = int.parse(state.pathParameters['id']!);
-                  return MoviePage(id: id);
+                  return AdaptivePage(
+                    key: state.pageKey,
+                    child: MoviePage(id: id),
+                  );
                 },
               ),
             ],

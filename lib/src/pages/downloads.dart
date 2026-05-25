@@ -9,7 +9,7 @@ import 'package:ytsmovies/src/pages/download_details.dart';
 import 'package:ytsmovies/src/services/desktop_window_service.dart';
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
 import 'package:ytsmovies/src/injection.dart';
-import 'package:ytsmovies/src/widgets/desktop/desktop_dialogs.dart';
+import 'package:ytsmovies/src/widgets/adaptive/adaptive.dart';
 import 'package:open_file_manager/open_file_manager.dart';
 
 class DownloadsPage extends StatelessWidget {
@@ -17,7 +17,8 @@ class DownloadsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      title: const Text('Downloads'),
       appBar: AppBar(
         title: const Text('Downloads'),
         actions: [
@@ -44,6 +45,29 @@ class DownloadsPage extends StatelessWidget {
           ),
         ],
       ),
+      actions: [
+        AdaptiveIconButton(
+          icon: const Icon(Icons.settings),
+          tooltip: 'Download settings',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const DownloadSettingsPage(),
+              ),
+            );
+          },
+        ),
+        AdaptiveIconButton(
+          icon: const Icon(Icons.delete_sweep),
+          tooltip: 'Clear completed downloads',
+          onPressed: () {
+            context.read<DownloadManagerBloc>().add(
+                  DownloadManagerClearCompleted(),
+                );
+          },
+        ),
+      ],
       body: BlocBuilder<DownloadManagerBloc, DownloadManagerState>(
         builder: (context, state) {
           if (state.allDownloads.isEmpty) {
@@ -427,43 +451,25 @@ class _DownloadActionsMenu extends StatelessWidget {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context, DownloadManagerBloc bloc) async {
-    if (isDesktop) {
-      final confirmed = await showFluentConfirm(
-        context: context,
-        title: 'Delete Download',
-        message:
-            'Are you sure you want to delete this download? This will also remove downloaded files.',
-        confirmLabel: 'Delete',
-        destructive: true,
-      );
-      if (confirmed) {
-        bloc.add(DownloadManagerDeleteDownload(task.taskId));
-      }
-      return;
-    }
-    showDialog(
+  void _showDeleteConfirmation(
+      BuildContext context, DownloadManagerBloc bloc) async {
+    final confirmed = await showAdaptiveAppDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Download'),
-        content: const Text(
+      title: 'Delete Download',
+      message:
           'Are you sure you want to delete this download? This will also remove downloaded files.',
+      actions: const [
+        AdaptiveDialogAction(label: 'Cancel', value: false),
+        AdaptiveDialogAction(
+          label: 'Delete',
+          value: true,
+          isPrimary: true,
+          isDestructive: true,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              bloc.add(DownloadManagerDeleteDownload(task.taskId));
-              Navigator.of(dialogContext).pop();
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      ],
     );
+    if (confirmed == true) {
+      bloc.add(DownloadManagerDeleteDownload(task.taskId));
+    }
   }
 }
