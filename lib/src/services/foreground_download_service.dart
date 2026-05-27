@@ -46,8 +46,7 @@ class ForegroundDownloadService {
     return p;
   }
 
-  bool get _supportsBackgroundService =>
-      Platform.isAndroid || Platform.isIOS;
+  bool get _supportsBackgroundService => Platform.isAndroid || Platform.isIOS;
 
   @postConstruct
   Future<void> initialize() async {
@@ -262,8 +261,7 @@ class ForegroundDownloadService {
       movieTitle: movieTitle,
       initialDownloadLimit:
           downloadLimit ?? _preferencesService.globalDownloadLimit,
-      initialUploadLimit:
-          uploadLimit ?? _preferencesService.globalUploadLimit,
+      initialUploadLimit: uploadLimit ?? _preferencesService.globalUploadLimit,
       selectedIndices: selectedIndices,
       previewMode: previewMode,
     );
@@ -376,6 +374,7 @@ class ForegroundDownloadService {
     return await FlutterBackgroundService().isRunning();
   }
 
+  @disposeMethod
   Future<void> dispose() async {
     _d('dispose');
     await _progressController.close();

@@ -1,13 +1,66 @@
+import 'dart:async';
 import 'dart:developer';
+import 'dart:collection';
 import 'package:dio/dio.dart';
 import 'package:ytsmovies/src/utils/exceptions.dart';
 import 'package:ytsmovies/src/services/connectivity_service.dart';
-import 'package:ytsmovies/src/injection.dart';
 
 /// Interceptor for handling API errors and network issues
-class ErrorInterceptor extends Interceptor {
+class NetworkConnectivityInterceptor extends Interceptor {
+  final ConnectivityService _conn;
+  final Dio _dio;
+  final _requestQueue = ListQueue<_QueueRequest>();
+
+  NetworkConnectivityInterceptor({
+    required ConnectivityService connectivity,
+    required Dio dio,
+  })  : _conn = connectivity,
+        _dio = dio,
+        super() {
+    _conn.stream.listen(
+      (state) {
+        if (state == ConnectivityState.connected) {
+          for (final queueReq in _requestQueue) {
+            _executeResponse(queueReq.options).then(
+              (response) {
+                _requestQueue.removeFirst();
+                queueReq.completer.complete(response);
+              },
+              onError: (error) => queueReq.completer.completeError(error),
+            );
+          }
+        }
+      },
+    );
+  }
+
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
+  void onRequest(
+      RequestOptions options, RequestInterceptorHandler handler) async {
+    if (options.extra['isRetryAttempt'] == true) {
+      return handler.next(options);
+    }
+
+    final isDisconnected = await _conn.isDisconnected;
+    log("Connectivity: ${!isDisconnected}");
+    if (isDisconnected) {
+      return handler.reject(
+        DioException.connectionError(
+          requestOptions: options,
+          reason: "No internet connection. Request could not be sent.",
+        ),
+        true,
+      );
+    }
+    return handler.next(options);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
+    if (err.requestOptions.extra['isRetryAttempt'] == true) {
+      return handler.next(err);
+    }
+
     log(
       'API Error: ${err.message}',
       error: err,
@@ -15,38 +68,46 @@ class ErrorInterceptor extends Interceptor {
       time: DateTime.now(),
     );
 
+    if (_isNetworkError(err)) {
+      final completer = Completer<Response>();
+      _requestQueue.add(_QueueRequest(
+        completer: completer,
+        options: err.requestOptions,
+      ));
+      log("Added attempt to queue, url: ${err.requestOptions.path}");
+
+      try {
+        final response = await completer.future;
+        return handler.resolve(response);
+      } on DioException catch (err) {
+        final customError = _parseError(err);
+        return handler.next(err.copyWith(error: customError));
+      }
+    }
+
     final customError = _parseError(err);
-    handler.reject(DioException(
-      requestOptions: err.requestOptions,
-      error: customError,
-      response: err.response,
-      stackTrace: err.stackTrace,
-    ));
+    return handler.next(err.copyWith(error: customError));
+  }
+
+  bool _isNetworkError(DioException err) =>
+      err.type == DioExceptionType.connectionError;
+
+  Future<Response> _executeResponse(RequestOptions options) {
+    final extra = Map<String, dynamic>.from(options.extra);
+    extra['isRetryAttempt'] = true;
+
+    return _dio.fetch(options.copyWith(extra: extra));
   }
 
   CustomException _parseError(DioException error) {
     // Check connectivity status for network-related errors
-    final isConnected = getIt<ConnectivityService>().isConnected;
-
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
-        return CustomException(
-          isConnected
-              ? 'Connection timeout. Please try again.'
-              : 'No internet connection. Please check your network settings.',
-        );
+        return CustomException('Connection timeout. Please try again.');
       case DioExceptionType.sendTimeout:
-        return CustomException(
-          isConnected
-              ? 'Request timeout. Please try again.'
-              : 'No internet connection. Request could not be sent.',
-        );
+        return CustomException('Request timeout. Please try again.');
       case DioExceptionType.receiveTimeout:
-        return CustomException(
-          isConnected
-              ? 'Server response timeout. Please try again.'
-              : 'No internet connection. Unable to receive response.',
-        );
+        return CustomException('Server response timeout. Please try again.');
       case DioExceptionType.badCertificate:
         return const CustomException(
           'Certificate verification failed. Please check your connection.',
@@ -58,19 +119,11 @@ class ErrorInterceptor extends Interceptor {
           'Request was cancelled.',
         );
       case DioExceptionType.connectionError:
-        return CustomException(
-          isConnected
-              ? 'Connection failed. Please try again.'
-              : 'No internet connection. Please check your network settings.',
-        );
+        return CustomException('Connection failed. Please try again.');
       case DioExceptionType.unknown:
         if (error.error.toString().contains('SocketException') ||
             error.error.toString().contains('Network is unreachable')) {
-          return CustomException(
-            isConnected
-                ? 'Network error. Please try again.'
-                : 'No internet connection. Please check your network settings.',
-          );
+          return CustomException('Network error. Please try again.');
         }
         return CustomException(
           error.message ?? 'An unexpected error occurred. Please try again.',
@@ -129,4 +182,11 @@ class ErrorInterceptor extends Interceptor {
         );
     }
   }
+}
+
+class _QueueRequest {
+  final RequestOptions options;
+  final Completer<Response> completer;
+
+  _QueueRequest({required this.completer, required this.options});
 }

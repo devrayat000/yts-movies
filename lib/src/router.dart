@@ -21,151 +21,149 @@ import 'package:ytsmovies/src/widgets/adaptive/adaptive_page.dart';
 import 'package:ytsmovies/src/widgets/desktop_shell.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 
-mixin RouterExtension {
-  static final _rootNavigatorKey = GlobalKey<NavigatorState>();
-  static final _shellNavigatorKey = GlobalKey<NavigatorState>();
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
-  // Public getter for root navigator key
-  static GlobalKey<NavigatorState> get rootNavigatorKey => _rootNavigatorKey;
+// Public getter for root navigator key
+GlobalKey<NavigatorState> get rootNavigatorKey => _rootNavigatorKey;
 
-  final router = GoRouter(
-    navigatorKey: _rootNavigatorKey,
-    routes: [
-      GoRoute(
-        path: '/',
-        name: "splash",
-        builder: (context, state) => const InitializationSplashScreen(),
-      ),
-      ShellRoute(
-        navigatorKey: _shellNavigatorKey,
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state, child) {
-          final content = Unfocus(
-            child: PageStorage(
-              bucket: MyGlobals.bucket,
-              child: child,
+final router = GoRouter(
+  navigatorKey: _rootNavigatorKey,
+  routes: [
+    GoRoute(
+      path: '/',
+      name: "splash",
+      builder: (context, state) => const InitializationSplashScreen(),
+    ),
+    ShellRoute(
+      navigatorKey: _shellNavigatorKey,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state, child) {
+        final content = Unfocus(
+          child: PageStorage(
+            bucket: MyGlobals.bucket,
+            child: child,
+          ),
+        );
+        return MultiProvider(
+          providers: [
+            RepositoryProvider(
+              create: (context) => getIt.get<MoviesClient>(),
+              lazy: true,
             ),
-          );
-          return MultiProvider(
-            providers: [
-              RepositoryProvider(
-                create: (context) => getIt.get<MoviesClient>(),
-                lazy: true,
-              ),
-              Provider<Filter>(
-                create: (_) => Filter(),
-                dispose: (_, filter) => filter.reset(),
-              ),
-            ],
-            child: isDesktop
-                ? DesktopShell(
-                    location: state.uri.toString(),
-                    child: content,
-                  )
-                : content,
-          );
-        },
-        routes: [
-          GoRoute(
-            path: "/home",
-            name: "home",
-            pageBuilder: (context, state) =>
-                AdaptivePage(key: state.pageKey, child: const HomePage()),
-            routes: [
-              GoRoute(
-                path: 'search',
-                name: "search",
-                pageBuilder: (context, state) {
-                  final query = state.uri.queryParameters['q'];
-                  return AdaptivePage(
-                    key: state.pageKey,
-                    child: SearchPage(initialQuery: query),
-                  );
-                },
-              ),
-              GoRoute(
-                path: 'latest',
-                name: "latest",
-                pageBuilder: (context, state) => AdaptivePage(
+            Provider<Filter>(
+              create: (_) => Filter(),
+              dispose: (_, filter) => filter.reset(),
+            ),
+          ],
+          child: isDesktop
+              ? DesktopShell(
+                  location: state.uri.toString(),
+                  child: content,
+                )
+              : content,
+        );
+      },
+      routes: [
+        GoRoute(
+          path: "/home",
+          name: "home",
+          pageBuilder: (context, state) =>
+              AdaptivePage(key: state.pageKey, child: const HomePage()),
+          routes: [
+            GoRoute(
+              path: 'search',
+              name: "search",
+              pageBuilder: (context, state) {
+                final query = state.uri.queryParameters['q'];
+                return AdaptivePage(
                   key: state.pageKey,
-                  child: const LatestMoviesPage(),
-                ),
+                  child: SearchPage(initialQuery: query),
+                );
+              },
+            ),
+            GoRoute(
+              path: 'latest',
+              name: "latest",
+              pageBuilder: (context, state) => AdaptivePage(
+                key: state.pageKey,
+                child: const LatestMoviesPage(),
               ),
-              GoRoute(
-                path: '4k',
-                name: "4k",
-                pageBuilder: (context, state) => AdaptivePage(
-                  key: state.pageKey,
-                  child: const HD4KMoviesPage(),
-                ),
+            ),
+            GoRoute(
+              path: '4k',
+              name: "4k",
+              pageBuilder: (context, state) => AdaptivePage(
+                key: state.pageKey,
+                child: const HD4KMoviesPage(),
               ),
-              GoRoute(
-                path: 'rated',
-                name: "rated",
-                pageBuilder: (context, state) => AdaptivePage(
-                  key: state.pageKey,
-                  child: const RatedMoviesPage(),
-                ),
+            ),
+            GoRoute(
+              path: 'rated',
+              name: "rated",
+              pageBuilder: (context, state) => AdaptivePage(
+                key: state.pageKey,
+                child: const RatedMoviesPage(),
               ),
-              GoRoute(
-                path: 'favourites',
-                name: "favourites",
-                pageBuilder: (context, state) => AdaptivePage(
-                  key: state.pageKey,
-                  child: const FavouritesPage(),
-                ),
+            ),
+            GoRoute(
+              path: 'favourites',
+              name: "favourites",
+              pageBuilder: (context, state) => AdaptivePage(
+                key: state.pageKey,
+                child: const FavouritesPage(),
               ),
-              GoRoute(
-                path: 'downloads',
-                name: "downloads",
-                pageBuilder: (context, state) => AdaptivePage(
-                  key: state.pageKey,
-                  child: const DownloadsPage(),
-                ),
-                routes: [
-                  GoRoute(
-                    path: 'details/:taskId',
-                    name: "download-details",
-                    pageBuilder: (context, state) {
-                      final taskIdStr = state.pathParameters['taskId']!;
-                      final taskId = int.parse(taskIdStr);
-                      return AdaptivePage(
-                        key: state.pageKey,
-                        child: DownloadDetailsPage(taskId: taskId),
-                      );
-                    },
-                  ),
-                ],
+            ),
+            GoRoute(
+              path: 'downloads',
+              name: "downloads",
+              pageBuilder: (context, state) => AdaptivePage(
+                key: state.pageKey,
+                child: const DownloadsPage(),
               ),
-              GoRoute(
-                path: 'app-info',
-                name: "app-info",
-                pageBuilder: (context, state) => AdaptivePage(
-                  key: state.pageKey,
-                  child: const AppInfoPage(),
-                ),
-              ),
-              GoRoute(
-                path: 'movie/:id',
-                name: "details",
-                pageBuilder: (context, state) {
-                  if (state.extra != null && state.extra is Movie) {
+              routes: [
+                GoRoute(
+                  path: 'details/:taskId',
+                  name: "download-details",
+                  pageBuilder: (context, state) {
+                    final taskIdStr = state.pathParameters['taskId']!;
+                    final taskId = int.parse(taskIdStr);
                     return AdaptivePage(
                       key: state.pageKey,
-                      child: MoviePage.withMovie(item: state.extra as Movie),
+                      child: DownloadDetailsPage(taskId: taskId),
                     );
-                  }
-                  final id = int.parse(state.pathParameters['id']!);
+                  },
+                ),
+              ],
+            ),
+            GoRoute(
+              path: 'app-info',
+              name: "app-info",
+              pageBuilder: (context, state) => AdaptivePage(
+                key: state.pageKey,
+                child: const AppInfoPage(),
+              ),
+            ),
+            GoRoute(
+              path: 'movie/:id',
+              name: "details",
+              pageBuilder: (context, state) {
+                if (state.extra != null && state.extra is Movie) {
                   return AdaptivePage(
                     key: state.pageKey,
-                    child: MoviePage(id: id),
+                    child: MoviePage.withMovie(item: state.extra as Movie),
                   );
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-    ],
-  );
-}
+                }
+                final id = int.parse(state.pathParameters['id']!);
+                return AdaptivePage(
+                  key: state.pageKey,
+                  child: MoviePage(id: id),
+                );
+              },
+            ),
+          ],
+        ),
+      ],
+    ),
+  ],
+);

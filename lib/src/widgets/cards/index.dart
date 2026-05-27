@@ -3,6 +3,7 @@ library;
 import 'dart:developer';
 
 import 'package:flutter/cupertino.dart' show CupertinoScrollbar;
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ytsmovies/src/models/index.dart';

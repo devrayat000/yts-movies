@@ -151,8 +151,9 @@ class ItemBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoScrollbar(
+    return Scrollbar(
       child: CustomScrollView(
+        scrollBehavior: MaterialScrollBehavior(),
         key: key,
         slivers: [
           SliverPadding(

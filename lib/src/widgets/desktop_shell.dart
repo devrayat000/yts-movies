@@ -27,6 +27,12 @@ class _DesktopShellState extends State<DesktopShell> {
     _NavSpec('search', Icons.search, Icons.search, 'Search'),
   ];
 
+  // Breakpoint: below this, rail auto-collapses. Tuned for desktop/TV/large tablet.
+  static const double _expandBreakpoint = 1000;
+
+  // User override of auto-collapse. null = follow breakpoint.
+  bool? _userExpanded;
+
   int _indexFromLocation(String loc) {
     for (var i = 0; i < _items.length; i++) {
       final spec = _items[i];
@@ -47,185 +53,250 @@ class _DesktopShellState extends State<DesktopShell> {
     final selectedIndex = _indexFromLocation(widget.location);
 
     // Sidebar color matches cardColor/surfaceContainer for desktop layout distinction
-    final sidebarColor = isDark
-        ? const Color(0xFF1E293B)
-        : const Color(0xFFF3F4F6);
+    final sidebarColor =
+        isDark ? const Color(0xFF1E293B) : const Color(0xFFF3F4F6);
 
     return Scaffold(
-      body: Row(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final autoExtended = constraints.maxWidth >= _expandBreakpoint;
+          final extended = _userExpanded ?? autoExtended;
+
+          return Row(
+            children: [
+              ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(
+                  scrollbars: false,
+                ),
+                child: NavigationRail(
+                  extended: extended,
+                  minExtendedWidth: 250,
+                  backgroundColor: sidebarColor,
+                  useIndicator: true,
+                  indicatorColor: theme.colorScheme.primaryContainer,
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: _goto,
+                  selectedIconTheme: IconThemeData(
+                    color: theme.colorScheme.primary,
+                    size: 22,
+                  ),
+                  unselectedIconTheme: IconThemeData(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    size: 22,
+                  ),
+                  selectedLabelTextStyle: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  unselectedLabelTextStyle:
+                      theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  leading: _buildLeading(theme, extended),
+                  destinations: [
+                    for (final item in _items)
+                      NavigationRailDestination(
+                        icon: Icon(item.icon),
+                        selectedIcon: Icon(item.activeIcon),
+                        label: Text(item.label),
+                      ),
+                  ],
+                  trailingAtBottom: true,
+                  trailing: _buildTrailing(theme, isDark, extended),
+                ),
+              ),
+              VerticalDivider(
+                width: 1,
+                thickness: 1,
+                color: theme.dividerColor.withValues(alpha: 0.15),
+              ),
+              Expanded(
+                child: widget.child,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _toggleExtended(bool current) {
+    setState(() => _userExpanded = !current);
+  }
+
+  Widget _buildLeading(ThemeData theme, bool extended) {
+    final menuButton = IconButton(
+      icon: Icon(extended ? Icons.menu_open : Icons.menu),
+      tooltip: extended ? 'Collapse' : 'Expand',
+      onPressed: () => _toggleExtended(extended),
+    );
+
+    final logo = Image.asset(
+      'images/logo-YTS.png',
+      height: 24,
+      errorBuilder: (_, __, ___) => const Icon(
+        Icons.play_circle_fill,
+        color: Colors.green,
+        size: 24,
+      ),
+    );
+
+    if (!extended) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 12, bottom: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            menuButton,
+            const SizedBox(height: 8),
+            logo,
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 16, 20, 12),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Desktop Navigation Sidebar
-          Container(
-            width: 250,
-            color: sidebarColor,
+          menuButton,
+          const SizedBox(width: 4),
+          logo,
+          const SizedBox(width: 10),
+          Text(
+            'YTS Movies',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrailing(ThemeData theme, bool isDark, bool extended) {
+    if (!extended) {
+      return Expanded(
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Header section with Title and Logo
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-                  child: Row(
-                    children: [
-                      Image.asset(
-                        'images/logo-YTS.png',
-                        height: 24,
-                        errorBuilder: (_, __, ___) => const Icon(
-                          Icons.play_circle_fill,
-                          color: Colors.green,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'YTS Movies',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
+                Divider(
+                  height: 1,
+                  indent: 12,
+                  endIndent: 12,
+                  color: theme.dividerColor.withValues(alpha: 0.15),
                 ),
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                const SizedBox(height: 12),
-
-                // Navigation Items
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    itemCount: _items.length,
-                    itemBuilder: (context, index) {
-                      final item = _items[index];
-                      final isSelected = index == selectedIndex;
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(8),
-                          onTap: () => _goto(index),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            curve: Curves.easeOutCubic,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              color: isSelected
-                                  ? theme.colorScheme.primaryContainer
-                                  : Colors.transparent,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  isSelected ? item.activeIcon : item.icon,
-                                  size: 20,
-                                  color: isSelected
-                                      ? theme.colorScheme.primary
-                                      : theme.colorScheme.onSurface.withOpacity(0.7),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  item.label,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: isSelected
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                    color: isSelected
-                                        ? theme.colorScheme.primary
-                                        : theme.colorScheme.onSurface,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                const SizedBox(height: 8),
+                IconButton(
+                  icon: Icon(
+                    Icons.info_outline,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
+                  tooltip: 'About App',
+                  onPressed: () => context.pushNamed('app-info'),
                 ),
-
-                // Footer Actions (About, Theme Toggle)
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    children: [
-                      // About Button
-                      InkWell(
-                        borderRadius: BorderRadius.circular(8),
-                        onTap: () => context.pushNamed('app-info'),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                size: 20,
-                                color: theme.colorScheme.onSurface.withOpacity(0.7),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'About App',
-                                style: theme.textTheme.bodyMedium,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      // Theme Toggle Row
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  isDark ? Icons.dark_mode : Icons.light_mode,
-                                  size: 20,
-                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'Dark Theme',
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                              ],
-                            ),
-                            Switch(
-                              value: isDark,
-                              onChanged: (_) =>
-                                  context.read<ThemeCubit>().toggle(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                IconButton(
+                  icon: Icon(
+                    isDark ? Icons.dark_mode : Icons.light_mode,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
+                  tooltip: isDark ? 'Light theme' : 'Dark theme',
+                  onPressed: () => context.read<ThemeCubit>().toggle(),
                 ),
               ],
             ),
           ),
-          // Vertical boundary line
-          VerticalDivider(
-            width: 1,
-            thickness: 1,
-            color: theme.dividerColor.withOpacity(0.15),
+        ),
+      );
+    }
+
+    return Expanded(
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: SizedBox(
+          width: 250,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Divider(
+                height: 1,
+                indent: 16,
+                endIndent: 16,
+                color: theme.dividerColor.withValues(alpha: 0.15),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => context.pushNamed('app-info'),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              size: 20,
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.7),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'About App',
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                isDark ? Icons.dark_mode : Icons.light_mode,
+                                size: 20,
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.7),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Dark Theme',
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
+                          Switch(
+                            value: isDark,
+                            onChanged: (_) =>
+                                context.read<ThemeCubit>().toggle(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          // Content pane
-          Expanded(
-            child: widget.child,
-          ),
-        ],
+        ),
       ),
     );
   }

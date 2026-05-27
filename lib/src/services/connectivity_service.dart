@@ -1,91 +1,88 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+
+enum ConnectivityState {
+  initial("initial"),
+  connected("connected"),
+  disconnected("disconnected"),
+  ;
+
+  final String value;
+  const ConnectivityState(this.value);
+}
 
 /// Service for monitoring network connectivity status
 @lazySingleton
-class ConnectivityService {
-  ConnectivityService();
+class ConnectivityService extends Cubit<ConnectivityState> {
+  late final StreamSubscription<List<ConnectivityResult>> _sub;
+  late final Connectivity _conn;
 
-  final Connectivity _connectivity = Connectivity();
-  late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
+  ConnectivityService() : super(ConnectivityState.initial) {
+    _conn = Connectivity();
+    _sub = _conn.onConnectivityChanged.listen(
+      (results) {
+        if (_checkConnected(results)) {
+          _updateState(ConnectivityState.connected);
+        } else {
+          _updateState(ConnectivityState.disconnected);
+        }
+      },
+      onError: (error) => addError(error),
+    );
+  }
 
-  bool _isConnected = true;
-  bool get isConnected => _isConnected;
+  void _updateState(ConnectivityState newState) {
+    if (state != newState) {
+      log('Connectivity status changed: $newState}');
+      emit(newState);
+    }
+  }
 
-  final StreamController<bool> _connectivityController =
-      StreamController<bool>.broadcast();
-  Stream<bool> get connectivityStream => _connectivityController.stream;
+  bool get isConnected => state == ConnectivityState.connected;
+  bool get isDisconnected => state == ConnectivityState.disconnected;
 
   /// Initialize the connectivity service
+  @postConstruct
   Future<void> initialize() async {
     try {
       // Check initial connectivity status
-      final result = await _connectivity.checkConnectivity();
-      _updateConnectivityStatus(result);
-
-      // Listen for connectivity changes
-      _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
-        _updateConnectivityStatus,
-        onError: (error, stackTrace) {
-          log(
-            'Connectivity monitoring error: $error',
-            error: error,
-            stackTrace: stackTrace,
-          );
-        },
-      );
+      final results = await _conn.checkConnectivity();
+      if (_checkConnected(results)) {
+        _updateState(ConnectivityState.connected);
+      } else {
+        _updateState(ConnectivityState.disconnected);
+      }
     } catch (e, stackTrace) {
       log(
         'Failed to initialize connectivity service: $e',
         error: e,
         stackTrace: stackTrace,
       );
-      // Assume connected if we can't check
-      _isConnected = true;
-    }
-  }
-
-  /// Update connectivity status based on connectivity result
-  void _updateConnectivityStatus(List<ConnectivityResult> results) {
-    final wasConnected = _isConnected;
-
-    // Check if any of the results indicate connectivity
-    _isConnected = results.any((result) =>
-        result == ConnectivityResult.mobile ||
-        result == ConnectivityResult.wifi ||
-        result == ConnectivityResult.ethernet ||
-        result == ConnectivityResult.vpn);
-
-    if (wasConnected != _isConnected) {
-      log('Connectivity status changed: ${_isConnected ? "Connected" : "Disconnected"}');
-      _connectivityController.add(_isConnected);
+      addError(e, stackTrace);
     }
   }
 
   /// Get a user-friendly connectivity status message
   String get statusMessage {
-    return _isConnected
+    return state == ConnectivityState.connected
         ? 'Connected to internet'
         : 'No internet connection. Please check your network settings.';
   }
 
-  /// Check if the device has an active internet connection
-  Future<bool> hasInternetConnection() async {
-    try {
-      final result = await _connectivity.checkConnectivity();
-      _updateConnectivityStatus(result);
-      return _isConnected;
-    } catch (e) {
-      log('Error checking internet connection: $e');
-      return false;
-    }
-  }
+  bool _checkConnected(List<ConnectivityResult> results) => results.any(
+      (element) =>
+          element == ConnectivityResult.ethernet ||
+          element == ConnectivityResult.mobile ||
+          element == ConnectivityResult.wifi);
 
   /// Dispose of the service and close streams
-  void dispose() {
-    _connectivitySubscription.cancel();
-    _connectivityController.close();
+  @override
+  @disposeMethod
+  Future<void> close() {
+    _sub.cancel();
+    return super.close();
   }
 }

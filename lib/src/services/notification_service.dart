@@ -57,6 +57,7 @@ class NotificationService {
   }
 
   /// Dispose the service
+  @disposeMethod
   Future<void> dispose() async {
     await _notificationTapController.close();
   }

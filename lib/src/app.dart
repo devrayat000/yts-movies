@@ -9,7 +9,7 @@ import 'package:ytsmovies/src/router.dart';
 import 'package:ytsmovies/src/services/desktop_window_service.dart';
 import 'package:ytsmovies/src/widgets.dart';
 
-class YTSApp extends StatelessWidget with RouterExtension {
+class YTSApp extends StatelessWidget {
   YTSApp({super.key});
 
   @override
@@ -21,7 +21,7 @@ class YTSApp extends StatelessWidget with RouterExtension {
         return MaterialApp.router(
           title: 'YTS Movies',
           debugShowCheckedModeBanner: false,
-          routerConfig: this.router,
+          routerConfig: router,
           theme: optimizedTheme,
           darkTheme: optimizedTheme,
           themeMode: materialTheme.brightness == Brightness.dark

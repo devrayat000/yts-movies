@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ytsmovies/src/services/connectivity_service.dart';
-import 'package:ytsmovies/src/injection.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Widget that displays network connectivity status
 class ConnectivityBanner extends StatefulWidget {
@@ -21,7 +21,6 @@ class _ConnectivityBannerState extends State<ConnectivityBanner>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _heightAnimation;
-  bool _isConnected = true;
 
   @override
   void initState() {
@@ -40,39 +39,12 @@ class _ConnectivityBannerState extends State<ConnectivityBanner>
       curve: Curves.easeInOut,
     ));
 
-    // Listen to connectivity changes
-    final connectivityService = getIt<ConnectivityService>();
-    _isConnected = connectivityService.isConnected;
-    connectivityService.connectivityStream.listen((isConnected) {
-      if (mounted) {
-        setState(() {
-          _isConnected = isConnected;
-        });
-
-        if (!isConnected) {
-          _animationController.forward();
-        } else {
-          if (widget.showWhenConnected) {
-            _animationController.forward();
-            // Hide after showing briefly when reconnected
-            Future.delayed(const Duration(seconds: 2), () {
-              if (mounted) {
-                _animationController.reverse();
-              }
-            });
-          } else {
-            _animationController.reverse();
-          }
-        }
-      }
-    });
-
     // Show banner initially if offline
-    if (!_isConnected) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _animationController.forward();
-      });
-    }
+    // if (context.read<ConnectivityState>() == ConnectivityState.disconnected) {
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     _animationController.forward();
+    //   });
+    // }
   }
 
   @override
@@ -88,53 +60,76 @@ class _ConnectivityBannerState extends State<ConnectivityBanner>
         AnimatedBuilder(
           animation: _heightAnimation,
           builder: (context, child) {
-            return SizeTransition(
-              sizeFactor: _heightAnimation,
-              child: Container(
-                width: double.infinity,
-                color: _isConnected ? Colors.green : Colors.red,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _isConnected ? Icons.wifi : Icons.wifi_off,
-                      color: Colors.white,
-                      size: 20,
+            return BlocConsumer<ConnectivityService, ConnectivityState>(
+              listener: (context, state) {
+                if (state == ConnectivityState.disconnected) {
+                  _animationController.forward();
+                } else {
+                  if (widget.showWhenConnected) {
+                    _animationController.forward();
+                    // Hide after showing briefly when reconnected
+                    Future.delayed(const Duration(seconds: 2), () {
+                      if (mounted) {
+                        _animationController.reverse();
+                      }
+                    });
+                  } else {
+                    _animationController.reverse();
+                  }
+                }
+              },
+              builder: (context, state) {
+                final isConnected = state == ConnectivityState.connected;
+                return SizeTransition(
+                  sizeFactor: _heightAnimation,
+                  child: Container(
+                    width: double.infinity,
+                    color: isConnected ? Colors.green : Colors.red,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _isConnected
-                            ? 'Connection restored'
-                            : 'No internet connection',
-                        style: const TextStyle(
+                    child: Row(
+                      children: [
+                        Icon(
+                          isConnected ? Icons.wifi : Icons.wifi_off,
                           color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          size: 20,
                         ),
-                      ),
-                    ),
-                    if (!_isConnected)
-                      TextButton(
-                        onPressed: () async {
-                          // Trigger a connectivity check
-                          await getIt<ConnectivityService>()
-                              .hasInternetConnection();
-                        },
-                        child: const Text(
-                          'Retry',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            isConnected
+                                ? 'Connection restored'
+                                : 'No internet connection',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
-              ),
+                        if (!isConnected)
+                          TextButton(
+                            onPressed: () async {
+                              // Trigger a connectivity check
+                              await context
+                                  .read<ConnectivityService>()
+                                  .initialize();
+                            },
+                            child: const Text(
+                              'Retry',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             );
           },
         ),

@@ -146,6 +146,7 @@ class ErrorReportingService {
   }
 
   /// Dispose of the service
+  @disposeMethod
   void dispose() {
     _errorController.close();
   }

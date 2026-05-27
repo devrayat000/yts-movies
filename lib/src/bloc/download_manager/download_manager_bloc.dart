@@ -426,6 +426,7 @@ class DownloadManagerBloc
   }
 
   @override
+  @disposeMethod
   Future<void> close() {
     _d('close: cancelling subscription');
     _progressSubscription?.cancel();

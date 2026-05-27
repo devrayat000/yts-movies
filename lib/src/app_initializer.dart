@@ -8,6 +8,7 @@ import 'package:ytsmovies/src/app.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/bloc/download_manager/index.dart';
 import 'package:ytsmovies/src/injection.dart';
+import 'package:ytsmovies/src/services/connectivity_service.dart';
 import 'package:ytsmovies/src/services/desktop_window_service.dart';
 import 'package:ytsmovies/src/services/notification_service.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
@@ -70,7 +71,7 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> {
     if (task == null) return;
 
     // Navigate based on download status
-    final context = RouterExtension.rootNavigatorKey.currentContext;
+    final context = rootNavigatorKey.currentContext;
     if (context == null || !context.mounted) return;
 
     if (task.status == DownloadStatus.downloading ||
@@ -127,6 +128,8 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> {
           create: (_) =>
               getIt<DownloadManagerBloc>()..add(DownloadManagerStarted()),
         ),
+        BlocProvider<ConnectivityService>(
+            create: (_) => getIt<ConnectivityService>())
       ],
       child: YTSApp(),
     );

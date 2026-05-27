@@ -52,7 +52,6 @@ dependencies:
   injectable: ^2.6.0
   open_file_manager: ^2.0.1
   libtorrent_flutter: ^1.8.5
-  fluent_ui: ^4.15.1
   window_manager: ^0.5.1
   tray_manager: ^0.5.2
 

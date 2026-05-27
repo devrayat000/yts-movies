@@ -46,7 +46,7 @@ class MyFutureBuilder<T> extends StatelessWidget {
             if (snapshot.hasError) {
               // Check if it's a connectivity issue
               if (checkConnectivity &&
-                  !getIt<ConnectivityService>().isConnected) {
+                  !context.read<ConnectivityService>().isConnected) {
                 return OfflineWidget(
                   onRetry: onRetry,
                 );
