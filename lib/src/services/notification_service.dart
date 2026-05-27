@@ -9,11 +9,11 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  final StreamController<int> _notificationTapController =
-      StreamController<int>.broadcast();
+  final StreamController<NotificationResponse> _notificationTapController =
+      StreamController<NotificationResponse>.broadcast();
 
-  /// Stream of taskIds from notification taps
-  Stream<int> get notificationTapStream => _notificationTapController.stream;
+  /// Stream of notification tap responses
+  Stream<NotificationResponse> get notificationTapStream => _notificationTapController.stream;
 
   /// Initialize notification handling
   @postConstruct
@@ -23,7 +23,7 @@ class NotificationService {
 
     final initializationSettingsWindows = WindowsInitializationSettings(
       appName: 'Brokeflix',
-      appUserModelId: 'zulab.Brokeflix_sbyjbps4naycw!App',
+      appUserModelId: 'dev.rayat.brokeflix',
       guid: 'b07a4d8b-7c2f-4a13-9c4a-e3b9f3a4d8c2',
     );
 
@@ -43,14 +43,8 @@ class NotificationService {
   /// Handle notification tap
   void _onNotificationTap(NotificationResponse response) {
     try {
-      final payload = response.payload;
-      if (payload != null) {
-        final taskId = int.tryParse(payload);
-        if (taskId != null) {
-          log('Notification tapped for task: $taskId');
-          _notificationTapController.add(taskId);
-        }
-      }
+      log('Notification response received: actionId=${response.actionId}, payload=${response.payload}');
+      _notificationTapController.add(response);
     } catch (e) {
       log('Error handling notification tap: $e');
     }

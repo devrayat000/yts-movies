@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:tray_manager/tray_manager.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:ytsmovies/src/app.dart';
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
@@ -27,7 +28,7 @@ class YTSAppInitializer extends StatefulWidget {
 class _YTSAppInitializerState extends State<YTSAppInitializer> with WindowListener, TrayListener {
   bool _isInitializing = true;
   String? _error;
-  StreamSubscription<int>? _notificationSubscription;
+  StreamSubscription<NotificationResponse>? _notificationSubscription;
   StreamSubscription<DownloadManagerState>? _downloadSubscription;
   bool _desktopInitialized = false;
 
@@ -198,10 +199,42 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> with WindowListen
     await windowManager.destroy();
   }
 
-  void _handleNotificationTap(int taskId) {
-    // Get the download task to determine its status
+  void _handleNotificationTap(NotificationResponse response) {
+    String? actionId = response.actionId;
+    String? payload = response.payload;
+
+    if (actionId != null && actionId.contains(':')) {
+      final parts = actionId.split(':');
+      actionId = parts[0];
+      payload = parts.length > 1 ? parts[1] : null;
+    } else if (payload != null && payload.contains(':')) {
+      final parts = payload.split(':');
+      actionId = parts[0];
+      payload = parts.length > 1 ? parts[1] : null;
+    }
+
+    if (payload == null) return;
+    final taskId = int.tryParse(payload);
+    if (taskId == null) return;
+
     final downloadBloc = getIt<DownloadManagerBloc>();
     final task = downloadBloc.state.downloads[taskId];
+
+    if (actionId != null) {
+      log('Notification action clicked: $actionId for task: $taskId');
+      switch (actionId) {
+        case 'pause':
+          downloadBloc.add(DownloadManagerPauseDownload(taskId));
+          break;
+        case 'resume':
+          downloadBloc.add(DownloadManagerResumeDownload(taskId));
+          break;
+        case 'stop':
+          downloadBloc.add(DownloadManagerStopDownload(taskId));
+          break;
+      }
+      return;
+    }
 
     if (task == null) return;
 

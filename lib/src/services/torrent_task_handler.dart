@@ -839,6 +839,8 @@ class _TorrentHandler {
             ? pct.toInt().clamp(0, 100)
             : null,
         indeterminate: t.lastStatus == DownloadStatus.downloadingMetadata,
+        taskId: t.taskId,
+        status: t.lastStatus,
       );
       return;
     }
@@ -880,8 +882,22 @@ class _TorrentHandler {
     required String body,
     int? progress,
     bool indeterminate = false,
+    int? taskId,
+    DownloadStatus? status,
   }) async {
     final showBar = progress != null || indeterminate;
+
+    // Create action buttons for Android
+    final List<AndroidNotificationAction> androidActions = [];
+    if (taskId != null && status != null) {
+      if (status == DownloadStatus.downloading || status == DownloadStatus.downloadingMetadata) {
+        androidActions.add(const AndroidNotificationAction('pause', 'Pause', cancelNotification: false));
+      } else if (status == DownloadStatus.paused) {
+        androidActions.add(const AndroidNotificationAction('resume', 'Resume', cancelNotification: false));
+      }
+      androidActions.add(const AndroidNotificationAction('stop', 'Stop', cancelNotification: true));
+    }
+
     final details = AndroidNotificationDetails(
       notificationChannelId,
       'Torrent Downloads',
@@ -898,13 +914,45 @@ class _TorrentHandler {
       playSound: false,
       enableVibration: false,
       icon: '@mipmap/ic_launcher',
+      actions: androidActions.isNotEmpty ? androidActions : null,
     );
+
+    // Create progress bar for Windows
+    final List<WindowsProgressBar> winProgressBars = [];
+    if (showBar) {
+      winProgressBars.add(WindowsProgressBar(
+        id: 'progress',
+        status: indeterminate ? 'Fetching metadata...' : 'Downloading',
+        value: progress != null ? progress / 100.0 : null,
+      ));
+    }
+
+    // Create action buttons for Windows
+    final List<WindowsAction> winActions = [];
+    if (taskId != null && status != null) {
+      if (status == DownloadStatus.downloading || status == DownloadStatus.downloadingMetadata) {
+        winActions.add(WindowsAction(content: 'Pause', arguments: 'pause:$taskId'));
+      } else if (status == DownloadStatus.paused) {
+        winActions.add(WindowsAction(content: 'Resume', arguments: 'resume:$taskId'));
+      }
+      winActions.add(WindowsAction(content: 'Stop', arguments: 'stop:$taskId'));
+    }
+
+    final winDetails = WindowsNotificationDetails(
+      progressBars: winProgressBars,
+      actions: winActions,
+    );
+
     try {
       await notifications.show(
         notificationId,
         title,
         body,
-        NotificationDetails(android: details),
+        NotificationDetails(
+          android: details,
+          windows: winDetails,
+        ),
+        payload: taskId?.toString(),
       );
     } catch (e, s) {
       log('foreground notification failed: $e',
