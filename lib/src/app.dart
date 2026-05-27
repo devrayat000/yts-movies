@@ -19,7 +19,7 @@ class YTSApp extends StatelessWidget {
       builder: (context, materialTheme) {
         final optimizedTheme = _desktopOptimizedTheme(materialTheme);
         return MaterialApp.router(
-          title: 'YTS Movies',
+          title: 'Brokeflix',
           debugShowCheckedModeBanner: false,
           routerConfig: router,
           theme: optimizedTheme,

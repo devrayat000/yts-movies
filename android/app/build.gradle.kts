@@ -16,7 +16,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.rayat.dev.ytsmovies"
+    namespace = "dev.rayat.brokeflix"
     compileSdk = 36
     ndkVersion = "27.0.12077973"
 
@@ -37,7 +37,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.rayat.dev.ytsmovies"
+        applicationId = "dev.rayat.brokeflix"
         minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

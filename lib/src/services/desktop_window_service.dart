@@ -43,7 +43,7 @@ class DesktopWindowService with WindowListener, TrayListener {
       size: Size(1280, 800),
       minimumSize: Size(900, 600),
       center: true,
-      title: 'YTS Movies',
+      title: 'Brokeflix',
       titleBarStyle: TitleBarStyle.normal,
     );
 

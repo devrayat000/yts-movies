@@ -131,16 +131,6 @@ class _DesktopShellState extends State<DesktopShell> {
       onPressed: () => _toggleExtended(extended),
     );
 
-    final logo = Image.asset(
-      'images/logo-YTS.png',
-      height: 24,
-      errorBuilder: (_, __, ___) => const Icon(
-        Icons.play_circle_fill,
-        color: Colors.green,
-        size: 24,
-      ),
-    );
-
     if (!extended) {
       return Padding(
         padding: const EdgeInsets.only(top: 12, bottom: 8),
@@ -149,7 +139,6 @@ class _DesktopShellState extends State<DesktopShell> {
           children: [
             menuButton,
             const SizedBox(height: 8),
-            logo,
           ],
         ),
       );
@@ -161,11 +150,9 @@ class _DesktopShellState extends State<DesktopShell> {
         mainAxisSize: MainAxisSize.min,
         children: [
           menuButton,
-          const SizedBox(width: 4),
-          logo,
           const SizedBox(width: 10),
           Text(
-            'YTS Movies',
+            'Brokeflix',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,

@@ -13,7 +13,7 @@
 		<key>CFBundleName</key>
 		<string>ytsmovies</string>
 		<key>CFBundleDisplayName</key>
-		<string>YTS Movies</string>
+	<string>Brokeflix</string>
 		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
 		<key>CFBundlePackageType</key>

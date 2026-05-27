@@ -5,4 +5,10 @@ flutter_icons:
   adaptive_icon_background: "#47BF58"
   adaptive_icon_foreground: "assets/icons/launch_icon_adaptive.png"
 
+  windows:
+    generate: true
+    image_path: "assets/icons/launch_icon_adaptive.png"
+    icon_size: 48 # min:48, max:256, default: 48
+
+
 # flutter pub run flutter_launcher_icons:main

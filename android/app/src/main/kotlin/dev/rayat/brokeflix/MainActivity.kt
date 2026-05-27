@@ -1,4 +1,4 @@
-package com.rayat.dev.ytsmovies
+package dev.rayat.brokeflix
 
 import io.flutter.embedding.android.FlutterActivity
 

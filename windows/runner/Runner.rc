@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.rayat.dev" "\0"
-            VALUE "FileDescription", "ytsmovies" "\0"
+            VALUE "CompanyName", "ZuLab" "\0"
+            VALUE "FileDescription", "Brokeflix" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "ytsmovies" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.rayat.dev. All rights reserved." "\0"
-            VALUE "OriginalFilename", "ytsmovies.exe" "\0"
-            VALUE "ProductName", "ytsmovies" "\0"
+            VALUE "InternalName", "Brokeflix" "\0"
+            VALUE "LegalCopyright", "Copyright © 2026 ZuLab" "\0"
+            VALUE "OriginalFilename", "brokeflix.exe" "\0"
+            VALUE "ProductName", "Brokeflix" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
