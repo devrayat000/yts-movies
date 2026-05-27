@@ -812,7 +812,7 @@ class _TorrentHandler {
 
     if (live.isEmpty) {
       _showForegroundNotification(
-        title: 'YTS Movies',
+        title: 'Brokeflix',
         body: 'Torrent service idle',
       );
       return;

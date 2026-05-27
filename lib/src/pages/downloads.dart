@@ -6,7 +6,6 @@ import 'package:ytsmovies/src/bloc/download_manager/index.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
 import 'package:ytsmovies/src/pages/download_settings.dart';
 import 'package:ytsmovies/src/pages/download_details.dart';
-import 'package:ytsmovies/src/services/desktop_window_service.dart';
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
 import 'package:ytsmovies/src/injection.dart';
 import 'package:ytsmovies/src/widgets/adaptive/adaptive.dart';

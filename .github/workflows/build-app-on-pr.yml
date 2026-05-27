@@ -46,22 +46,22 @@ jobs:
 
           # Rename and move universal APK
           if [ -f "$SRC_DIR/app-universal-release.apk" ]; then
-            mv "$SRC_DIR/app-universal-release.apk" "$DEST_DIR/yts-movies-v${VERSION}-universal.apk"
+            mv "$SRC_DIR/app-universal-release.apk" "$DEST_DIR/brokeflix-v${VERSION}-universal.apk"
             echo "Universal APK moved and renamed"
           elif [ -f "$DEST_DIR/app-release.apk" ]; then
-            mv "$DEST_DIR/app-release.apk" "$DEST_DIR/yts-movies-v${VERSION}-universal.apk"
+            mv "$DEST_DIR/app-release.apk" "$DEST_DIR/brokeflix-v${VERSION}-universal.apk"
             echo "Universal APK (from flutter-apk) moved and renamed"
           fi
 
           # Rename and move arm64-v8a APK
           if [ -f "$SRC_DIR/app-arm64-v8a-release.apk" ]; then
-            mv "$SRC_DIR/app-arm64-v8a-release.apk" "$DEST_DIR/yts-movies-v${VERSION}-arm64-v8a.apk"
+            mv "$SRC_DIR/app-arm64-v8a-release.apk" "$DEST_DIR/brokeflix-v${VERSION}-arm64-v8a.apk"
             echo "arm64-v8a APK moved and renamed"
           fi
 
           # Rename and move armeabi-v7a APK
           if [ -f "$SRC_DIR/app-armeabi-v7a-release.apk" ]; then
-            mv "$SRC_DIR/app-armeabi-v7a-release.apk" "$DEST_DIR/yts-movies-v${VERSION}-armeabi-v7a.apk"
+            mv "$SRC_DIR/app-armeabi-v7a-release.apk" "$DEST_DIR/brokeflix-v${VERSION}-armeabi-v7a.apk"
             echo "armeabi-v7a APK moved and renamed"
           fi
 
@@ -86,9 +86,9 @@ jobs:
             fi
           }
 
-          SIZE_UNIVERSAL=$(get_size "$DEST_DIR/yts-movies-v${VERSION}-universal.apk")
-          SIZE_ARM64=$(get_size "$DEST_DIR/yts-movies-v${VERSION}-arm64-v8a.apk")
-          SIZE_ARM32=$(get_size "$DEST_DIR/yts-movies-v${VERSION}-armeabi-v7a.apk")
+          SIZE_UNIVERSAL=$(get_size "$DEST_DIR/brokeflix-v${VERSION}-universal.apk")
+          SIZE_ARM64=$(get_size "$DEST_DIR/brokeflix-v${VERSION}-arm64-v8a.apk")
+          SIZE_ARM32=$(get_size "$DEST_DIR/brokeflix-v${VERSION}-armeabi-v7a.apk")
 
           echo "size_universal=$SIZE_UNIVERSAL" >> $GITHUB_OUTPUT
           echo "size_arm64=$SIZE_ARM64" >> $GITHUB_OUTPUT
@@ -103,9 +103,9 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.setup.outputs.tag }}
-          name: "YTS Movies v${{ steps.setup.outputs.version }} - PR #${{ github.event.pull_request.number }}"
+          name: "Brokeflix v${{ steps.setup.outputs.version }} - PR #${{ github.event.pull_request.number }}"
           body: |
-            🚀 **YTS Movies APK Build from Pull Request #${{ github.event.pull_request.number }}**
+            🚀 **Brokeflix APK Build from Pull Request #${{ github.event.pull_request.number }}**
 
             **📱 App Details:**
             - Version: ${{ steps.setup.outputs.version }}
@@ -134,7 +134,7 @@ jobs:
           draft: false
           prerelease: true
           files: |
-            build/app/outputs/flutter-apk/yts-movies-v${{ steps.setup.outputs.version }}-*.apk
+            build/app/outputs/flutter-apk/brokeflix-v${{ steps.setup.outputs.version }}-*.apk
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 💬 Comment PR with Release Link
@@ -212,8 +212,8 @@ jobs:
         run: |
           AAB_PATH="build/app/outputs/bundle/release/app-release.aab"
           if [ -f "$AAB_PATH" ]; then
-            mv "$AAB_PATH" "build/app/outputs/bundle/release/yts-movies-v${{ steps.setup.outputs.version }}.aab"
-            echo "AAB renamed to yts-movies-v${{ steps.setup.outputs.version }}.aab"
+            mv "$AAB_PATH" "build/app/outputs/bundle/release/brokeflix-v${{ steps.setup.outputs.version }}.aab"
+            echo "AAB renamed to brokeflix-v${{ steps.setup.outputs.version }}.aab"
           else
             echo "AAB file not found, failing"
             exit 1
@@ -224,7 +224,7 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y bc
 
-          AAB_PATH="build/app/outputs/bundle/release/yts-movies-v${{ steps.setup.outputs.version }}.aab"
+          AAB_PATH="build/app/outputs/bundle/release/brokeflix-v${{ steps.setup.outputs.version }}.aab"
           SIZE_BYTES=$(stat -c%s "$AAB_PATH")
           SIZE_MB=$(echo "scale=2; $SIZE_BYTES / 1024 / 1024" | bc)
           echo "size_mb=$SIZE_MB" >> $GITHUB_OUTPUT
@@ -239,7 +239,7 @@ jobs:
           draft: false
           prerelease: true
           files: |
-            build/app/outputs/bundle/release/yts-movies-v${{ steps.setup.outputs.version }}.aab
+            build/app/outputs/bundle/release/brokeflix-v${{ steps.setup.outputs.version }}.aab
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 💬 Comment PR with AAB info

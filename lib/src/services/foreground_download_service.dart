@@ -88,7 +88,7 @@ class ForegroundDownloadService {
         autoStart: false,
         isForegroundMode: true,
         notificationChannelId: notificationChannelId,
-        initialNotificationTitle: 'YTS Movies',
+        initialNotificationTitle: 'Brokeflix',
         initialNotificationContent: 'Torrent download service running',
         foregroundServiceNotificationId: notificationId,
       ),

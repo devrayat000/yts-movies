@@ -7,7 +7,7 @@ flutter_icons:
 
   windows:
     generate: true
-    image_path: "assets/icons/launch_icon_adaptive.png"
+    image_path: "assets/icons/launch_icon_win.png"
     icon_size: 48 # min:48, max:256, default: 48
 
 

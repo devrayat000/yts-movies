@@ -125,40 +125,12 @@ class _DesktopShellState extends State<DesktopShell> {
   }
 
   Widget _buildLeading(ThemeData theme, bool extended) {
-    final menuButton = IconButton(
-      icon: Icon(extended ? Icons.menu_open : Icons.menu),
-      tooltip: extended ? 'Collapse' : 'Expand',
-      onPressed: () => _toggleExtended(extended),
-    );
-
-    if (!extended) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 12, bottom: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            menuButton,
-            const SizedBox(height: 8),
-          ],
-        ),
-      );
-    }
-
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 16, 20, 12),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          menuButton,
-          const SizedBox(width: 10),
-          Text(
-            'Brokeflix',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.only(top: 12, bottom: 8),
+      child: IconButton(
+        icon: Icon(extended ? Icons.menu_open : Icons.menu),
+        tooltip: extended ? 'Collapse' : 'Expand',
+        onPressed: () => _toggleExtended(extended),
       ),
     );
   }

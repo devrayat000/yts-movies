@@ -3,7 +3,7 @@ import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/widgets/adaptive/adaptive.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
 
-typedef ApiHandler<T> = Future<T> Function(int page);
+typedef ApiHandler<T> = Future<T> Function(int page, int limit);
 
 class MoviesList extends StatefulWidget {
   final ApiHandler<MovieListResponse> handler;

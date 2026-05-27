@@ -22,8 +22,8 @@ class NotificationService {
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
     final initializationSettingsWindows = WindowsInitializationSettings(
-      appName: 'YTS Movies',
-      appUserModelId: 'com.propelitsoft.ytsmovies',
+      appName: 'Brokeflix',
+      appUserModelId: 'dev.rayat.brokeflix',
       guid: 'b07a4d8b-7c2f-4a13-9c4a-e3b9f3a4d8c2',
     );
 

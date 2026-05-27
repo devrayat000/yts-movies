@@ -1,10 +1,10 @@
-# YTS Movies
+# Brokeflix
 
-Flutter client for browsing the YTS catalog and downloading movie torrents directly on Android / iOS.
+Flutter client for browsing movie catalogs and downloading movie torrents directly on Android / iOS / Windows.
 
 ## Features
 
-- Browse, search and filter the YTS movie catalog
+- Browse, search and filter the movie catalog
 - Movie detail pages with trailers, suggestions and cast
 - Built-in torrent downloader (background foreground service)
   - Sequential queue with configurable concurrency
@@ -17,7 +17,7 @@ Flutter client for browsing the YTS catalog and downloading movie torrents direc
 - Flutter 3 / Dart 3
 - `flutter_bloc` + `hydrated_bloc` state management
 - `go_router` navigation
-- `dio` + `retrofit` for the YTS REST API
+- `dio` + `retrofit` for the movie REST API
 - `hive_ce` local storage
 - `dtorrent_task_v2` torrent engine
 - `flutter_background_service` + `flutter_local_notifications` for downloads

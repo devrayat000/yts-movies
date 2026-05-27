@@ -21,9 +21,10 @@ class SearchResults extends StatelessWidget {
     final repo = context.read<MoviesClient>();
 
     return MoviesPagedView(
-      handler: (page) async {
+      handler: (page, limit) async {
         final response = await repo.getMovieList(
           page: page,
+          limit: limit,
           queryTerm: query,
           queries: params,
         );
