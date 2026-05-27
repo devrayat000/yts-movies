@@ -119,7 +119,7 @@ msix_config:
   display_name: Brokeflix
   publisher_display_name: zulab
   identity_name: zulab.Brokeflix
-  msix_version: 2.7.0.5
+  msix_version: 2.7.0.0
   logo_path: assets/icons/launch_icon_win.png
   capabilities: internetClient, internetClientServer, privateNetworkClientServer
   store: true
