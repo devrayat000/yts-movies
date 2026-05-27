@@ -15,7 +15,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 2.6.1-libtorrent.4+4
+version: 2.7.0-libtorrent.1+5
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -114,3 +114,16 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+msix_config:
+  display_name: Brokeflix
+  publisher_display_name: zulab
+  identity_name: zulab.Brokeflix
+  msix_version: 2.7.0.5
+  logo_path: assets/icons/launch_icon_win.png
+  capabilities: internetClient, internetClientServer, privateNetworkClientServer
+  store: true
+  # Build configuration
+  output_name: brokeflix
+  # Signing configuration
+  publisher: CN=A68081B3-E8B3-48C1-9F88-8EC3690D0963

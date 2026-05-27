@@ -150,6 +150,12 @@ class ForegroundDownloadService {
     if (Platform.isAndroid) {
       return '$kAndroidPublicDownloadsRoot/$kDefaultDownloadSubdir';
     }
+    if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+      final downloadsDir = await getDownloadsDirectory();
+      if (downloadsDir != null) {
+        return '${downloadsDir.path}/$kDefaultDownloadSubdir';
+      }
+    }
     final appDir = await getApplicationDocumentsDirectory();
     return '${appDir.path}/Downloads/$kDefaultDownloadSubdir';
   }
