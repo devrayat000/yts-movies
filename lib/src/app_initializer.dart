@@ -28,6 +28,7 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> with WindowListen
   bool _isInitializing = true;
   String? _error;
   StreamSubscription<int>? _notificationSubscription;
+  StreamSubscription<DownloadManagerState>? _downloadSubscription;
   bool _desktopInitialized = false;
 
   static const _trayShowKey = 'show_app';
@@ -93,6 +94,10 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> with WindowListen
     trayManager.addListener(this);
 
     await _initTray();
+
+    _downloadSubscription = getIt<DownloadManagerBloc>().stream.listen((state) {
+      _updateTrayTooltip(state);
+    });
   }
 
   Future<void> _initTray() async {
@@ -219,9 +224,34 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> with WindowListen
     }
   }
 
+  void _updateTrayTooltip(DownloadManagerState state) {
+    if (!isDesktop) return;
+    try {
+      final active = state.activeDownloads;
+      if (active.isEmpty) {
+        trayManager.setToolTip('Brokeflix');
+      } else if (active.length == 1) {
+        final t = active.first;
+        final speed = t.formattedDownloadSpeed;
+        final progress = t.progressPercentage;
+        trayManager.setToolTip('Brokeflix\nDownloading: $progress ($speed)');
+      } else {
+        var totalDl = 0;
+        for (final t in active) {
+          totalDl += t.downloadSpeed;
+        }
+        final totalSpeed = DownloadTask.formatBytes(totalDl);
+        trayManager.setToolTip('Brokeflix\nDownloading ${active.length} movies ($totalSpeed/s)');
+      }
+    } catch (e) {
+      log('Error updating tray tooltip: $e');
+    }
+  }
+
   @override
   void dispose() {
     _notificationSubscription?.cancel();
+    _downloadSubscription?.cancel();
     if (_desktopInitialized) {
       windowManager.removeListener(this);
       trayManager.removeListener(this);
