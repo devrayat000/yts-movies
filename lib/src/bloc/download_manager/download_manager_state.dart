@@ -49,23 +49,28 @@ class DownloadManagerState {
     );
   }
 
-  /// Serialize to JSON
+  /// Serialize to JSON.
+  ///
+  /// JSON object keys must be strings, so int taskIds are stringified here
+  /// and parsed back in [fromJson]. Storing them as int keys silently
+  /// produces an empty map on rehydrate (the cast in fromJson fails).
   Map<String, dynamic> toJson() {
     return {
-      'downloads': downloads.map((key, value) => MapEntry(key, value.toJson())),
+      'downloads': {
+        for (final e in downloads.entries) e.key.toString(): e.value.toJson(),
+      },
     };
   }
 
-  /// Deserialize from JSON
   factory DownloadManagerState.fromJson(Map<String, dynamic> json) {
-    final downloadsMap = (json['downloads'] as Map<int, dynamic>?) ?? {};
+    final raw = (json['downloads'] as Map?)?.cast<String, dynamic>() ??
+        const <String, dynamic>{};
     return DownloadManagerState(
-      downloads: downloadsMap.map(
-        (key, value) => MapEntry(
-          key,
-          DownloadTask.fromJson(value as Map<String, dynamic>),
-        ),
-      ),
+      downloads: {
+        for (final e in raw.entries)
+          int.parse(e.key):
+              DownloadTask.fromJson((e.value as Map).cast<String, dynamic>()),
+      },
     );
   }
 }

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:ytsmovies/src/models/index.dart';
+import 'package:ytsmovies/src/widgets/adaptive/adaptive.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
 
-typedef ApiHandler<T> = Future<T> Function(int page);
+typedef ApiHandler<T> = Future<T> Function(int page, int limit);
 
 class MoviesList extends StatefulWidget {
   final ApiHandler<MovieListResponse> handler;
   final PreferredSizeWidget? appBar;
   final String label;
+  final Widget? title;
   final Widget? endDrawer;
   final WidgetBuilder? noItemBuilder;
 
@@ -15,6 +17,7 @@ class MoviesList extends StatefulWidget {
     super.key,
     required this.handler,
     this.appBar,
+    this.title,
     this.label = '',
     this.endDrawer,
     this.noItemBuilder,
@@ -41,8 +44,9 @@ class MoviesListState extends State<MoviesList> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
       appBar: widget.appBar,
+      title: widget.title,
       endDrawer: widget.endDrawer,
       body: MoviesPagedView(
         handler: widget.handler,

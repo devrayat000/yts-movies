@@ -37,33 +37,52 @@ extension GetItInjectableX on _i174.GetIt {
       environmentFilter,
     );
     final apiModule = _$ApiModule();
-    gh.singletonAsync<_i1000.MoviesClient>(() => apiModule.initClient());
-    gh.singletonAsync<_i98.NotificationService>(() {
-      final i = _i98.NotificationService();
-      return i.initialize().then((_) => i);
-    });
-    gh.singletonAsync<_i701.PreferencesService>(() {
-      final i = _i701.PreferencesService();
-      return i.initialize().then((_) => i);
-    });
+    gh.singletonAsync<_i98.NotificationService>(
+      () {
+        final i = _i98.NotificationService();
+        return i.initialize().then((_) => i);
+      },
+      dispose: (i) => i.dispose(),
+    );
+    gh.singletonAsync<_i701.PreferencesService>(
+      () {
+        final i = _i701.PreferencesService();
+        return i.initialize().then((_) => i);
+      },
+      dispose: (i) => i.close(),
+    );
     gh.lazySingleton<_i126.FavouritesService>(() => _i126.FavouritesService());
-    gh.lazySingleton<_i807.ConnectivityService>(
-        () => _i807.ConnectivityService());
+    gh.lazySingletonAsync<_i807.ConnectivityService>(
+      () {
+        final i = _i807.ConnectivityService();
+        return i.initialize().then((_) => i);
+      },
+      dispose: (i) => i.close(),
+    );
     gh.lazySingleton<_i1043.ErrorReportingService>(
-        () => _i1043.ErrorReportingService());
+      () => _i1043.ErrorReportingService(),
+      dispose: (i) => i.dispose(),
+    );
     gh.lazySingleton<_i1055.AppTheme>(() => _i1055.AppTheme());
+    gh.singletonAsync<_i1000.MoviesClient>(() async => apiModule.initClient(
+        conn: await getAsync<_i807.ConnectivityService>()));
     gh.lazySingleton<_i382.ErrorNotificationService>(() =>
         _i382.ErrorNotificationService(gh<_i1043.ErrorReportingService>()));
-    gh.singletonAsync<_i663.ForegroundDownloadService>(() async {
-      final i = _i663.ForegroundDownloadService(
-          await getAsync<_i701.PreferencesService>());
-      return i.initialize().then((_) => i);
-    });
+    gh.singletonAsync<_i663.ForegroundDownloadService>(
+      () async {
+        final i = _i663.ForegroundDownloadService(
+            await getAsync<_i701.PreferencesService>());
+        return i.initialize().then((_) => i);
+      },
+      dispose: (i) => i.dispose(),
+    );
     gh.lazySingleton<_i406.ThemeCubit>(
         () => _i406.ThemeCubit(gh<_i1055.AppTheme>()));
-    gh.singletonAsync<_i611.DownloadManagerBloc>(() async =>
-        _i611.DownloadManagerBloc(
-            await getAsync<_i663.ForegroundDownloadService>()));
+    gh.singletonAsync<_i611.DownloadManagerBloc>(
+      () async => _i611.DownloadManagerBloc(
+          await getAsync<_i663.ForegroundDownloadService>()),
+      dispose: (i) => i.close(),
+    );
     return this;
   }
 }

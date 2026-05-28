@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.rayat.dev.ytsmovies">
+    package="dev.rayat.brokeflix">
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <!-- Legacy write access for API 24-29 (Android 7-10). Scoped storage on
@@ -34,7 +34,7 @@
         </intent>
     </queries>
    <application
-        android:label="YTS Movies"
+        android:label="Brokeflix"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
@@ -64,6 +64,8 @@
         <!-- Foreground service for background downloads -->
         <service
             android:name="id.flutter.flutter_background_service.BackgroundService"
+            android:stopWithTask="true"
+            tools:replace="android:stopWithTask"
             android:foregroundServiceType="dataSync"/>
         
         <!-- Don't delete the meta-data below.

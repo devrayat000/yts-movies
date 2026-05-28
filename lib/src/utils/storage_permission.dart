@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:ytsmovies/src/services/desktop_window_service.dart';
 
 /// Public Downloads directory on Android primary user.
 /// Path is stable across Android versions and what every download manager
@@ -18,7 +19,7 @@ const String kDefaultDownloadSubdir = 'Movies';
 /// ("All files access" toggle in system Settings). On API 24-29 the
 /// legacy WRITE_EXTERNAL_STORAGE runtime permission is enough.
 Future<bool> ensurePublicStorageWrite() async {
-  if (!Platform.isAndroid) return true;
+  if (!isAndroid) return true;
 
   final manage = await Permission.manageExternalStorage.status;
   if (manage.isGranted) return true;

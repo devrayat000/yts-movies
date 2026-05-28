@@ -1,32 +1,88 @@
-import 'package:flutter/cupertino.dart' show CupertinoScrollBehavior;
+import 'package:flutter/cupertino.dart'
+    show CupertinoScrollBehavior, DefaultCupertinoLocalizations;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:ytsmovies/src/bloc/theme_bloc.dart';
 import 'package:ytsmovies/src/router.dart';
+import 'package:ytsmovies/src/services/desktop_window_service.dart';
 import 'package:ytsmovies/src/widgets.dart';
 
 class YTSApp extends StatelessWidget {
-  const YTSApp({super.key});
+  YTSApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'YTS Movies',
-      debugShowCheckedModeBanner: false,
-      routerConfig: router,
-      scrollBehavior: const CupertinoScrollBehavior(),
-      builder: (context, widget) => ConnectivityBanner(
-        showWhenConnected: true,
-        child: _AppShell(child: widget!),
+    return BlocBuilder<ThemeCubit, ThemeData>(
+      buildWhen: (previous, current) => previous != current,
+      builder: (context, materialTheme) {
+        final optimizedTheme = _desktopOptimizedTheme(materialTheme);
+        return MaterialApp.router(
+          title: 'Brokeflix',
+          debugShowCheckedModeBanner: false,
+          routerConfig: router,
+          theme: optimizedTheme,
+          darkTheme: optimizedTheme,
+          themeMode: materialTheme.brightness == Brightness.dark
+              ? ThemeMode.dark
+              : ThemeMode.light,
+          scrollBehavior: const _AppScrollBehavior(),
+          localizationsDelegates: [
+            DefaultMaterialLocalizations.delegate,
+            DefaultCupertinoLocalizations.delegate,
+            DefaultWidgetsLocalizations.delegate,
+          ],
+          builder: (context, widget) => ConnectivityBanner(
+            showWhenConnected: true,
+            child: _AppShell(
+              materialTheme: optimizedTheme,
+              child: widget!,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  ThemeData _desktopOptimizedTheme(ThemeData theme) {
+    return theme.copyWith(
+      visualDensity: VisualDensity.adaptivePlatformDensity,
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: theme.cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: theme.brightness == Brightness.dark
+                ? const Color(0xFF374151)
+                : const Color(0xFFE5E7EB),
+            width: 1,
+          ),
+        ),
       ),
     );
   }
 }
 
-class _AppShell extends StatelessWidget {
-  const _AppShell({required this.child});
+/// Cupertino-style scrollbar everywhere, but also allow trackpad + mouse
+/// dragging so desktop users can drag-scroll lists / posters.
+class _AppScrollBehavior extends CupertinoScrollBehavior {
+  const _AppScrollBehavior();
 
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+        PointerDeviceKind.stylus,
+      };
+}
+
+class _AppShell extends StatelessWidget {
+  const _AppShell({required this.materialTheme, required this.child});
+
+  final ThemeData materialTheme;
   final Widget child;
 
   @override
@@ -37,27 +93,28 @@ class _AppShell extends StatelessWidget {
     }
     ErrorWidget.builder = (_) => errorWidget;
 
-    return _ThemeProvider(child: child);
+    final frame = isDesktop ? _DesktopChrome(child: child) : child;
+    return AnimatedTheme(
+      data: materialTheme,
+      curve: Curves.easeOutCirc,
+      child: frame,
+    );
   }
 }
 
-class _ThemeProvider extends StatelessWidget {
-  const _ThemeProvider({required this.child});
+/// Desktop-only wrapper that adds a draggable region across the very top of
+/// the window so users can move the window even though the app keeps the
+/// native title bar visible. Lets the rest of the UI feel native on Windows
+/// without overriding the OS chrome.
+class _DesktopChrome extends StatelessWidget {
+  const _DesktopChrome({required this.child});
 
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    // final brightness = MediaQuery.platformBrightnessOf(context);
-    // context.read<ThemeCubit>().sync(brightness);
-
-    return BlocBuilder<ThemeCubit, ThemeData>(
-      builder: (context, theme) => AnimatedTheme(
-        data: theme,
-        curve: Curves.easeOutCirc,
-        child: child,
-      ),
-      buildWhen: (previous, current) => previous != current,
-    );
+    // Padding at top reserves a 4px area where window dragging hand-off to
+    // the OS frame is most reliable; the bulk of the UI is the child.
+    return child;
   }
 }

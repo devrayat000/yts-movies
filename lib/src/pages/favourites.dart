@@ -10,7 +10,8 @@ class FavouritesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MoviesList(
       label: 'favourite',
-      handler: context.favouritesService.getFavouriteMovies,
+      handler: (page, limit) => context.favouritesService.getFavouriteMovies(page),
+      title: const Text('Favourite Movies'),
       appBar: AppBar(
         title: Text(
           'Favourite Movies',

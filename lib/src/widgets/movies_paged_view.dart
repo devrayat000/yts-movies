@@ -64,7 +64,9 @@ class _MoviesPagedViewState extends State<MoviesPagedView> {
 
   void _fetchPage(int pageKey) async {
     try {
-      final response = await widget.handler(pageKey);
+      final crossAxisCount = context.posterGridColumns(targetItemWidth: 220);
+      final limit = (crossAxisCount * 3).clamp(10, 50);
+      final response = await widget.handler(pageKey, limit);
       final isLastPage = response.data.isLastPage;
       final movies = response.data.movies ?? [];
 
@@ -80,8 +82,11 @@ class _MoviesPagedViewState extends State<MoviesPagedView> {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoScrollbar(
+    final crossAxisCount = context.posterGridColumns(targetItemWidth: 220);
+    return Scrollbar(
       controller: _scrollController,
+      thumbVisibility: true,
+      interactive: true,
       child: RefreshIndicator(
         onRefresh: () => SynchronousFuture(_pagingController.refresh()),
         child: PagedGridView<int, Movie>(
@@ -91,8 +96,8 @@ class _MoviesPagedViewState extends State<MoviesPagedView> {
           scrollController: _scrollController,
           shrinkWrap: true,
           physics: const BouncingScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
             childAspectRatio:
                 0.67, // Slightly taller for better movie poster display
             crossAxisSpacing: 8,
@@ -107,10 +112,12 @@ class _MoviesPagedViewState extends State<MoviesPagedView> {
                 movie: item,
               );
             },
-            firstPageProgressIndicatorBuilder: (_) => const MovieListShimmer(),
+            firstPageProgressIndicatorBuilder: (_) => MovieListShimmer(
+              count: (crossAxisCount * 3).clamp(10, 50),
+            ),
             newPageProgressIndicatorBuilder: (_) => Padding(
               padding: const EdgeInsets.only(top: 8.0),
-              child: const MovieListShimmer(count: 2),
+              child: MovieListShimmer(count: crossAxisCount),
             ),
             firstPageErrorIndicatorBuilder: _firstPageErrorIndicator,
             newPageErrorIndicatorBuilder: _newPageErrorIndicator,

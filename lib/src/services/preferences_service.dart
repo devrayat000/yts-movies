@@ -101,6 +101,7 @@ class PreferencesService {
     await _box.clear();
   }
 
+  @disposeMethod
   Future<void> close() async {
     await _box.close();
   }

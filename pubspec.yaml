@@ -1,5 +1,5 @@
 name: ytsmovies
-description: YTS Movies — browse, search and download YTS movie torrents directly to your device.
+description: Brokeflix — browse, search and download movie torrents directly to your device.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
@@ -15,7 +15,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 2.5.0+2
+version: 2.7.0-libtorrent.1+5
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -28,7 +28,6 @@ dependencies:
   url_launcher: ^6.1.10
   path_provider: ^2.0.14
   infinite_scroll_pagination: ^4.1.0
-  youtube_player_flutter: ^9.1.1
   cached_network_image: ^3.2.3
   flutter_bloc: ^9.1.1
   hydrated_bloc: ^10.0.0
@@ -43,24 +42,25 @@ dependencies:
   hive_ce: ^2.11.3
   hive_ce_flutter: ^2.3.1
   http_cache_hive_store: ^5.0.1
-  dtorrent_task_v2: ^0.4.4
-  dtorrent_parser: ^1.0.8
   permission_handler: ^12.0.1
   file_picker: ^10.3.3
-  b_encode_decode: ^1.0.4
-  flutter_foreground_task: ^9.1.0
-  flutter_local_notifications: ^19.5.0
+  # flutter_foreground_task: ^9.1.0
+  flutter_local_notifications: ^21.0.0
   flutter_background_service: ^5.1.0
   get_it: ^9.0.5
   injectable: ^2.6.0
   open_file_manager: ^2.0.1
+  libtorrent_flutter: ^1.8.5
+  window_manager: ^0.5.1
+  tray_manager: ^0.5.2
+  youtube_player_iframe: ^6.0.0
 
 dev_dependencies:
-  flutter_launcher_icons: ^0.14.3
+  flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.2.19
   change_app_package_name: ^1.1.0
 
-  package_rename: ^1.2.0
+  package_rename: ^1.10.1
   flutter_lints: ^6.0.0
   freezed: ^3.0.6
   json_serializable: ^6.9.0
@@ -69,7 +69,7 @@ dev_dependencies:
   hive_ce_generator: ^1.9.2
   flutter_unused_packages: ^1.0.1
   injectable_generator: ^2.7.0
-
+  msix: ^3.16.13
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -87,6 +87,7 @@ flutter:
   assets:
     - images/logo-imdb.png
     - images/logo-YTS.png
+    - images/tray_icon.ico
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
@@ -113,3 +114,16 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+msix_config:
+  display_name: Brokeflix
+  publisher_display_name: zulab
+  identity_name: zulab.Brokeflix
+  msix_version: 2.7.0.0
+  logo_path: assets/icons/launch_icon_win.png
+  capabilities: internetClient, internetClientServer, privateNetworkClientServer
+  store: true
+  # Build configuration
+  output_name: brokeflix
+  # Signing configuration
+  publisher: CN=A68081B3-E8B3-48C1-9F88-8EC3690D0963

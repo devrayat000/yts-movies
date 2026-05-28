@@ -1,305 +1,299 @@
+import 'dart:developer' as dev;
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:ytsmovies/src/bloc/download_manager/index.dart';
+import 'package:ytsmovies/src/injection.dart';
+import 'package:ytsmovies/src/models/download_task.dart';
+import 'package:ytsmovies/src/models/movie.dart';
 import 'package:ytsmovies/src/models/torrent.dart' as m;
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
-import 'package:ytsmovies/src/injection.dart';
-import 'package:file_picker/file_picker.dart';
 
-class AdvancedDownloadDialog extends StatefulWidget {
+void _d(String msg) {
+  // ignore: avoid_print
+  debugPrint('[DLG] $msg');
+  dev.log(msg, name: 'DLG');
+}
+
+/// Full-page pre-download configuration.
+///
+/// Opens immediately on a quality-button tap and kicks off a preview-mode
+/// addDownload — libtorrent fetches metadata in the background isolate while
+/// the user picks files, save path, and speed caps. "Start" commits the
+/// selection (handler clears preview mode and the engine begins downloading
+/// only the chosen files). "Cancel" deletes the preview torrent and any
+/// scratch state.
+class DownloadConfigPage extends StatefulWidget {
   final m.Torrent torrent;
-  final String movieTitle;
+  final Movie movie;
   final String magnetUri;
-  final VoidCallback? onDownloadStart;
+  final int taskId;
 
-  const AdvancedDownloadDialog({
+  const DownloadConfigPage({
     super.key,
     required this.torrent,
-    required this.movieTitle,
+    required this.movie,
     required this.magnetUri,
-    this.onDownloadStart,
+    required this.taskId,
   });
 
   @override
-  State<AdvancedDownloadDialog> createState() => _AdvancedDownloadDialogState();
+  State<DownloadConfigPage> createState() => _DownloadConfigPageState();
 }
 
-class _AdvancedDownloadDialogState extends State<AdvancedDownloadDialog> {
+class _DownloadConfigPageState extends State<DownloadConfigPage> {
+  late DownloadManagerBloc _bloc;
   late String _savePath;
-  bool _wifiOnly = false;
-  bool _sequentialDownload = true;
-  bool _showAdvanced = false;
-  double _downloadSpeedLimit = 0; // 0 = MAX
-  double _uploadSpeedLimit = 0; // 0 = MAX
-  final List<String> _trackers = [];
+  final Set<int> _selectedIndices = <int>{};
+  bool _initialSelectionApplied = false;
+  bool _committed = false;
+  bool _disposed = false;
+  bool _previewStartScheduled = false;
 
   @override
   void initState() {
     super.initState();
+    _bloc = context.read<DownloadManagerBloc>();
     _savePath = getIt<ForegroundDownloadService>().downloadPath;
-    _loadTrackers();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startPreview());
   }
 
-  void _loadTrackers() {
-    // Parse trackers from magnet URI
-    final uri = Uri.parse(widget.magnetUri);
-    final trParams = uri.queryParametersAll['tr'] ?? [];
-    _trackers.addAll(trParams);
+  @override
+  void dispose() {
+    _disposed = true;
+    // Abandon the preview torrent if the user backed out without committing.
+    // Use a scheduled flag too — covers the case where _changeSavePath
+    // queued a re-add that hasn't fired yet.
+    if (!_committed &&
+        (_previewStartScheduled ||
+            _bloc.state.downloads.containsKey(widget.taskId))) {
+      _bloc.add(DownloadManagerDeleteDownload(widget.taskId));
+    }
+    super.dispose();
+  }
+
+  void _startPreview() {
+    _d('_startPreview: taskId=${widget.taskId}, savePath=$_savePath');
+    if (_disposed) {
+      _d('_startPreview: disposed, skip');
+      return;
+    }
+    _previewStartScheduled = false;
+    if (_bloc.state.downloads.containsKey(widget.taskId)) {
+      _d('_startPreview: taskId already in bloc state, skip');
+      return;
+    }
+    final task = DownloadTask(
+      taskId: widget.taskId,
+      movieId: widget.movie.id,
+      movieTitle: widget.movie.title,
+      torrentHash: widget.torrent.hash,
+      magnetUri: widget.magnetUri,
+      quality: widget.torrent.quality,
+      type: widget.torrent.type,
+      size: widget.torrent.size,
+      coverImage: widget.movie.mediumCoverImage,
+      filePath: _savePath,
+    );
+    _bloc.add(DownloadManagerAddDownload(
+      task: task,
+      selectedIndices: null,
+      previewMode: true,
+    ));
+  }
+
+  Future<void> _changeSavePath() async {
+    final newPath = await FilePicker.platform.getDirectoryPath();
+    if (newPath == null || newPath == _savePath) return;
+    // libtorrent has no live-move so we drop the current preview and re-add
+    // against the new path. Wait for the bloc to drop the entry first —
+    // otherwise the re-add's containsKey guard skips silently.
+    _bloc.add(DownloadManagerDeleteDownload(widget.taskId));
+    _previewStartScheduled = true;
+    try {
+      await _bloc.stream
+          .firstWhere((s) => !s.downloads.containsKey(widget.taskId))
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {/* fall through; _startPreview will re-check */}
+    if (!mounted) return;
+    setState(() {
+      _savePath = newPath;
+      _selectedIndices.clear();
+      _initialSelectionApplied = false;
+    });
+    _startPreview();
+  }
+
+  void _start() {
+    _d('_start: taskId=${widget.taskId}, selected=$_selectedIndices');
+    if (_selectedIndices.isEmpty) {
+      _d('_start: empty selection, abort');
+      return;
+    }
+    _committed = true;
+    _bloc.add(DownloadManagerApplyFileSelection(
+      taskId: widget.taskId,
+      selectedIndices: _selectedIndices.toList()..sort(),
+    ));
+    if (!mounted) return;
+    // Capture messenger + router BEFORE pop — after pop the dialog's
+    // BuildContext is detached and ScaffoldMessenger.of would no-op.
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+    Navigator.of(context).pop();
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Download started'),
+        action: SnackBarAction(
+          label: 'View',
+          onPressed: () {
+            router.pushNamed('downloads');
+            messenger.removeCurrentSnackBar();
+          },
+        ),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  void _cancel() {
+    if (!mounted) return;
+    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Dialog(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(28),
-                  topRight: Radius.circular(28),
-                ),
-              ),
+    return BlocConsumer<DownloadManagerBloc, DownloadManagerState>(
+      buildWhen: (prev, curr) =>
+          prev.downloads[widget.taskId] != curr.downloads[widget.taskId],
+      listenWhen: (prev, curr) {
+        final prevLen = prev.downloads[widget.taskId]?.files.length ?? 0;
+        final currLen = curr.downloads[widget.taskId]?.files.length ?? 0;
+        return prevLen != currLen;
+      },
+      listener: (context, state) {
+        final task = state.downloads[widget.taskId];
+        if (task != null &&
+            task.files.isNotEmpty &&
+            !_initialSelectionApplied) {
+          setState(() {
+            _selectedIndices
+              ..clear()
+              ..addAll(List<int>.generate(task.files.length, (i) => i));
+            _initialSelectionApplied = true;
+          });
+        }
+      },
+      builder: (context, state) {
+        final task = state.downloads[widget.taskId];
+        final filesReady = task != null && task.files.isNotEmpty;
+        final hasError = task != null && task.status == DownloadStatus.failed;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Configure Download'),
+            leading: IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: _cancel,
+            ),
+          ),
+          body: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _movieCard(theme),
+              const SizedBox(height: 16),
+              _savePathCard(theme),
+              const SizedBox(height: 16),
+              if (hasError)
+                _errorCard(theme, task.errorMessage ?? 'Unknown error')
+              else if (!filesReady)
+                _metadataLoadingCard(theme, task)
+              else
+                _filesCard(theme, task),
+            ],
+          ),
+          bottomNavigationBar: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.download_rounded,
-                    color: theme.colorScheme.onPrimaryContainer,
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _cancel,
+                      child: const Text('CANCEL'),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      'Download File!',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: FilledButton.icon(
+                      onPressed: filesReady && _selectedIndices.isNotEmpty
+                          ? _start
+                          : null,
+                      icon: const Icon(Icons.download),
+                      label: const Text('START'),
                     ),
                   ),
                 ],
               ),
             ),
+          ),
+        );
+      },
+    );
+  }
 
-            // Content
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  // Magnet Link
-                  _buildSection(
-                    'Link:',
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            widget.magnetUri,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontFamily: 'monospace',
-                              fontSize: 10,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.copy, size: 20),
-                          onPressed: () {
-                            // Copy to clipboard
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Magnet link copied'),
-                                duration: Duration(seconds: 1),
-                              ),
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.share, size: 20),
-                          onPressed: () {
-                            // Share magnet link
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(),
-
-                  // Save As
-                  _buildSection(
-                    'Save as:',
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${widget.movieTitle} [${widget.torrent.quality}] ${widget.torrent.type?.toUpperCase() ?? ""}',
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Extension',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.outline,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // File Info
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildInfoChip(
-                          'Files: 8/8',
-                          icon: Icons.folder_outlined,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildInfoChip(
-                          'Size: ${widget.torrent.size}',
-                          icon: Icons.storage_outlined,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Action Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _selectFiles,
-                          child: const Text('SELECT FILES'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _editTrackers,
-                          child: const Text('EDIT TRACKERS'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Storage Path
-                  _buildSection(
-                    'Storage:',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.history,
-                          size: 20,
-                          color: theme.colorScheme.outline,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _formatStorageInfo(),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                _savePath,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  fontFamily: 'monospace',
-                                  fontSize: 10,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.folder_open, size: 20),
-                          onPressed: _changeSavePath,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(),
-
-                  // Options
-                  CheckboxListTile(
-                    title: const Text('Wifi only'),
-                    value: _wifiOnly,
-                    onChanged: (value) =>
-                        setState(() => _wifiOnly = value ?? false),
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  CheckboxListTile(
-                    title: const Text('Sequential download'),
-                    value: _sequentialDownload,
-                    onChanged: (value) =>
-                        setState(() => _sequentialDownload = value ?? false),
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-
-                  // Advanced Options
-                  CheckboxListTile(
-                    title: const Text('Advance option'),
-                    value: _showAdvanced,
-                    onChanged: (value) =>
-                        setState(() => _showAdvanced = value ?? false),
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-
-                  if (_showAdvanced) ...[
-                    const Divider(),
-                    _buildSpeedLimitSlider(
-                      'Download speed limit:',
-                      _downloadSpeedLimit,
-                      (value) => setState(() => _downloadSpeedLimit = value),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildSpeedLimitSlider(
-                      'Upload speed limit:',
-                      _uploadSpeedLimit,
-                      (value) => setState(() => _uploadSpeedLimit = value),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-
-            // Bottom Actions
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(28),
-                  bottomRight: Radius.circular(28),
+  Widget _movieCard(ThemeData theme) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (widget.movie.mediumCoverImage.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: CachedNetworkImage(
+                  imageUrl: widget.movie.mediumCoverImage,
+                  width: 70,
+                  height: 100,
+                  fit: BoxFit.cover,
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('CANCEL'),
+                  Text(
+                    widget.movie.title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  FilledButton(
-                    onPressed: _startDownload,
-                    child: const Text('START'),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${widget.torrent.quality}'
+                    '${widget.torrent.type != null ? " ${widget.torrent.type!.toUpperCase()}" : ""}'
+                    ' • ${widget.torrent.size}',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.magnetUri,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontFamily: 'monospace',
+                      fontSize: 9,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -310,176 +304,199 @@ class _AdvancedDownloadDialogState extends State<AdvancedDownloadDialog> {
     );
   }
 
-  Widget _buildSection(String title, {required Widget child}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: 8),
-        child,
-      ],
-    );
-  }
-
-  Widget _buildInfoChip(String label, {required IconData icon}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSpeedLimitSlider(
-    String label,
-    double value,
-    ValueChanged<double> onChanged,
-  ) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '$label ${value == 0 ? "MAX" : "${value.toStringAsFixed(1)}MB/s"}',
-          style: theme.textTheme.bodyMedium,
-        ),
-        Row(
+  Widget _savePathCard(ThemeData theme) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _formatSpeed(value),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
+              'Save to',
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
             ),
-            Expanded(
-              child: Slider(
-                value: value,
-                min: 0,
-                max: 10,
-                divisions: 100,
-                onChanged: onChanged,
-              ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.folder, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _savePath,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _changeSavePath,
+                  icon: const Icon(Icons.folder_open, size: 16),
+                  label: const Text('Change'),
+                ),
+              ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _metadataLoadingCard(ThemeData theme, DownloadTask? task) {
+    final progress = task?.progress ?? 0;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Fetching torrent metadata…',
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ],
+            ),
+            if (progress > 0) ...[
+              const SizedBox(height: 12),
+              LinearProgressIndicator(value: progress.clamp(0.0, 1.0)),
+              const SizedBox(height: 4),
+              Text(
+                '${(progress * 100).toStringAsFixed(1)}%',
+                style: theme.textTheme.labelSmall,
+              ),
+            ],
+            const SizedBox(height: 8),
             Text(
-              'MAX',
+              'The file list will appear once metadata is downloaded.',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ],
         ),
-      ],
-    );
-  }
-
-  String _formatSpeed(double mbPerSecond) {
-    if (mbPerSecond == 0) return '0B/s';
-    final kbps = mbPerSecond * 1024;
-    return '${kbps.toStringAsFixed(1)}KB/s';
-  }
-
-  String _formatStorageInfo() {
-    // Mock storage info - replace with actual implementation
-    return '7.60GB/103.56GB, 7.3% free';
-  }
-
-  Future<void> _changeSavePath() async {
-    final path = await FilePicker.platform.getDirectoryPath();
-    if (path != null) {
-      setState(() => _savePath = path);
-    }
-  }
-
-  Future<void> _selectFiles() async {
-    // Show file selection dialog
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select files!'),
-        content: const Text('File selection will be implemented here'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
       ),
     );
   }
 
-  Future<void> _editTrackers() async {
-    final controller = TextEditingController(text: _trackers.join('\n'));
-
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit trackers(1 per line)'),
-        content: SizedBox(
-          width: 400,
-          child: TextField(
-            controller: controller,
-            maxLines: 10,
-            style: const TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 12,
+  Widget _errorCard(ThemeData theme, String message) {
+    return Card(
+      color: theme.colorScheme.errorContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(Icons.error_outline,
+                color: theme.colorScheme.onErrorContainer),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Metadata fetch failed: $message',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onErrorContainer,
+                ),
+              ),
             ),
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-            ),
-          ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL'),
-          ),
-          FilledButton(
-            onPressed: () {
-              _trackers.clear();
-              _trackers.addAll(
-                controller.text.split('\n').where((t) => t.isNotEmpty),
-              );
-              Navigator.pop(context);
-            },
-            child: const Text('OK'),
-          ),
-        ],
       ),
     );
   }
 
-  void _startDownload() {
-    widget.onDownloadStart?.call();
-    Navigator.of(context).pop({
-      'savePath': _savePath,
-      'wifiOnly': _wifiOnly,
-      'sequentialDownload': _sequentialDownload,
-      'downloadSpeedLimit': _downloadSpeedLimit,
-      'uploadSpeedLimit': _uploadSpeedLimit,
-      'trackers': _trackers,
-    });
+  Widget _filesCard(ThemeData theme, DownloadTask task) {
+    final files = task.files;
+    final selectedSize = files
+        .where((f) => _selectedIndices.contains(f.index))
+        .fold<int>(0, (s, f) => s + f.size);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Files (${_selectedIndices.length} / ${files.length})',
+                    style: theme.textTheme.titleSmall,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedIndices
+                        ..clear()
+                        ..addAll(List.generate(files.length, (i) => i));
+                    });
+                  },
+                  child: const Text('All'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(_selectedIndices.clear);
+                  },
+                  child: const Text('None'),
+                ),
+              ],
+            ),
+            Text(
+              '${DownloadTask.formatBytes(selectedSize)} selected',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const Divider(),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 320),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: files.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, i) {
+                  final f = files[i];
+                  final selected = _selectedIndices.contains(f.index);
+                  return CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: selected,
+                    onChanged: (v) {
+                      setState(() {
+                        if (v == true) {
+                          _selectedIndices.add(f.index);
+                        } else {
+                          _selectedIndices.remove(f.index);
+                        }
+                      });
+                    },
+                    title: Text(
+                      f.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    subtitle: Text(
+                      DownloadTask.formatBytes(f.size),
+                      style: theme.textTheme.labelSmall,
+                    ),
+                    dense: true,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

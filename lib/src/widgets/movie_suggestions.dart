@@ -48,20 +48,27 @@ class SuggestionsState extends State<Suggestions> {
       );
     }
 
-    return GridView.builder(
-      shrinkWrap: true,
-      padding: const EdgeInsets.only(top: 12.0),
-      physics: const NeverScrollableScrollPhysics(),
-      itemBuilder: (context, index) => MovieCard.grid(
-        movie: response.data.movies![index],
-      ),
-      itemCount: response.data.movies!.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.67,
-        crossAxisSpacing: 4,
-        mainAxisSpacing: 4,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Target a poster width of ~180dp; clamp 2..7 columns.
+        final width = constraints.maxWidth;
+        final crossAxisCount = (width / 180).floor().clamp(2, 7);
+        return GridView.builder(
+          shrinkWrap: true,
+          padding: const EdgeInsets.only(top: 12.0),
+          physics: const NeverScrollableScrollPhysics(),
+          itemBuilder: (context, index) => MovieCard.grid(
+            movie: response.data.movies![index],
+          ),
+          itemCount: response.data.movies!.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            childAspectRatio: 0.67,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+        );
+      },
     );
   }
 }

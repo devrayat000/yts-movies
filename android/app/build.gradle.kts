@@ -16,7 +16,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.rayat.dev.ytsmovies"
+    namespace = "dev.rayat.brokeflix"
     compileSdk = 36
     ndkVersion = "27.0.12077973"
 
@@ -37,8 +37,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.rayat.dev.ytsmovies"
-        minSdk = flutter.minSdkVersion
+        applicationId = "dev.rayat.brokeflix"
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -63,6 +63,17 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            ndk {
+                abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a"))
+            }
+        }
+    }
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a")
+            isUniversalApk = true // This compiles a fat/universal APK in the same run!
         }
     }
 }

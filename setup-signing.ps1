@@ -1,7 +1,7 @@
 # PowerShell script to generate keystore and setup GitHub secrets
 # Run this script to create your app signing keystore
 
-Write-Host "🔐 Setting up App Signing for YTS Movies" -ForegroundColor Green
+Write-Host "🔐 Setting up App Signing for Brokeflix" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 
 # Check if keytool is available

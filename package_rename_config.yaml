@@ -1,7 +1,13 @@
 package_rename_config:
   android:
-    app_name: YTS Movies
-    package_name: com.rayat.dev.ytsmovies
+    app_name: Brokeflix
+    package_name: dev.rayat.brokeflix
 
   ios:
-    app_name: YTS Movies
+    app_name: Brokeflix
+
+  windows:
+    app_name: Brokeflix # Window title & Software name
+    organization: "ZuLab" # Organization/Company name
+    copyright_notice: "Copyright © 2026 ZuLab" # Legal copyright
+    exe_name: "brokeflix" # Executable name (binary)

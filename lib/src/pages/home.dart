@@ -8,6 +8,7 @@ import 'package:ytsmovies/src/api/movies.dart';
 import 'package:ytsmovies/src/models/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
+import 'package:ytsmovies/src/widgets/adaptive/adaptive.dart';
 import 'package:ytsmovies/src/services/error_notification_service.dart';
 
 class HomePage extends StatefulWidget {
@@ -62,50 +63,60 @@ class HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
       restorationId: "home-screen-scaffold",
       appBar: const HomeAppbar(),
       body: ScrollConfiguration(
         behavior: const MaterialScrollBehavior(),
         child: HeroMode(
           enabled: false,
-          child: ListView(
-            padding: const EdgeInsets.all(12.0),
-            restorationId: "home-screen-listview",
-            children: [
-              IntroItem(
-                key: const PageStorageKey('latest-movies-intro'),
-                title: const Text('Latest Movies'),
-                titleTextStyle: Theme.of(context).textTheme.headlineSmall,
-                future: _latestMovies,
-                itemBuilder: (context, movie, i) {
-                  return _image(movie);
-                },
-                onAction: () => _handleNavigation("latest"),
-              ),
-              _space,
-              IntroItem(
-                key: const PageStorageKey('4k-movies-intro'),
-                title: const Text('4K Movies'),
-                titleTextStyle: Theme.of(context).textTheme.headlineSmall,
-                future: _hdMovies,
-                itemBuilder: (context, movie, i) {
-                  return _image(movie);
-                },
-                onAction: () => _handleNavigation("4k"),
-              ),
-              _space,
-              IntroItem(
-                key: const PageStorageKey('rated-movies-intro'),
-                title: const Text('Top Rated Movies'),
-                titleTextStyle: Theme.of(context).textTheme.headlineSmall,
-                future: _ratedMovies,
-                itemBuilder: (context, movie, i) {
-                  return _image(movie);
-                },
-                onAction: () => _handleNavigation("rated"),
-              ),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              const maxContentWidth = 1400.0;
+              final hpad = ((constraints.maxWidth - maxContentWidth) / 2)
+                  .clamp(12.0, double.infinity);
+              return ListView(
+                padding: EdgeInsets.symmetric(horizontal: hpad, vertical: 12),
+                restorationId: "home-screen-listview",
+                children: [
+                  IntroItem(
+                    key: const PageStorageKey('latest-movies-intro'),
+                    title: const Text('Latest Movies'),
+                    titleTextStyle:
+                        Theme.of(context).textTheme.headlineSmall,
+                    future: _latestMovies,
+                    itemBuilder: (context, movie, i) {
+                      return _image(movie);
+                    },
+                    onAction: () => _handleNavigation("latest"),
+                  ),
+                  _space,
+                  IntroItem(
+                    key: const PageStorageKey('4k-movies-intro'),
+                    title: const Text('4K Movies'),
+                    titleTextStyle:
+                        Theme.of(context).textTheme.headlineSmall,
+                    future: _hdMovies,
+                    itemBuilder: (context, movie, i) {
+                      return _image(movie);
+                    },
+                    onAction: () => _handleNavigation("4k"),
+                  ),
+                  _space,
+                  IntroItem(
+                    key: const PageStorageKey('rated-movies-intro'),
+                    title: const Text('Top Rated Movies'),
+                    titleTextStyle:
+                        Theme.of(context).textTheme.headlineSmall,
+                    future: _ratedMovies,
+                    itemBuilder: (context, movie, i) {
+                      return _image(movie);
+                    },
+                    onAction: () => _handleNavigation("rated"),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),

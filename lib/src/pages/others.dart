@@ -12,7 +12,8 @@ class LatestMoviesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MoviesList(
       label: 'latest',
-      handler: (page) => context.read<MoviesClient>().getMovieList(page: page),
+      handler: (page, limit) => context.read<MoviesClient>().getMovieList(page: page, limit: limit),
+      title: const Text('Latest Movies'),
       appBar: AppBar(
         title: Text(
           'Latest Movies',
@@ -31,10 +32,12 @@ class HD4KMoviesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MoviesList(
       label: '4k',
-      handler: (page) => context.read<MoviesClient>().getMovieList(
+      handler: (page, limit) => context.read<MoviesClient>().getMovieList(
             page: page,
+            limit: limit,
             quality: Quality.$2160,
           ),
+      title: const Text('4K Movies'),
       appBar: AppBar(
         title: Text(
           '4K Movies',
@@ -53,10 +56,12 @@ class RatedMoviesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MoviesList(
       label: 'rated',
-      handler: (page) => context.read<MoviesClient>().getMovieList(
+      handler: (page, limit) => context.read<MoviesClient>().getMovieList(
             page: page,
+            limit: limit,
             minimumRating: 5,
           ),
+      title: const Text('Highly Rated Movies'),
       appBar: AppBar(
         title: Text(
           'Highly Rated Movies',

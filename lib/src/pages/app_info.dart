@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:ytsmovies/src/widgets/adaptive/adaptive.dart';
 
 class AppInfoPage extends StatelessWidget {
   const AppInfoPage({super.key});
@@ -19,7 +20,8 @@ class AppInfoPage extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
+    return AdaptiveScaffold(
+      title: const Text('App Info'),
       appBar: AppBar(
         title: const Text('App Info'),
         centerTitle: true,
@@ -59,7 +61,7 @@ class AppInfoPage extends StatelessWidget {
               icon: Icons.info_outline,
               title: 'About',
               content:
-                  'YTS Movies is a beautiful and intuitive movie browsing app that allows you to discover, search, and explore movies from the YTS database. Browse the latest releases, search by genre, and find your next favorite film.',
+                  'Brokeflix is a beautiful and intuitive movie browsing app that allows you to discover, search, and explore movies. Browse the latest releases, search by genre, and find your next favorite film.',
             ),
 
             const SizedBox(height: 16),
@@ -142,7 +144,7 @@ class AppInfoPage extends StatelessWidget {
 
             // Copyright
             Text(
-              '© ${DateTime.now().year} YTS Movies App',
+              '© ${DateTime.now().year} Brokeflix App',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: isDark ? Colors.grey[400] : Colors.grey[600],
               ),
@@ -215,7 +217,7 @@ class AppInfoPage extends StatelessWidget {
             future: _loadPackageInfo(),
             builder: (context, snapshot) {
               return Text(
-                snapshot.data?.appName ?? 'YTS Movies',
+                snapshot.data?.appName ?? 'Brokeflix',
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white : Colors.black87,

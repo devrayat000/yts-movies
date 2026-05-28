@@ -97,7 +97,7 @@ class IntroItem extends StatelessWidget {
             ),
           ),
           SizedBox(
-            height: 200,
+            height: context.introCarouselHeight,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.only(
@@ -138,7 +138,7 @@ class IntroItem extends StatelessWidget {
   }
 }
 
-class ItemBuilder extends StatelessWidget {
+class ItemBuilder extends StatefulWidget {
   final void Function()? onAction;
   final List<Movie> items;
   final Widget Function(BuildContext, Movie, int) builder;
@@ -150,10 +150,41 @@ class ItemBuilder extends StatelessWidget {
   });
 
   @override
+  State<ItemBuilder> createState() => _ItemBuilderState();
+}
+
+class _ItemBuilderState extends State<ItemBuilder> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return CupertinoScrollbar(
+    return Scrollbar(
+      controller: _scrollController,
+      thumbVisibility: true,
+      interactive: true,
       child: CustomScrollView(
-        key: key,
+        controller: _scrollController,
+        scrollBehavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+            PointerDeviceKind.trackpad,
+            PointerDeviceKind.stylus,
+          },
+        ),
+        key: widget.key,
         slivers: [
           SliverPadding(
             padding:
@@ -162,12 +193,12 @@ class ItemBuilder extends StatelessWidget {
               delegate: SliverChildBuilderDelegate(
                 (context, i) {
                   return Padding(
-                    padding: EdgeInsetsGeometry.only(
-                        right: i == items.length - 1 ? 0.0 : 6.0),
-                    child: builder(context, items[i], i),
+                    padding: EdgeInsets.only(
+                        right: i == widget.items.length - 1 ? 0.0 : 6.0),
+                    child: widget.builder(context, widget.items[i], i),
                   );
                 },
-                childCount: items.length,
+                childCount: widget.items.length,
               ),
             ),
           ),
@@ -181,6 +212,6 @@ class ItemBuilder extends StatelessWidget {
   }
 
   Widget get _moreIcon => SliverToBoxAdapter(
-        child: ShowMoreButton(onPressed: onAction),
+        child: ShowMoreButton(onPressed: widget.onAction),
       );
 }

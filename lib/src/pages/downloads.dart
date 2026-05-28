@@ -8,6 +8,7 @@ import 'package:ytsmovies/src/pages/download_settings.dart';
 import 'package:ytsmovies/src/pages/download_details.dart';
 import 'package:ytsmovies/src/services/foreground_download_service.dart';
 import 'package:ytsmovies/src/injection.dart';
+import 'package:ytsmovies/src/widgets/adaptive/adaptive.dart';
 import 'package:open_file_manager/open_file_manager.dart';
 
 class DownloadsPage extends StatelessWidget {
@@ -15,7 +16,8 @@ class DownloadsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveScaffold(
+      title: const Text('Downloads'),
       appBar: AppBar(
         title: const Text('Downloads'),
         actions: [
@@ -42,6 +44,29 @@ class DownloadsPage extends StatelessWidget {
           ),
         ],
       ),
+      actions: [
+        AdaptiveIconButton(
+          icon: const Icon(Icons.settings),
+          tooltip: 'Download settings',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const DownloadSettingsPage(),
+              ),
+            );
+          },
+        ),
+        AdaptiveIconButton(
+          icon: const Icon(Icons.delete_sweep),
+          tooltip: 'Clear completed downloads',
+          onPressed: () {
+            context.read<DownloadManagerBloc>().add(
+                  DownloadManagerClearCompleted(),
+                );
+          },
+        ),
+      ],
       body: BlocBuilder<DownloadManagerBloc, DownloadManagerState>(
         builder: (context, state) {
           if (state.allDownloads.isEmpty) {
@@ -67,36 +92,44 @@ class DownloadsPage extends StatelessWidget {
             );
           }
 
+          // On wide screens, lay download cards out in a grid so each card
+          // doesn't stretch across the entire viewport.
+          final width = MediaQuery.sizeOf(context).width;
+          final cardsPerRow = (width / 520).floor().clamp(1, 4);
+
+          Widget buildSection(String title, List<DownloadTask> tasks) {
+            if (tasks.isEmpty) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionHeader(title: '$title (${tasks.length})'),
+                if (cardsPerRow == 1)
+                  ...tasks.map((t) => _DownloadTaskCard(task: t))
+                else
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: cardsPerRow,
+                      childAspectRatio: 2.6,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemCount: tasks.length,
+                    itemBuilder: (_, i) => _DownloadTaskCard(task: tasks[i]),
+                  ),
+                const SizedBox(height: 16),
+              ],
+            );
+          }
+
           return ListView(
             padding: const EdgeInsets.all(8.0),
             children: [
-              if (state.activeDownloads.isNotEmpty) ...[
-                _SectionHeader(
-                    title: 'Active (${state.activeDownloads.length})'),
-                ...state.activeDownloads
-                    .map((task) => _DownloadTaskCard(task: task)),
-                const SizedBox(height: 16),
-              ],
-              if (state.pausedDownloads.isNotEmpty) ...[
-                _SectionHeader(
-                    title: 'Paused (${state.pausedDownloads.length})'),
-                ...state.pausedDownloads
-                    .map((task) => _DownloadTaskCard(task: task)),
-                const SizedBox(height: 16),
-              ],
-              if (state.completedDownloads.isNotEmpty) ...[
-                _SectionHeader(
-                    title: 'Completed (${state.completedDownloads.length})'),
-                ...state.completedDownloads
-                    .map((task) => _DownloadTaskCard(task: task)),
-                const SizedBox(height: 16),
-              ],
-              if (state.failedDownloads.isNotEmpty) ...[
-                _SectionHeader(
-                    title: 'Failed (${state.failedDownloads.length})'),
-                ...state.failedDownloads
-                    .map((task) => _DownloadTaskCard(task: task)),
-              ],
+              buildSection('Active', state.activeDownloads),
+              buildSection('Paused', state.pausedDownloads),
+              buildSection('Completed', state.completedDownloads),
+              buildSection('Failed', state.failedDownloads),
             ],
           );
         },
@@ -417,29 +450,25 @@ class _DownloadActionsMenu extends StatelessWidget {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context, DownloadManagerBloc bloc) {
-    showDialog(
+  void _showDeleteConfirmation(
+      BuildContext context, DownloadManagerBloc bloc) async {
+    final confirmed = await showAdaptiveAppDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Download'),
-        content: const Text(
+      title: 'Delete Download',
+      message:
           'Are you sure you want to delete this download? This will also remove downloaded files.',
+      actions: const [
+        AdaptiveDialogAction(label: 'Cancel', value: false),
+        AdaptiveDialogAction(
+          label: 'Delete',
+          value: true,
+          isPrimary: true,
+          isDestructive: true,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              bloc.add(DownloadManagerDeleteDownload(task.taskId));
-              Navigator.of(dialogContext).pop();
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      ],
     );
+    if (confirmed == true) {
+      bloc.add(DownloadManagerDeleteDownload(task.taskId));
+    }
   }
 }

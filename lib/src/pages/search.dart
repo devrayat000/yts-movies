@@ -6,6 +6,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
 import 'package:ytsmovies/src/bloc/filter/index.dart';
+import '../widgets/adaptive/adaptive.dart';
 import '../widgets/index.dart' hide SearchSuggestions;
 import '../widgets/search/search_suggestions.dart';
 import '../models/index.dart';
@@ -331,72 +332,61 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
+    final searchField = Stack(
+      alignment: Alignment.centerRight,
+      children: [
+        AdaptiveTextField(
+          controller: _searchController,
+          focusNode: _focusNode,
+          onChanged: _onSearchChanged,
+          onSubmitted: _onSearchSubmitted,
+          placeholder: 'Search movies...',
+          textInputAction: TextInputAction.search,
+          style: TextStyle(
+            color: colorScheme.onSurface,
+            fontSize: 16,
+          ),
+        ),
+        if (_currentInput.isNotEmpty)
+          Positioned.directional(
+            textDirection: TextDirection.ltr,
+            end: 0,
+            child: AdaptiveIconButton(
+              onPressed: () {
+                _searchController.clear();
+                _resetSearch();
+              },
+              icon: const Icon(Icons.clear),
+            ),
+          )
+      ],
+    );
+
+    final filterAction = !_hasSearched
+        ? null
+        : AdaptiveIconButton(
+            icon: const Icon(Icons.tune),
+            tooltip: 'Filter',
+            onPressed: () {
+              FilterBottomSheet.show(
+                context,
+                onApplyFilter: () {
+                  final filterParams = context.read<Filter>().values;
+                  log('Applying filters: $filterParams');
+                  _performSearch(_currentQuery, params: filterParams);
+                },
+              );
+            },
+          );
+
+    return AdaptiveScaffold(
+      title: searchField,
+      actions: [if (filterAction != null) filterAction],
       appBar: AppBar(
         backgroundColor: colorScheme.surface,
         elevation: 0,
-        title: Stack(
-          alignment: Alignment.centerRight,
-          children: [
-            TextField(
-              controller: _searchController,
-              focusNode: _focusNode,
-              onChanged: _onSearchChanged,
-              onSubmitted: _onSearchSubmitted,
-              decoration: InputDecoration(
-                hintText: 'Search movies...',
-                border: _searchInputBorder,
-                enabledBorder: _searchInputBorder,
-                focusedBorder: _searchInputBorder,
-                hintStyle: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                isDense: true, // Makes the field more compact
-                filled: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical:
-                      6, // Reduced vertical padding for thinner appearance
-                ),
-              ),
-              textInputAction: TextInputAction.search,
-              style: TextStyle(
-                color: colorScheme.onSurface,
-                fontSize: 16,
-              ),
-            ),
-            if (_currentInput.isNotEmpty)
-              Positioned.directional(
-                textDirection: TextDirection.ltr,
-                end: 0,
-                child: IconButton(
-                  onPressed: () {
-                    _searchController.clear();
-                    _resetSearch();
-                  },
-                  icon: const Icon(Icons.clear),
-                ),
-              )
-          ],
-        ),
-        actions: [
-          if (_hasSearched)
-            IconButton(
-              icon: const Icon(Icons.tune),
-              onPressed: () {
-                FilterBottomSheet.show(
-                  context,
-                  onApplyFilter: () {
-                    // Apply filter logic here
-                    final filterParams = context.read<Filter>().values;
-                    log('Applying filters: $filterParams');
-                    _performSearch(_currentQuery, params: filterParams);
-                  },
-                );
-              },
-              tooltip: 'Filter',
-            ),
-        ],
+        title: searchField,
+        actions: [if (filterAction != null) filterAction],
       ),
       body: Stack(
         children: [

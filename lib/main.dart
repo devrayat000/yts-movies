@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'package:logging/logging.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,10 +12,16 @@ import 'package:ytsmovies/hive/hive_registrar.g.dart';
 import 'package:ytsmovies/src/app_initializer.dart';
 
 void main() {
+  Logger.root.level = Level.ALL; // Set root logger level
+  Logger.root.onRecord.listen((record) {
+    debugPrint(
+        '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}');
+  });
   runZonedGuarded(
     _initializeApp,
     (Object error, StackTrace stack) {
-      log(error.toString(), error: error, stackTrace: stack);
+      debugPrint('Error: $error');
+      debugPrint('Stack: $stack');
     },
   );
 }
@@ -30,7 +37,8 @@ Future<void> _initializeApp() async {
     FlutterError.presentError(details);
     if (kReleaseMode) {
       // In release mode, log the error but don't exit
-      log('Flutter error: ${details.toString()}');
+      log('Flutter error: ${details.toString()}',
+          error: details.exception, stackTrace: details.stack);
     }
   };
 
@@ -52,7 +60,7 @@ Future<void> _initializeCriticalStorage() async {
               (await getApplicationDocumentsDirectory()).path),
     );
   } catch (e) {
-    log('Failed to initialize critical storage: $e');
+    log('Failed to initialize critical storage: $e', error: e);
     // Continue with app startup even if storage fails
   }
 }

@@ -5,13 +5,14 @@ class ShimmerIntroItem extends StatelessWidget {
   /// Number of shimmer items to show
   final int itemCount;
 
-  /// Height of the shimmer container
-  final double height;
+  /// Height of the shimmer container. Defaults to the responsive carousel
+  /// height so loading state matches the loaded state.
+  final double? height;
 
   const ShimmerIntroItem({
     super.key,
-    this.itemCount = 4,
-    this.height = 200,
+    this.itemCount = 6,
+    this.height,
   });
 
   @override
@@ -19,24 +20,32 @@ class ShimmerIntroItem extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final h = height ?? context.introCarouselHeight;
     return Shimmer(
       linearGradient: _getShimmerGradient(theme, isDark),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: itemCount,
-        padding: const EdgeInsets.only(bottom: 10.0, left: 12.0, right: 12.0),
-        itemBuilder: (context, index) {
-          return Container(
-            margin: EdgeInsets.only(
-              right: index == itemCount - 1 ? 0.0 : 6.0,
-            ),
-            child: ShimmerLoading(
-              isLoading: true,
-              child: _buildShimmerMovieItem(context, theme),
-            ),
-          );
-        },
+      child: SizedBox(
+        height: h,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: itemCount,
+          padding:
+              const EdgeInsets.only(bottom: 10.0, left: 12.0, right: 12.0),
+          itemBuilder: (context, index) {
+            return Container(
+              margin: EdgeInsets.only(
+                right: index == itemCount - 1 ? 0.0 : 6.0,
+              ),
+              child: AspectRatio(
+                aspectRatio: 0.67,
+                child: ShimmerLoading(
+                  isLoading: true,
+                  child: _buildShimmerMovieItem(context, theme),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -46,9 +55,6 @@ class ShimmerIntroItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16.0),
-      ),
-      child: AspectRatio(
-        aspectRatio: 0.67,
       ),
     );
   }
