@@ -13,7 +13,8 @@ class NotificationService {
       StreamController<NotificationResponse>.broadcast();
 
   /// Stream of notification tap responses
-  Stream<NotificationResponse> get notificationTapStream => _notificationTapController.stream;
+  Stream<NotificationResponse> get notificationTapStream =>
+      _notificationTapController.stream;
 
   /// Initialize notification handling
   @postConstruct
@@ -33,7 +34,7 @@ class NotificationService {
     );
 
     await _notificationsPlugin.initialize(
-      initializationSettings,
+      settings: initializationSettings,
       onDidReceiveNotificationResponse: _onNotificationTap,
     );
 

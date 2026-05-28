@@ -56,8 +56,11 @@ class DesktopTorrentHandler {
     _engine = LibtorrentFlutter.instance;
     _torrentSub = _engine.torrentUpdates.listen(
       _onSnapshot,
-      onError: (Object e, StackTrace s) => log('torrentUpdates stream error: $e',
-          error: e, stackTrace: s, name: _logTag),
+      onError: (Object e, StackTrace s) => log(
+          'torrentUpdates stream error: $e',
+          error: e,
+          stackTrace: s,
+          name: _logTag),
     );
     // Intentionally no periodic notification refresh. Windows toasts re-pop
     // on every Show() call (the plugin doesn't expose ToastNotifier.Update),
@@ -71,7 +74,7 @@ class DesktopTorrentHandler {
   Future<void> dispose() async {
     await _torrentSub?.cancel();
     try {
-      await _notifications.cancel(_foregroundNotificationId);
+      await _notifications.cancel(id: _foregroundNotificationId);
     } catch (_) {}
     for (final tid in _torrentToTask.keys.toList()) {
       try {
@@ -172,8 +175,7 @@ class DesktopTorrentHandler {
       try {
         _engine.removeTorrent(tid, deleteFiles: true);
       } catch (e, s) {
-        log('removeTorrent failed: $e',
-            error: e, stackTrace: s, name: _logTag);
+        log('removeTorrent failed: $e', error: e, stackTrace: s, name: _logTag);
       }
       _torrentToTask.remove(tid);
     }
@@ -283,7 +285,8 @@ class DesktopTorrentHandler {
     final prevStatus = task.lastStatus;
     task.lastStatus = _statusFor(task, info);
 
-    if (task.lastStatus == DownloadStatus.completed && !task.completionEmitted) {
+    if (task.lastStatus == DownloadStatus.completed &&
+        !task.completionEmitted) {
       task.completionEmitted = true;
       _markFilesComplete(task);
       _showCompletionNotification(task);
@@ -302,10 +305,10 @@ class DesktopTorrentHandler {
   Future<void> _showCompletionNotification(_Task task) async {
     try {
       await _notifications.show(
-        _completionIdFor(task.taskId),
-        task.movieTitle,
-        'Download complete',
-        NotificationDetails(
+        id: _completionIdFor(task.taskId),
+        title: task.movieTitle,
+        body: 'Download complete',
+        notificationDetails: NotificationDetails(
           windows: WindowsNotificationDetails(
             actions: [
               WindowsAction(
@@ -325,7 +328,7 @@ class DesktopTorrentHandler {
 
   /// Re-render the shared progress toast. Same id is reused across snapshots
   /// so flutter_local_notifications updates the existing toast in place.
-  void _updateForegroundNotification() {
+  Future<void> _updateForegroundNotification() async {
     final live = _tasks.values.where((t) {
       switch (t.lastStatus) {
         case DownloadStatus.downloading:
@@ -341,7 +344,7 @@ class DesktopTorrentHandler {
     }).toList();
 
     if (live.isEmpty) {
-      _notifications.cancel(_foregroundNotificationId);
+      await _notifications.cancel(id: _foregroundNotificationId);
       return;
     }
 
@@ -411,11 +414,11 @@ class DesktopTorrentHandler {
     }
 
     try {
-      _notifications.show(
-        _foregroundNotificationId,
-        title,
-        body,
-        NotificationDetails(
+      await _notifications.show(
+        id: _foregroundNotificationId,
+        title: title,
+        body: body,
+        notificationDetails: NotificationDetails(
           windows: WindowsNotificationDetails(
             progressBars: [
               WindowsProgressBar(

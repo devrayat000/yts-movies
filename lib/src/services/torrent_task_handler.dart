@@ -758,7 +758,7 @@ class _TorrentHandler {
 
   Future<void> _cancelTaskNotification(int taskId) async {
     try {
-      await notifications.cancel(_notificationIdFor(taskId));
+      await notifications.cancel(id: _notificationIdFor(taskId));
     } catch (_) {}
   }
 
@@ -778,10 +778,10 @@ class _TorrentHandler {
     );
     try {
       await notifications.show(
-        _notificationIdFor(task.taskId),
-        task.movieTitle,
-        'Download complete',
-        NotificationDetails(android: details),
+        id: _notificationIdFor(task.taskId),
+        title: task.movieTitle,
+        body: 'Download complete',
+        notificationDetails: NotificationDetails(android: details),
         payload: task.taskId.toString(),
       );
     } catch (e, s) {
@@ -890,12 +890,16 @@ class _TorrentHandler {
     // Create action buttons for Android
     final List<AndroidNotificationAction> androidActions = [];
     if (taskId != null && status != null) {
-      if (status == DownloadStatus.downloading || status == DownloadStatus.downloadingMetadata) {
-        androidActions.add(const AndroidNotificationAction('pause', 'Pause', cancelNotification: false));
+      if (status == DownloadStatus.downloading ||
+          status == DownloadStatus.downloadingMetadata) {
+        androidActions.add(const AndroidNotificationAction('pause', 'Pause',
+            cancelNotification: false));
       } else if (status == DownloadStatus.paused) {
-        androidActions.add(const AndroidNotificationAction('resume', 'Resume', cancelNotification: false));
+        androidActions.add(const AndroidNotificationAction('resume', 'Resume',
+            cancelNotification: false));
       }
-      androidActions.add(const AndroidNotificationAction('stop', 'Stop', cancelNotification: true));
+      androidActions.add(const AndroidNotificationAction('stop', 'Stop',
+          cancelNotification: true));
     }
 
     final details = AndroidNotificationDetails(
@@ -930,10 +934,13 @@ class _TorrentHandler {
     // Create action buttons for Windows
     final List<WindowsAction> winActions = [];
     if (taskId != null && status != null) {
-      if (status == DownloadStatus.downloading || status == DownloadStatus.downloadingMetadata) {
-        winActions.add(WindowsAction(content: 'Pause', arguments: 'pause:$taskId'));
+      if (status == DownloadStatus.downloading ||
+          status == DownloadStatus.downloadingMetadata) {
+        winActions
+            .add(WindowsAction(content: 'Pause', arguments: 'pause:$taskId'));
       } else if (status == DownloadStatus.paused) {
-        winActions.add(WindowsAction(content: 'Resume', arguments: 'resume:$taskId'));
+        winActions
+            .add(WindowsAction(content: 'Resume', arguments: 'resume:$taskId'));
       }
       winActions.add(WindowsAction(content: 'Stop', arguments: 'stop:$taskId'));
     }
@@ -945,10 +952,10 @@ class _TorrentHandler {
 
     try {
       await notifications.show(
-        notificationId,
-        title,
-        body,
-        NotificationDetails(
+        id: notificationId,
+        title: title,
+        body: body,
+        notificationDetails: NotificationDetails(
           android: details,
           windows: winDetails,
         ),
