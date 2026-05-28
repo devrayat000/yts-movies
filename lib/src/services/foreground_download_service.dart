@@ -1,7 +1,6 @@
 import 'dart:async';
-import 'dart:developer' as dev;
+import 'dart:developer';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:injectable/injectable.dart';
@@ -9,17 +8,13 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:ytsmovies/src/models/download_task.dart';
 import 'package:ytsmovies/src/models/torrent_service_models.dart';
+import 'package:ytsmovies/src/services/desktop_torrent_handler.dart';
+import 'package:ytsmovies/src/services/desktop_window_service.dart';
 import 'package:ytsmovies/src/services/torrent_task_handler.dart';
 import 'package:ytsmovies/src/services/preferences_service.dart';
 import 'package:ytsmovies/src/utils/storage_permission.dart';
 
-const String _logTag = 'FDS';
-
-void _d(String msg, {Object? error, StackTrace? stack}) {
-  // ignore: avoid_print
-  debugPrint('[$_logTag] $msg');
-  dev.log(msg, name: _logTag, error: error, stackTrace: stack);
-}
+const _logTag = 'FDS';
 
 /// Service to manage foreground torrent downloads
 @singleton
@@ -32,6 +27,7 @@ class ForegroundDownloadService {
   String? _downloadPath;
   final StreamController<ProgressUpdate> _progressController =
       StreamController<ProgressUpdate>.broadcast();
+  DesktopTorrentHandler? _desktopHandler;
 
   Stream<ProgressUpdate> get progressStream => _progressController.stream;
 
@@ -46,19 +42,33 @@ class ForegroundDownloadService {
     return p;
   }
 
-  bool get _supportsBackgroundService => Platform.isAndroid || Platform.isIOS;
+  bool get _supportsBackgroundService => isAndroid || isIOS;
 
   @postConstruct
   Future<void> initialize() async {
-    _d('initialize: enter (alreadyInit=$_isInitialized)');
+    log('initialize: enter (alreadyInit=$_isInitialized)', name: _logTag);
     if (_isInitialized) return;
 
     await _initDownloadPath();
-    _d('initialize: downloadPath=$_downloadPath');
+    log('initialize: downloadPath=$_downloadPath', name: _logTag);
     await _requestPermissions();
 
+    if (isDesktop) {
+      // flutter_background_service has no Windows/Linux/macOS backing, so
+      // libtorrent runs directly in the main isolate. Progress flows through
+      // the same _progressController the mobile path uses, keeping the bloc
+      // unaware of which backend is active.
+      final handler = DesktopTorrentHandler(onProgress: _progressController.add);
+      await handler.initialize(defaultSavePath: _downloadPath ?? '.');
+      _desktopHandler = handler;
+      _isInitialized = true;
+      log('initialize: desktop handler ready', name: _logTag);
+      return;
+    }
+
     if (!_supportsBackgroundService) {
-      _d('initialize: skipping FlutterBackgroundService (unsupported platform)');
+      log('initialize: skipping FlutterBackgroundService (unsupported platform)',
+          name: _logTag);
       _isInitialized = true;
       return;
     }
@@ -74,7 +84,7 @@ class ForegroundDownloadService {
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
-    _d('initialize: notification channel created');
+    log('initialize: notification channel created', name: _logTag);
 
     final service = FlutterBackgroundService();
     await service.configure(
@@ -93,28 +103,29 @@ class ForegroundDownloadService {
         foregroundServiceNotificationId: notificationId,
       ),
     );
-    _d('initialize: FlutterBackgroundService configured');
+    log('initialize: FlutterBackgroundService configured', name: _logTag);
 
     service.on('progressUpdate').listen((event) {
       if (event == null) {
-        _d('progressUpdate: null event, ignoring');
+        log('progressUpdate: null event, ignoring', name: _logTag);
         return;
       }
       try {
         final update = ProgressUpdate.fromJson(event);
-        _d('progressUpdate<- task=${update.taskId}, status=${update.status}, '
+        log('progressUpdate<- task=${update.taskId}, status=${update.status}, '
             'progress=${(update.progress * 100).toStringAsFixed(1)}%, '
             'dl=${update.downloadSpeed}, ul=${update.uploadSpeed}, '
             'done=${update.downloadedBytes}/${update.totalBytes}, '
             'files=${update.files?.length}, err=${update.error}');
         _progressController.add(update);
       } catch (e, s) {
-        _d('progressUpdate parse error: $e', error: e, stack: s);
+        log('progressUpdate parse error: $e',
+            error: e, stackTrace: s, name: _logTag);
       }
     });
 
     _isInitialized = true;
-    _d('initialize: done');
+    log('initialize: done', name: _logTag);
   }
 
   @pragma('vm:entry-point')
@@ -139,7 +150,8 @@ class ForegroundDownloadService {
       // and we don't want to prompt at app startup. Created on first write
       // (see `ensureSavePathExists`).
     } catch (e, s) {
-      _d('_initDownloadPath failed: $e', error: e, stack: s);
+      log('_initDownloadPath failed: $e',
+          error: e, stackTrace: s, name: _logTag);
       final appDir = await getApplicationDocumentsDirectory();
       _downloadPath = '${appDir.path}/downloads';
       await Directory(_downloadPath!).create(recursive: true);
@@ -147,17 +159,17 @@ class ForegroundDownloadService {
   }
 
   Future<String> _defaultPath() async {
-    if (Platform.isAndroid) {
-      return '$kAndroidPublicDownloadsRoot/$kDefaultDownloadSubdir';
+    if (isAndroid) {
+      return '$kAndroidPublicDownloadsRoot${Platform.pathSeparator}$kDefaultDownloadSubdir';
     }
-    if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+    if (isDesktop) {
       final downloadsDir = await getDownloadsDirectory();
       if (downloadsDir != null) {
-        return '${downloadsDir.path}/$kDefaultDownloadSubdir';
+        return '${downloadsDir.path}${Platform.pathSeparator}$kDefaultDownloadSubdir';
       }
     }
     final appDir = await getApplicationDocumentsDirectory();
-    return '${appDir.path}/Downloads/$kDefaultDownloadSubdir';
+    return '${appDir.path}${Platform.pathSeparator}Downloads${Platform.pathSeparator}$kDefaultDownloadSubdir';
   }
 
   /// Creates the save directory if missing. Must be called after the user
@@ -175,13 +187,13 @@ class ForegroundDownloadService {
     if (!await dir.exists()) await dir.create(recursive: true);
     await _preferencesService.setCustomDownloadPath(newPath);
     _downloadPath = newPath;
-    _d('updateDownloadPath: $_downloadPath');
+    log('updateDownloadPath: $_downloadPath', name: _logTag);
   }
 
   Future<void> resetToDefaultPath() async {
     await _preferencesService.setCustomDownloadPath(null);
     _downloadPath = await _defaultPath();
-    _d('resetToDefaultPath: $_downloadPath');
+    log('resetToDefaultPath: $_downloadPath', name: _logTag);
   }
 
   /// Only POST_NOTIFICATIONS is required at runtime — the foreground service
@@ -190,40 +202,41 @@ class ForegroundDownloadService {
   /// directory chosen by the user (perm is the URI grant itself).
   Future<void> _requestPermissions() async {
     final status = await Permission.notification.request();
-    _d('_requestPermissions: notification=$status');
+    log('_requestPermissions: notification=$status', name: _logTag);
   }
 
   Future<bool> checkPermissions() async {
     try {
       if (await Permission.notification.isDenied) {
         final status = await Permission.notification.request();
-        _d('checkPermissions: notification re-request -> $status');
+        log('checkPermissions: notification re-request -> $status',
+            name: _logTag);
         if (!status.isGranted) return false;
       }
       return true;
     } catch (e, s) {
-      _d('checkPermissions error: $e', error: e, stack: s);
+      log('checkPermissions error: $e', error: e, stackTrace: s, name: _logTag);
       return false;
     }
   }
 
   Future<bool> startService() async {
     if (!_supportsBackgroundService) {
-      _d('startService: unsupported platform, no-op');
+      log('startService: unsupported platform, no-op', name: _logTag);
       return false;
     }
     final service = FlutterBackgroundService();
     if (await service.isRunning()) {
-      _d('startService: already running');
+      log('startService: already running', name: _logTag);
       return true;
     }
     if (!await checkPermissions()) {
-      _d('startService: permission denied');
+      log('startService: permission denied', name: _logTag);
       return false;
     }
-    _d('startService: starting…');
+    log('startService: starting…', name: _logTag);
     final ok = await service.startService();
-    _d('startService: startService() returned $ok');
+    log('startService: startService() returned $ok', name: _logTag);
     return true;
   }
 
@@ -237,28 +250,10 @@ class ForegroundDownloadService {
     List<int>? selectedIndices,
     bool previewMode = false,
   }) async {
-    _d('startDownload: taskId=$taskId, savePath=$savePath, '
+    log('startDownload: taskId=$taskId, savePath=$savePath, '
         'movieTitle="$movieTitle", magnet="${_truncMagnet(magnetUri)}", '
         'dl=$downloadLimit, ul=$uploadLimit, sel=$selectedIndices, '
         'preview=$previewMode');
-    if (!_supportsBackgroundService) {
-      _d('startDownload: unsupported platform, no-op');
-      return;
-    }
-    final service = FlutterBackgroundService();
-    if (!await service.isRunning()) {
-      _d('startDownload: service not running, starting');
-      final started = await startService();
-      if (!started) {
-        _d('startDownload: startService failed');
-        throw Exception(
-          'Failed to start foreground service. Please grant notification '
-          'and storage permissions in app settings.',
-        );
-      }
-      _d('startDownload: waiting 500ms for service spin-up');
-      await Future.delayed(const Duration(milliseconds: 500));
-    }
 
     final req = StartDownloadRequest(
       taskId: taskId,
@@ -271,45 +266,79 @@ class ForegroundDownloadService {
       selectedIndices: selectedIndices,
       previewMode: previewMode,
     );
-    _d('startDownload-> invoke "startDownload" json keys=${req.toJson().keys.toList()}');
+
+    if (_desktopHandler != null) {
+      await _desktopHandler!.startDownload(req);
+      return;
+    }
+
+    if (!_supportsBackgroundService) {
+      log('startDownload: unsupported platform, no-op', name: _logTag);
+      return;
+    }
+    final service = FlutterBackgroundService();
+    if (!await service.isRunning()) {
+      log('startDownload: service not running, starting', name: _logTag);
+      final started = await startService();
+      if (!started) {
+        log('startDownload: startService failed', name: _logTag);
+        throw Exception(
+          'Failed to start foreground service. Please grant notification '
+          'and storage permissions in app settings.',
+        );
+      }
+      log('startDownload: waiting 500ms for service spin-up', name: _logTag);
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+
+    log('startDownload-> invoke "startDownload" json keys=${req.toJson().keys.toList()}',
+        name: _logTag);
     service.invoke('startDownload', req.toJson());
   }
 
   Future<void> pauseDownload(int taskId) async {
-    _d('pauseDownload-> taskId=$taskId');
+    log('pauseDownload-> taskId=$taskId', name: _logTag);
+    final req = DownloadControlRequest(taskId: taskId);
+    if (_desktopHandler != null) {
+      _desktopHandler!.pauseDownload(req);
+      return;
+    }
     if (!_supportsBackgroundService) return;
-    FlutterBackgroundService().invoke(
-      'pauseDownload',
-      DownloadControlRequest(taskId: taskId).toJson(),
-    );
+    FlutterBackgroundService().invoke('pauseDownload', req.toJson());
   }
 
   Future<void> resumeDownload(int taskId) async {
-    _d('resumeDownload-> taskId=$taskId');
+    log('resumeDownload-> taskId=$taskId', name: _logTag);
+    final req = DownloadControlRequest(taskId: taskId);
+    if (_desktopHandler != null) {
+      _desktopHandler!.resumeDownload(req);
+      return;
+    }
     if (!_supportsBackgroundService) return;
-    FlutterBackgroundService().invoke(
-      'resumeDownload',
-      DownloadControlRequest(taskId: taskId).toJson(),
-    );
+    FlutterBackgroundService().invoke('resumeDownload', req.toJson());
   }
 
   Future<void> stopDownload(int taskId) async {
-    _d('stopDownload-> taskId=$taskId');
+    log('stopDownload-> taskId=$taskId', name: _logTag);
+    final req = DownloadControlRequest(taskId: taskId);
+    if (_desktopHandler != null) {
+      _desktopHandler!.stopDownload(req);
+      return;
+    }
     if (!_supportsBackgroundService) return;
-    FlutterBackgroundService().invoke(
-      'stopDownload',
-      DownloadControlRequest(taskId: taskId).toJson(),
-    );
+    FlutterBackgroundService().invoke('stopDownload', req.toJson());
   }
 
   /// Drop the torrent and let libtorrent wipe its on-disk files.
   Future<void> deleteDownload(int taskId) async {
-    _d('deleteDownload-> taskId=$taskId');
+    log('deleteDownload-> taskId=$taskId', name: _logTag);
+    final req = DownloadControlRequest(taskId: taskId);
+    if (_desktopHandler != null) {
+      _desktopHandler!.deleteDownload(req);
+      return;
+    }
     if (!_supportsBackgroundService) return;
-    FlutterBackgroundService().invoke(
-      'deleteDownload',
-      DownloadControlRequest(taskId: taskId).toJson(),
-    );
+    FlutterBackgroundService().invoke('deleteDownload', req.toJson());
   }
 
   /// libtorrent_flutter exposes only session-wide limits. The handler applies
@@ -320,16 +349,19 @@ class ForegroundDownloadService {
     int? downloadLimit,
     int? uploadLimit,
   }) async {
-    _d('setSpeedLimit-> taskId=$taskId, dl=$downloadLimit, ul=$uploadLimit');
-    if (!_supportsBackgroundService) return;
-    FlutterBackgroundService().invoke(
-      'setSpeedLimit',
-      SetSpeedLimitRequest(
-        taskId: taskId,
-        downloadLimit: downloadLimit,
-        uploadLimit: uploadLimit,
-      ).toJson(),
+    log('setSpeedLimit-> taskId=$taskId, dl=$downloadLimit, ul=$uploadLimit',
+        name: _logTag);
+    final req = SetSpeedLimitRequest(
+      taskId: taskId,
+      downloadLimit: downloadLimit,
+      uploadLimit: uploadLimit,
     );
+    if (_desktopHandler != null) {
+      _desktopHandler!.setSpeedLimit(req);
+      return;
+    }
+    if (!_supportsBackgroundService) return;
+    FlutterBackgroundService().invoke('setSpeedLimit', req.toJson());
   }
 
   Future<void> setFilePriority({
@@ -337,52 +369,66 @@ class ForegroundDownloadService {
     required int fileIndex,
     required FilePriorityLevel priority,
   }) async {
-    _d('setFilePriority-> taskId=$taskId, file=$fileIndex, prio=$priority');
-    if (!_supportsBackgroundService) return;
-    FlutterBackgroundService().invoke(
-      'setFilePriority',
-      SetFilePriorityRequest(
-        taskId: taskId,
-        fileIndex: fileIndex,
-        priority: priority,
-      ).toJson(),
+    log('setFilePriority-> taskId=$taskId, file=$fileIndex, prio=$priority',
+        name: _logTag);
+    final req = SetFilePriorityRequest(
+      taskId: taskId,
+      fileIndex: fileIndex,
+      priority: priority,
     );
+    if (_desktopHandler != null) {
+      _desktopHandler!.setFilePriority(req);
+      return;
+    }
+    if (!_supportsBackgroundService) return;
+    FlutterBackgroundService().invoke('setFilePriority', req.toJson());
   }
 
   Future<void> applyFileSelection({
     required int taskId,
     required List<int> selectedIndices,
   }) async {
-    _d('applyFileSelection-> taskId=$taskId, selected=$selectedIndices');
-    if (!_supportsBackgroundService) return;
-    FlutterBackgroundService().invoke(
-      'applyFileSelection',
-      ApplyFileSelectionRequest(
-        taskId: taskId,
-        selectedIndices: selectedIndices,
-      ).toJson(),
+    log('applyFileSelection-> taskId=$taskId, selected=$selectedIndices',
+        name: _logTag);
+    final req = ApplyFileSelectionRequest(
+      taskId: taskId,
+      selectedIndices: selectedIndices,
     );
+    if (_desktopHandler != null) {
+      _desktopHandler!.applyFileSelection(req);
+      return;
+    }
+    if (!_supportsBackgroundService) return;
+    FlutterBackgroundService().invoke('applyFileSelection', req.toJson());
   }
 
   Future<void> stopService() async {
+    if (_desktopHandler != null) {
+      await _desktopHandler!.dispose();
+      _desktopHandler = null;
+      return;
+    }
     if (!_supportsBackgroundService) return;
     final service = FlutterBackgroundService();
     if (await service.isRunning()) {
-      _d('stopService-> invoking');
+      log('stopService-> invoking', name: _logTag);
       service.invoke('stopService');
     } else {
-      _d('stopService: not running');
+      log('stopService: not running', name: _logTag);
     }
   }
 
   Future<bool> isServiceRunning() async {
+    if (_desktopHandler != null) return true;
     if (!_supportsBackgroundService) return false;
     return await FlutterBackgroundService().isRunning();
   }
 
   @disposeMethod
   Future<void> dispose() async {
-    _d('dispose');
+    log('dispose', name: _logTag);
+    await _desktopHandler?.dispose();
+    _desktopHandler = null;
     await _progressController.close();
     _isInitialized = false;
   }
