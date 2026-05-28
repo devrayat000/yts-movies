@@ -184,6 +184,118 @@ jobs:
               body: comment,
             });
 
+  build-msix:
+    name: Build Windows MSIX
+    runs-on: windows-latest
+    # Serialized after build-apk so the GitHub Release already exists.
+    needs: build-apk
+
+    steps:
+      - name: 📂 Checkout code
+        uses: actions/checkout@v5
+        with:
+          submodules: true
+
+      - name: 🛠️ Setup Flutter
+        id: setup
+        uses: ./.github/actions/setup-flutter
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
+
+      - name: 📦 Build MSIX (runs flutter build windows internally)
+        shell: bash
+        run: dart run msix:create
+
+      - name: 📦 Package portable EXE + rename MSIX
+        id: pack_windows
+        shell: bash
+        run: |
+          VERSION="${{ steps.setup.outputs.version }}"
+          REL_DIR="build/windows/x64/runner/Release"
+
+          MSIX_SRC="$REL_DIR/brokeflix.msix"
+          MSIX_DEST="$REL_DIR/brokeflix-v${VERSION}-windows-x64.msix"
+          if [ ! -f "$MSIX_SRC" ]; then
+            echo "MSIX not found at $MSIX_SRC"
+            ls -la "$REL_DIR" || true
+            exit 1
+          fi
+          mv "$MSIX_SRC" "$MSIX_DEST"
+
+          # Portable build = entire Release dir minus the msix (exe + DLLs + data/)
+          STAGE_DIR="build/windows/stage/brokeflix-v${VERSION}-windows-x64"
+          mkdir -p "$STAGE_DIR"
+          cp -r "$REL_DIR"/* "$STAGE_DIR"/
+          rm -f "$STAGE_DIR"/$(basename "$MSIX_DEST")
+
+          ZIP_DEST="build/windows/brokeflix-v${VERSION}-windows-x64.zip"
+          powershell -Command "Compress-Archive -Path 'build/windows/stage/brokeflix-v${VERSION}-windows-x64' -DestinationPath '${ZIP_DEST}' -Force"
+
+          echo "msix_path=$MSIX_DEST" >> $GITHUB_OUTPUT
+          echo "zip_path=$ZIP_DEST" >> $GITHUB_OUTPUT
+          ls -la "$REL_DIR" "build/windows"
+
+      - name: 📊 Get artifact sizes
+        id: win_info
+        shell: bash
+        run: |
+          msix_mb=$(awk "BEGIN {printf \"%.2f\", $(stat -c%s '${{ steps.pack_windows.outputs.msix_path }}') / 1024 / 1024}")
+          zip_mb=$(awk "BEGIN {printf \"%.2f\", $(stat -c%s '${{ steps.pack_windows.outputs.zip_path }}') / 1024 / 1024}")
+          echo "msix_mb=$msix_mb" >> $GITHUB_OUTPUT
+          echo "zip_mb=$zip_mb" >> $GITHUB_OUTPUT
+          echo "MSIX: ${msix_mb} MB | Portable zip: ${zip_mb} MB"
+
+      - name: 🚀 Upload MSIX + portable zip to existing Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.setup.outputs.tag }}
+          append_body: false
+          draft: false
+          prerelease: true
+          files: |
+            ${{ steps.pack_windows.outputs.msix_path }}
+            ${{ steps.pack_windows.outputs.zip_path }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 💬 Comment PR with Windows build info
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const version = '${{ steps.setup.outputs.version }}';
+            const msixSize = '${{ steps.win_info.outputs.msix_mb }}';
+            const zipSize = '${{ steps.win_info.outputs.zip_mb }}';
+            const tag = '${{ steps.setup.outputs.tag }}';
+            const releaseUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${tag}`;
+
+            const comment = `🪟 **Windows Build Successful — Attached to Release!**
+
+            📦 **Downloads:** [${tag} Release](${releaseUrl})
+
+            **📊 Artifact Sizes:**
+            * 🧩 **MSIX installer:** ${msixSize} MB
+            * 🗜️ **Portable ZIP (exe + DLLs):** ${zipSize} MB
+
+            **Build Details:**
+            - Version: ${version}
+            - Commit: ${context.sha.substring(0, 7)}
+            - Flutter Version: 3.32.1
+            - Build Type: Release (Windows x64)
+
+            **📥 How to install:**
+            - **MSIX:** double-click \`.msix\` to install (trust publisher cert on first install).
+            - **Portable:** extract the zip and run the \`.exe\` directly — no install required.
+
+            *Attached to release from PR #${context.payload.pull_request.number}*`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment,
+            });
+
   build-aab:
     name: Build AAB
     runs-on: ubuntu-latest
