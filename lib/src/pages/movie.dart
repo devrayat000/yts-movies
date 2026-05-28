@@ -112,28 +112,35 @@ class _Screen extends StatelessWidget {
         },
         child: CustomScrollView(
           slivers: [
-            SliverAppBar(
-              stretch: true,
-              pinned: true,
-              snap: false,
-              floating: false,
-              onStretchTrigger: () async {
-                // Triggers when stretching
-              },
-              stretchTriggerOffset: 200.0,
-              expandedHeight: 150.0,
-              flexibleSpace: FlexibleSpaceBar(
-                title: Text(
-                  _movie.title,
-                  style: Theme.of(context).appBarTheme.titleTextStyle,
-                  softWrap: true,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                centerTitle: true,
-                expandedTitleScale: 1.2,
-              ),
-              actions: [FavouriteButton(movie: _movie)],
-            ),
+            isDesktop
+                ? SliverAppBar(
+                    pinned: true,
+                    title: Text(
+                      _movie.title,
+                      style: Theme.of(context).appBarTheme.titleTextStyle,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    actions: [FavouriteButton(movie: _movie)],
+                  )
+                : SliverAppBar(
+                    stretch: true,
+                    pinned: true,
+                    snap: false,
+                    floating: false,
+                    stretchTriggerOffset: 200.0,
+                    expandedHeight: 150.0,
+                    flexibleSpace: FlexibleSpaceBar(
+                      title: Text(
+                        _movie.title,
+                        style: Theme.of(context).appBarTheme.titleTextStyle,
+                        softWrap: true,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      centerTitle: true,
+                      expandedTitleScale: 1.2,
+                    ),
+                    actions: [FavouriteButton(movie: _movie)],
+                  ),
             SliverPadding(
               padding: EdgeInsets.symmetric(
                 horizontal: isDesktop ? 24.0 : 8.0,
@@ -146,34 +153,7 @@ class _Screen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              _movie.year.toString(),
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            Text(
-                              language,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                        _space(),
-                        BreadCrumb.builder(
-                          itemCount: _movie.genres.length,
-                          builder: (i) => BreadCrumbItem(
-                            content: Text(
-                              _movie.genres[i],
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                          ),
-                          divider: const Text(
-                            ' / ',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        _space(),
+                        if (!isDesktop) ..._metaBlock(context, language),
                         DecoratedBox(
                           decoration: BoxDecoration(
                             image: DecorationImage(
@@ -415,6 +395,10 @@ class _Screen extends StatelessWidget {
                           ),
                         ),
                         _space(),
+                        if (isDesktop) ...[
+                          ..._metaBlock(context, language),
+                          _space(spacing: 8.0),
+                        ],
                         TorrentTab(torrents: _movie.torrents),
                         _space(spacing: 12.0),
                         if (_movie.trailer != null &&
@@ -460,6 +444,41 @@ class _Screen extends StatelessWidget {
 
   Widget _space({double spacing = 4.0}) {
     return SizedBox(height: spacing);
+  }
+
+  /// Year, language, genre breadcrumb. Rendered above the hero poster on
+  /// mobile, below it on desktop.
+  List<Widget> _metaBlock(BuildContext context, String language) {
+    return [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            _movie.year.toString(),
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          Text(
+            language,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
+      _space(),
+      BreadCrumb.builder(
+        itemCount: _movie.genres.length,
+        builder: (i) => BreadCrumbItem(
+          content: Text(
+            _movie.genres[i],
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        ),
+        divider: const Text(
+          ' / ',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+      _space(),
+    ];
   }
 
   Widget _rowSpace({double spacing = 16.0}) {
