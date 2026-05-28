@@ -25,7 +25,8 @@ class YTSAppInitializer extends StatefulWidget {
   State<YTSAppInitializer> createState() => _YTSAppInitializerState();
 }
 
-class _YTSAppInitializerState extends State<YTSAppInitializer> with WindowListener, TrayListener {
+class _YTSAppInitializerState extends State<YTSAppInitializer>
+    with WindowListener, TrayListener {
   bool _isInitializing = true;
   String? _error;
   StreamSubscription<NotificationResponse>? _notificationSubscription;
@@ -78,7 +79,7 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> with WindowListen
     await windowManager.ensureInitialized();
 
     const options = WindowOptions(
-      size: Size(1280, 800),
+      size: Size(1366, 768),
       minimumSize: Size(900, 600),
       center: true,
       title: 'Brokeflix',
@@ -274,7 +275,8 @@ class _YTSAppInitializerState extends State<YTSAppInitializer> with WindowListen
           totalDl += t.downloadSpeed;
         }
         final totalSpeed = DownloadTask.formatBytes(totalDl);
-        trayManager.setToolTip('Brokeflix\nDownloading ${active.length} movies ($totalSpeed/s)');
+        trayManager.setToolTip(
+            'Brokeflix\nDownloading ${active.length} movies ($totalSpeed/s)');
       }
     } catch (e) {
       log('Error updating tray tooltip: $e');

@@ -16,6 +16,7 @@ import 'package:ytsmovies/src/widgets/adaptive/adaptive.dart';
 import 'package:ytsmovies/src/widgets/index.dart';
 import 'package:ytsmovies/src/utils/index.dart';
 import 'package:ytsmovies/src/services/error_notification_service.dart';
+import 'package:ytsmovies/src/services/desktop_window_service.dart';
 
 class MoviePage extends StatelessWidget {
   static const routeName = '/details';
@@ -87,6 +88,7 @@ class MovieDetailsState extends State<MovieDetails> with RouteAware {
   int volume = 100;
   bool _isPlayerReady = false;
   bool _wasPlaying = false;
+  int _playerErrorCode = 0;
 
   final _muted = ValueNotifier(false);
   @override
@@ -192,89 +194,105 @@ class MovieDetailsState extends State<MovieDetails> with RouteAware {
 
   void _listener() {
     if (_isPlayerReady && mounted && !_controller!.value.isFullScreen) {
+      final err = _controller!.value.errorCode;
       setState(() {
         playerState = _controller!.value.playerState;
         videoMetaData = _controller!.metadata;
+        if (err != 0) _playerErrorCode = err;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Embed failed (e.g. YouTube error 153 = embedding disabled).
+    // Drop controller-based UI; _Screen will render external launch button.
+    if (_controller != null && _playerErrorCode != 0) {
+      return _Screen(movie: widget._movie);
+    }
     if (_controller != null) {
+      final playerWidget = YoutubePlayer(
+        controller: _controller!,
+        showVideoProgressIndicator: true,
+        progressIndicatorColor: Colors.red,
+        progressColors: const ProgressBarColors(
+          playedColor: Colors.red,
+          handleColor: Colors.redAccent,
+        ),
+        onReady: () {
+          _isPlayerReady = true;
+        },
+        topActions: <Widget>[
+          const SizedBox(width: 8.0),
+          Expanded(
+            child: Text(
+              _controller!.metadata.title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18.0,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.settings,
+              color: Colors.white,
+              size: 25.0,
+            ),
+            onPressed: () {
+              log('Settings Tapped!');
+            },
+          ),
+        ],
+        bottomActions: [
+          const SizedBox(width: 8.0),
+          IconButton(
+            onPressed: () {
+              if (_muted.value) {
+                _controller?.unMute();
+                _muted.value = false;
+              } else {
+                _controller?.mute();
+                _muted.value = true;
+              }
+            },
+            icon: ValueListenableBuilder<bool>(
+              valueListenable: _muted,
+              builder: (context, isMuted, child) {
+                return Icon(isMuted ? Icons.volume_mute : Icons.volume_up);
+              },
+            ),
+          ),
+          const SizedBox(width: 14.0),
+          const CurrentPosition(),
+          const SizedBox(width: 8.0),
+          const ProgressBar(
+            isExpanded: true,
+            colors: ProgressBarColors(
+              playedColor: Colors.red,
+              handleColor: Colors.redAccent,
+            ),
+          ),
+          const RemainingDuration(),
+          const PlaybackSpeedButton(),
+          const FullScreenButton(),
+        ],
+      );
+
+      // YoutubePlayerBuilder wraps in OrientationBuilder; a wide desktop
+      // window is "landscape", which triggers a fullscreen overlay above
+      // the page. Skip the builder on desktop and embed the player inline.
+      if (isDesktop) {
+        return _Screen(movie: widget._movie, player: playerWidget);
+      }
+
       return YoutubePlayerBuilder(
         onExitFullScreen: () {
           SystemChrome.setPreferredOrientations(DeviceOrientation.values);
         },
-        player: YoutubePlayer(
-          controller: _controller!,
-          showVideoProgressIndicator: true,
-          progressIndicatorColor: Colors.red,
-          progressColors: const ProgressBarColors(
-            playedColor: Colors.red,
-            handleColor: Colors.redAccent,
-          ),
-          onReady: () {
-            _isPlayerReady = true;
-          },
-          topActions: <Widget>[
-            const SizedBox(width: 8.0),
-            Expanded(
-              child: Text(
-                _controller!.metadata.title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18.0,
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ),
-            IconButton(
-              icon: const Icon(
-                Icons.settings,
-                color: Colors.white,
-                size: 25.0,
-              ),
-              onPressed: () {
-                log('Settings Tapped!');
-              },
-            ),
-          ],
-          bottomActions: [
-            const SizedBox(width: 8.0),
-            IconButton(
-              onPressed: () {
-                if (_muted.value) {
-                  _controller?.unMute();
-                  _muted.value = false;
-                } else {
-                  _controller?.mute();
-                  _muted.value = true;
-                }
-              },
-              icon: ValueListenableBuilder<bool>(
-                valueListenable: _muted,
-                builder: (context, isMuted, child) {
-                  return Icon(isMuted ? Icons.volume_mute : Icons.volume_up);
-                },
-              ),
-            ),
-            const SizedBox(width: 14.0),
-            const CurrentPosition(),
-            const SizedBox(width: 8.0),
-            const ProgressBar(
-              isExpanded: true,
-              colors: ProgressBarColors(
-                playedColor: Colors.red,
-                handleColor: Colors.redAccent,
-              ),
-            ),
-            const RemainingDuration(),
-            const PlaybackSpeedButton(),
-            const FullScreenButton(),
-          ],
-        ),
+        player: playerWidget,
         builder: (context, player) => _Screen(
           movie: widget._movie,
           player: player,
@@ -328,9 +346,17 @@ class _Screen extends StatelessWidget {
               actions: [FavouriteButton(movie: _movie)],
             ),
             SliverPadding(
-              padding: const EdgeInsets.all(8.0),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate.fixed([
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? 24.0 : 8.0,
+                vertical: 8.0,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1200),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -377,13 +403,25 @@ class _Screen extends StatelessWidget {
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: MovieImage(
-                            src: _movie.mediumCoverImage,
-                            id: _movie.id.toString(),
-                          ),
-                        ),
+                        isDesktop
+                            ? SizedBox(
+                                width: 280,
+                                child: AspectRatio(
+                                  aspectRatio: 2 / 3,
+                                  child: MovieImage(
+                                    src: _movie.mediumCoverImage,
+                                    id: _movie.id.toString(),
+                                  ),
+                                ),
+                              )
+                            : Expanded(
+                                child: MovieImage(
+                                  src: _movie.mediumCoverImage,
+                                  id: _movie.id.toString(),
+                                ),
+                              ),
                         _rowSpace(spacing: 12),
                         Expanded(
                           child: Column(
@@ -592,6 +630,29 @@ class _Screen extends StatelessWidget {
                       child: player!,
                     ),
                     _space(spacing: 12.0),
+                  ] else if (isDesktop &&
+                      _movie.trailer != null &&
+                      _movie.trailer!.isNotEmpty) ...[
+                    Text(
+                      'Trailer',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    _space(),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FilledButton.icon(
+                        onPressed: () async {
+                          final uri = Uri.parse(_movie.trailer!);
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(uri,
+                                mode: LaunchMode.externalApplication);
+                          }
+                        },
+                        icon: const Icon(Icons.play_circle_outline),
+                        label: const Text('Watch trailer on YouTube'),
+                      ),
+                    ),
+                    _space(spacing: 12.0),
                   ],
                   if (_getMovieDescription != null) ...[
                     Text(
@@ -610,7 +671,10 @@ class _Screen extends StatelessWidget {
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   Suggestions(id: _movie.id.toString()),
-                ]),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

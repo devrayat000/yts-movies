@@ -36,7 +36,8 @@ class _DesktopShellState extends State<DesktopShell> {
   int _indexFromLocation(String loc) {
     for (var i = 0; i < _items.length; i++) {
       final spec = _items[i];
-      final seg = spec.name == 'home' ? '/home' : '/home/${spec.name}';
+      if (spec.name == 'home') continue;
+      final seg = '/home/${spec.name}';
       if (loc == seg || loc.startsWith('$seg/')) return i;
     }
     return 0;
